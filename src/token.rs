@@ -20,22 +20,10 @@ impl std::fmt::Display for Expr {
             Expr::Null => write!(f, "Null"),
             Expr::Bool(b) => write!(f, "{}", b),
             Expr::Number(n) => write!(f, "{}", n),
-            Expr::String(s) => write!(f, "{}", unescape(s.to_string())),
+            Expr::String(s) => write!(f, "\"{}\"", unescape(s.to_string())),
             Expr::Symbol(s) => write!(f, "{}", s),
-            Expr::List(l, _) => {
-                write!(f, "(")?;
-                for e in l.iter() {
-                    write!(f, "{}", e)?;
-                }
-                write!(f, ")")
-            }
-            Expr::Vector(l, _) => {
-                write!(f, "[")?;
-                for e in l.iter() {
-                    write!(f, "{}", e)?;
-                }
-                write!(f, "]")
-            }
+            Expr::List(l, _) => write!(f, "({})", l.iter().map(|e| format!("{}", e)).collect::<Vec<String>>().join(" ")),
+            Expr::Vector(l, _) => write!(f, "[{}]", l.iter().map(|e| format!("{}", e)).collect::<Vec<String>>().join(", ")),
         }
     }
 }

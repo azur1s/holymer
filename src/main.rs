@@ -23,7 +23,9 @@ fn main() {
         // Everything is in a List(..) so we need to get it out and make it into
         // a vector of Expr instead, so we can compile it.
         let a = util::unwrap_list_nest(ast.unwrap());
-        println!("{:#?}", a);
+        for e in a.iter() {
+            println!("{}", e);
+        }
         // TODO: compile to something else..
     }
 }
