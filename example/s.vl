@@ -1,0 +1,8 @@
+(fun factorial [x]
+    (if (<= x 1)
+        1
+        (* x (factorial (- x 1)))))
+
+(def amount 7)
+(do
+    (print (factorial amount)))
