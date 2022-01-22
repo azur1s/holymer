@@ -14,4 +14,9 @@ another lisp dialect
 
 Progress:
 - [X] Lexer & Parser
+- [ ] Syntax checker & Type checker
 - [ ] Compiler
+
+Problems:
+- Parser only detect the first error and quit.
+- Parser can't detect `(()))` syntax error.

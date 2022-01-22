@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 regex = "1.5.4"
 anyhow = "1.0.52"
+cranelift = "0.80.0"

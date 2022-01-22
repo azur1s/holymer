@@ -2,7 +2,7 @@ use regex::Regex;
 use std::rc::Rc;
 
 use crate::{
-    lexer::Token,
+    lexer::{Token, here},
     token::{Expr::{self, Null, List, Vector}, Return, Error::{self, ErrorString}}, list, vector,
 };
 
@@ -10,13 +10,15 @@ const INT_REGEX: &str = r#"^-?[0-9]+$"#;
 const STRING_REGEX: &str = r#""(?:\\.|[^\\"])*""#;
 
 struct Reader {
+    src: String,
     tokens: Vec<Token>,
     position: usize,
 }
 
 impl Reader {
-    fn new(tokens: Vec<Token>) -> Reader {
+    fn new(tokens: Vec<Token>, src: String) -> Reader {
         Reader {
+            src,
             tokens,
             position: 0,
         }
@@ -53,18 +55,19 @@ fn read_atom(reader: &mut Reader) -> Return {
 
 fn read_sequence(reader: &mut Reader, end: &str) -> Return {
     let mut sequence: Vec<Expr> = Vec::new();
-    reader.next()?;
+    let _current_token_ = reader.next()?;
     loop {
         let token = match reader.peek() {
             Ok(token) => token,
-            Err(_) => return Err(ErrorString(format!("Unexpected end of input, found '{}'", end))),
+            Err(_) => return Err(ErrorString(
+                format!("{} Unexpected end of input, expected '{}'", here(&reader.src, &reader.tokens[reader.position - 1]), end)
+            )),
         };
         if token.value == end { break; }
         sequence.push(read_form(reader)?)
     }
     
-    let _ = reader.next();
-
+    let _match_token_ = reader.next()?;
     match end {
         ")" => Ok(list!(sequence)),
         "]" => Ok(vector!(sequence)),
@@ -75,15 +78,15 @@ fn read_sequence(reader: &mut Reader, end: &str) -> Return {
 fn read_form(reader: &mut Reader) -> Return {
     let token = reader.peek()?;
     match &token.value[..] {
-        "(" => read_sequence(reader, ")"),
         ")" => Err(ErrorString("Unexpected ')'".to_string())),
-        "[" => read_sequence(reader, "]"),
+        "(" => read_sequence(reader, ")"),
         "]" => Err(ErrorString("Unexpected ']'".to_string())),
+        "[" => read_sequence(reader, "]"),
         _ => read_atom(reader),
     }
 }
 
-pub fn parse(tokens: Vec<Token>) -> Return {
+pub fn parse(tokens: Vec<Token>, src: &str) -> Return {
     if tokens.len() == 0 { return Ok(Null); }
-    read_form(&mut Reader::new(tokens))
+    read_form(&mut Reader::new(tokens, src.to_string()))
 }

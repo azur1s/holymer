@@ -3,17 +3,19 @@ use anyhow::{anyhow, Error};
 
 const REGEX : &str = r###"[\s,]*([\[\]{}()]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('",;)]+)"###;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub value: String,
     pub span: (usize, usize),
+    pub line: usize,
 }
 
 impl Token {
-    pub fn new(value: String, span: (usize, usize)) -> Token {
+    pub fn new(value: String, span: (usize, usize), line: usize) -> Token {
         Token {
             value,
             span,
+            line,
         }
     }
 }
@@ -31,8 +33,14 @@ pub fn lexer(input: &str) -> Result<Vec<Token>, Error> {
         let position = capture.get(0).ok_or(anyhow!("No position found"))?;
         let span = (position.start(), position.end());
 
-        results.push(Token::new(value, span));
+        let line = input[..span.1].matches("\n").count();
+
+        results.push(Token::new(value, span, line));
     }
 
     Ok(results)
+}
+
+pub fn here(src: &str, token: &Token) -> String {
+    format!("{}:{}:{}", src, token.line + 1, token.span.0)
 }
