@@ -40,7 +40,7 @@ pub fn unwrap_list_nest(ast: Expr) -> Vec<Expr> {
         _ => {
             // This probably will not happen because everything is wrapped
             // in list. So it would be impossible that the ast is not a list.
-            eprintln!("Possibly a bug in the compiler, you shouln't get this messages.");
+            eprintln!("Possibly a bug in the compiler, you shouln't get this message.");
             dbg!(ast);
         }
     };
