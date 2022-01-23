@@ -12,11 +12,20 @@ another lisp dialect
     (print (factorial times)))
 ```
 
+Compliation flow:
+```
+Input(file) -> Lexer -> Parser -> Interpret
+  String       Token     Expr         IO
+                              |-> Compile(TODO)
+                                     File 
+```
+
 Progress:
 - [X] Lexer & Parser
 - [ ] Syntax checker & Type checker
+- [X] Interpreter
 - [ ] Compiler
 
 Problems:
-- Parser only detect the first error and quit.
+- Parser only detect the first error.
 - Parser can't detect `(()))` syntax error.
