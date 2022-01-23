@@ -1,12 +1,12 @@
-# vl
+# bobbylisp
 another lisp dialect
 
 ```lisp
+; example/s.blsp
 (fun factorial (x)
     (if (<= x 1)
         1
         (* x (factorial (- x 1)))))
-
 (do
     (print (factorial 7)))
 ```
