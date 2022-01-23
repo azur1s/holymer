@@ -1,6 +1,5 @@
 use std::{fs::read_to_string, env::args, path::Path};
 
-
 mod util;
 use util::cover_paren;
 
