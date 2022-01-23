@@ -1,1 +1,1 @@
-(while (< sex 0) (print "sex"))
+(print "Hello, World")
