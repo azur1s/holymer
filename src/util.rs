@@ -1,5 +1,3 @@
-use crate::token::Expr::{self, List};
-
 pub fn cover_paren(s: String) -> String {
     format!("({})", s)
 }
@@ -23,27 +21,5 @@ pub fn unescape(s: String) -> String {
             i += 1;
         }
     }
-    result
-}
-
-pub fn unwrap_list_nest(ast: Expr) -> Vec<Expr> {
-    let mut result: Vec<Expr> = Vec::new();
-
-    match ast.clone() {
-        List(l, _) => {
-            for expr in l.iter() {
-                
-                result.push(expr.clone());
-
-            }
-        }
-        _ => {
-            // This probably will not happen because everything is wrapped
-            // in list. So it would be impossible that the ast is not a list.
-            eprintln!("Possibly a bug in the compiler, you shouln't get this messages.");
-            dbg!(ast);
-        }
-    };
-
     result
 }

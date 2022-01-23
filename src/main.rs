@@ -4,7 +4,7 @@ mod token;
 mod util;
 mod lexer;
 mod parser;
-// mod compiler;
+mod compiler;
 
 fn main() {
     let args = args().nth(1).expect("No input file");
@@ -25,10 +25,15 @@ fn main() {
             eprintln!("{}", ast.as_ref().unwrap_err());
             return;
         } else {
-            // Everything is in a List(..) so we need to get it out and make it into
-            // a vector of Expr instead, so we can compile it.
-            let _a = util::unwrap_list_nest(ast.unwrap());
-            // compiler::compile(a);
+            let c = parser::translate_expr(ast.unwrap());
+            match c {
+                Ok(e) => {
+                    println!("{:#?}", e);
+                }
+                Err(e) => {
+                    eprintln!("{}", e);
+                }
+            }
         }
     }
 }
