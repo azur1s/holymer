@@ -86,9 +86,11 @@ impl Parser {
 }
 
 pub fn tokenize(str: &str) -> Vec<String> {
-    str.replace("(", " ( ")
-        .replace(")", " ) ")
-        .split_whitespace()
-        .map(|s| s.to_string())
-        .collect()
+    let regex = Regex::new(r###"[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]+)"###).unwrap();
+    let mut res = vec![];
+    for cap in regex.captures_iter(str) {
+        if cap[1].starts_with(";") { continue; }
+        res.push(String::from(&cap[1]));
+    }
+    res
 }

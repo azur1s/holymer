@@ -1,2 +1,2 @@
 (print "hi")
-(print "hello")
+(print "Hello, World!")
