@@ -1,9 +1,16 @@
 [package]
 name = "blspc"
+description = "Bobbylisp compiler."
 version = "0.1.0"
 edition = "2021"
+author = ["azur1s <https://github.com/azur1s>"]
+homepage = "https://github.com/azur1s/bobbylisp"
+repository = "https://github.com/azur1s/bobbylisp"
+license = "AGPL-3.0"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 regex = "1.5.4"
+structopt = "0.3.26"
