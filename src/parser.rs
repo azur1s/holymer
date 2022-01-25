@@ -9,6 +9,27 @@ pub enum Sexpr {
     Nil,
 }
 
+impl std::fmt::Display for Sexpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Int(i) => write!(f, "{}", i),
+            Float(fl) => write!(f, "{}", fl),
+            Str(s) => write!(f, "{}", s),
+            Boolean(b) => write!(f, "{}", b),
+            Symbol(s) => write!(f, "{}", s),
+            Cons(car, cdr) => {
+                write!(f, "(")?;
+                write!(f, "{}", car)?;
+                for c in cdr {
+                    write!(f, " {}", c)?;
+                }
+                write!(f, ")")
+            },
+            Nil => write!(f, "nil"),
+        }
+    }
+}
+
 pub type ParseResult = Result<Sexpr, String>;
 
 pub struct Parser {

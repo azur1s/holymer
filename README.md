@@ -13,10 +13,10 @@ another lisp dialect
 
 Compliation flow:
 ```
-Input(file) -> Parser -> Interpret(TODO)
-  String       SExprs          IO
-                     |->  Compile(TODO)
-                              File 
+Input(file) -> Parser -> Compile(Bytecode) -> Interpret
+  String       SExprs        Bytecode            IO
+                                          |->  Compile
+                                              Assembly(?)
 ```
 
 ## Installation
