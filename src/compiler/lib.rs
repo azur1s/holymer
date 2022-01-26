@@ -38,8 +38,6 @@ pub enum Instr {
     Store { address: Register, value: Type, },
     // Call intrinsic function.
     Call { address: Register, args: Register },
-    // Stack arithmetic.
-    Add, Sub, Mul, Div,
     // Immediate arithmetic.
     IAdd { lhs: Register, rhs: Register, to: Register, },
     ISub { lhs: Register, rhs: Register, to: Register, },
@@ -53,10 +51,6 @@ impl Display for Instr {
             Instr::Load { address } => write!(f, "LOAD {}", address),
             Instr::Store { address, value } => write!(f, "STORE {} {}", address, value),
             Instr::Call { address, args } => write!(f, "CALL {} {}", address, args),
-            Instr::Add => write!(f, "ADD"),
-            Instr::Sub => write!(f, "SUB"),
-            Instr::Mul => write!(f, "MUL"),
-            Instr::Div => write!(f, "DIV"),
             Instr::IAdd { lhs, rhs, to } => write!(f, "IADD {} {} {}", lhs, rhs, to),
             Instr::ISub { lhs, rhs, to } => write!(f, "ISUB {} {} {}", lhs, rhs, to),
             Instr::IMul { lhs, rhs, to } => write!(f, "IMUL {} {} {}", lhs, rhs, to),

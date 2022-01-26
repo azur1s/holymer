@@ -85,7 +85,9 @@ impl Compiler {
                     value: Type::String(s.to_string()),
                 });
             }
-            _ => return Err(format!("Expected atom, got {:?}", atom)),
+            _ => {
+                result.append(&mut self.compile(atom.clone())?);
+            }
         }
         
         Ok(result)
@@ -110,7 +112,71 @@ impl Compiler {
                     address: call_register,
                     args: arg_pointer,
                 });
-            }
+            },
+            "add" | "+" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                let lhs_pointer = self.current_pointer();
+                result.append(&mut lhs);
+
+                let mut rhs = self.compile_atom(&args[1])?;
+                let rhs_pointer = self.current_pointer();
+                result.append(&mut rhs);
+
+                let result_register = self.next_register();
+                result.push(Instr::IAdd {
+                    lhs: lhs_pointer,
+                    rhs: rhs_pointer,
+                    to: result_register,
+                });
+            },
+            "sub" | "-" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                let lhs_pointer = self.current_pointer();
+                result.append(&mut lhs);
+
+                let mut rhs = self.compile_atom(&args[1])?;
+                let rhs_pointer = self.current_pointer();
+                result.append(&mut rhs);
+
+                let result_register = self.next_register();
+                result.push(Instr::ISub {
+                    lhs: lhs_pointer,
+                    rhs: rhs_pointer,
+                    to: result_register,
+                });
+            },
+            "mul" | "*" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                let lhs_pointer = self.current_pointer();
+                result.append(&mut lhs);
+
+                let mut rhs = self.compile_atom(&args[1])?;
+                let rhs_pointer = self.current_pointer();
+                result.append(&mut rhs);
+
+                let result_register = self.next_register();
+                result.push(Instr::IMul {
+                    lhs: lhs_pointer,
+                    rhs: rhs_pointer,
+                    to: result_register,
+                });
+            },
+            "div" | "/" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                let lhs_pointer = self.current_pointer();
+                result.append(&mut lhs);
+
+                let mut rhs = self.compile_atom(&args[1])?;
+                let rhs_pointer = self.current_pointer();
+                result.append(&mut rhs);
+
+                let result_register = self.next_register();
+                result.push(Instr::IDiv {
+                    lhs: lhs_pointer,
+                    rhs: rhs_pointer,
+                    to: result_register,
+                });
+            },
             _ => return Err(format!("Unknown intrinsic: {}", intrinsic)),
         }
         
