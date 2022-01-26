@@ -35,14 +35,16 @@ pub enum Instr {
     // Load a literal value onto the stack.
     Load { address: Register },
     // Store a literal value into a register.
-    Store { address: Register, value: Type, },
+    Store { address: Register, value: Type },
     // Call intrinsic function.
     Call { address: Register, args: Register },
     // Immediate arithmetic.
-    IAdd { lhs: Register, rhs: Register, to: Register, },
-    ISub { lhs: Register, rhs: Register, to: Register, },
-    IMul { lhs: Register, rhs: Register, to: Register, },
-    IDiv { lhs: Register, rhs: Register, to: Register, },
+    IAdd { lhs: Register, rhs: Register, to: Register },
+    ISub { lhs: Register, rhs: Register, to: Register },
+    IMul { lhs: Register, rhs: Register, to: Register },
+    IDiv { lhs: Register, rhs: Register, to: Register },
+    // Jumping
+    JumpIfFalse { cond: Register, to: Register },
 }
 
 impl Display for Instr {
@@ -55,6 +57,7 @@ impl Display for Instr {
             Instr::ISub { lhs, rhs, to } => write!(f, "ISUB {} {} {}", lhs, rhs, to),
             Instr::IMul { lhs, rhs, to } => write!(f, "IMUL {} {} {}", lhs, rhs, to),
             Instr::IDiv { lhs, rhs, to } => write!(f, "IDIV {} {} {}", lhs, rhs, to),
+            Instr::JumpIfFalse { cond, to } => write!(f, "JUMP_IF_FALSE {} {}", cond, to),
         }
     }
 }
