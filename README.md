@@ -14,10 +14,10 @@ another lisp dialect
 
 Compliation flow:
 ```
-Input(file) -> Parser -> Compile(Bytecode) -> Interpret(blvm)
-  String       SExprs        Bytecode               IO
-                                          |->     Compile
-                                                Assembly(?)
+Input(file) -> Parser -> Compile(Bytecode) -> Interpret
+  String       SExprs        Bytecode            IO
+                                          |->  Compile
+                                              Assembly(?)
 ```
 
 ## Installation
@@ -34,9 +34,11 @@ $ blspc -h
 ```
 
 ### Example
+If no `-r` or `-c` specified. It will check for file extension instead.
+If found `.blsp`, it will compile, if found `.bsm` it will run vm and interpret the bytecode.
 ```bash
 $ blspc ./example/hello.blsp
-$ blvm hello.bbb
+$ blspc ./hello.bsm
 Hello, World!
 ```
 
@@ -44,4 +46,4 @@ Hello, World!
 - [X] Lexer & Parser
 - [ ] Syntax checker & Type checker
 - [ ] Interpreter
-- [ ] Compiler
+- [X] Compiler
