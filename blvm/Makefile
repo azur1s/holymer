@@ -5,12 +5,12 @@ build:
 	cargo build --release
 
 install:
-	rm -f ~/bin/blspc
-	cp ./target/release/blspc ~/bin/blspc
+	rm -f ~/bin/blvm
+	cp ./target/release/blvm ~/bin/blvm
 
 build-debug:
 	cargo build
 
 install-debug:
-	rm -f ~/bin/blspc
-	cp ./target/debug/blspc ~/bin/blspc
+	rm -f ~/bin/blvm
+	cp ./target/debug/blvm ~/bin/blvm
