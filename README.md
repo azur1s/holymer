@@ -1,5 +1,6 @@
 # bobbylisp
 another lisp dialect
+> Also available on https://git.ablecorp.us/azur/bobbylisp
 
 ```lisp
 ; example/s.blsp
@@ -13,10 +14,10 @@ another lisp dialect
 
 Compliation flow:
 ```
-Input(file) -> Parser -> Compile(Bytecode) -> Interpret
-  String       SExprs        Bytecode            IO
-                                          |->  Compile
-                                              Assembly(?)
+Input(file) -> Parser -> Compile(Bytecode) -> Interpret(blvm)
+  String       SExprs        Bytecode               IO
+                                          |->     Compile
+                                                Assembly(?)
 ```
 
 ## Installation
@@ -24,12 +25,19 @@ Input(file) -> Parser -> Compile(Bytecode) -> Interpret
 $ make
 ```
 or
-```bsah
+```bash
 $ make debug
 ```
 The binary will be installed in `~/bin/blspc` run it with:
-```
+```bash
 $ blspc -h
+```
+
+### Example
+```bash
+$ blspc ./example/hello.blsp
+$ blvm hello.bbb
+Hello, World!
 ```
 
 ## Progress:
