@@ -1,1 +1,3 @@
-(if true (print "True") (print "False"))
+(if true
+    (print (+ 34 35))
+    (print "False"))

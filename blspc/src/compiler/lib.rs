@@ -33,31 +33,36 @@ impl Display for Register {
 #[derive(Clone, Debug)]
 pub enum Instr {
     // Load a literal value onto the stack.
-    Load { address: Register },
+    Load { address: Register, label: usize },
     // Store a literal value into a register.
-    Store { address: Register, value: Type },
+    Store { address: Register, value: Type, label: usize },
     // Call intrinsic function.
-    Call { address: Register, args: Register },
+    Call { address: Register, args: Register, label: usize },
     // Immediate arithmetic.
-    IAdd { lhs: Register, rhs: Register, to: Register },
-    ISub { lhs: Register, rhs: Register, to: Register },
-    IMul { lhs: Register, rhs: Register, to: Register },
-    IDiv { lhs: Register, rhs: Register, to: Register },
+    IAdd { lhs: Register, rhs: Register, to: Register, label: usize },
+    ISub { lhs: Register, rhs: Register, to: Register, label: usize },
+    IMul { lhs: Register, rhs: Register, to: Register, label: usize },
+    IDiv { lhs: Register, rhs: Register, to: Register, label: usize },
     // Jumping
-    JumpIfFalse { cond: Register, to: Register },
+    Jump { to: usize, label: usize },
+    JumpIfFalse { cond: Register, to: usize, label: usize },
+
+    Return { value: Register, label: usize },
 }
 
 impl Display for Instr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Instr::Load { address } => write!(f, "LOAD {}", address),
-            Instr::Store { address, value } => write!(f, "STORE {} {}", address, value),
-            Instr::Call { address, args } => write!(f, "CALL {} {}", address, args),
-            Instr::IAdd { lhs, rhs, to } => write!(f, "IADD {} {} {}", lhs, rhs, to),
-            Instr::ISub { lhs, rhs, to } => write!(f, "ISUB {} {} {}", lhs, rhs, to),
-            Instr::IMul { lhs, rhs, to } => write!(f, "IMUL {} {} {}", lhs, rhs, to),
-            Instr::IDiv { lhs, rhs, to } => write!(f, "IDIV {} {} {}", lhs, rhs, to),
-            Instr::JumpIfFalse { cond, to } => write!(f, "JUMP_IF_FALSE {} {}", cond, to),
+            Instr::Load { address, label }         => write!(f, "{}: LOAD {}", label, address),
+            Instr::Store { address, value , label} => write!(f, "{}: STORE {} {}", label, address, value),
+            Instr::Call { address, args, label }   => write!(f, "{}: CALL {} {}", label, address, args),
+            Instr::IAdd { lhs, rhs, to, label }    => write!(f, "{}: IADD {} {} {}", label, lhs, rhs, to),
+            Instr::ISub { lhs, rhs, to, label }    => write!(f, "{}: ISUB {} {} {}", label, lhs, rhs, to),
+            Instr::IMul { lhs, rhs, to, label }    => write!(f, "{}: IMUL {} {} {}", label, lhs, rhs, to),
+            Instr::IDiv { lhs, rhs, to, label }    => write!(f, "{}: IDIV {} {} {}", label, lhs, rhs, to),
+            Instr::Jump { to, label }              => write!(f, "{}: JUMP {}", label, to),
+            Instr::JumpIfFalse { cond, to, label } => write!(f, "{}: JUMP_IF_FALSE {} {}", label, cond, to),
+            Instr::Return { value, label }         => write!(f, "{}: RETURN {}", label, value),
         }
     }
 }

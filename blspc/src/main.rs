@@ -29,7 +29,7 @@ fn main() {
             let mut file = File::create(format!("{}.bbb", file_name)).unwrap();
 
             let mut compiler = Compiler::new();
-            for instr in compiler.compile(result.unwrap()).unwrap() {
+            for instr in compiler.compile(result.unwrap(), 0).unwrap() {
                 write!(file, "{}\n", instr).unwrap();
             }
         },
