@@ -5,7 +5,7 @@ path=$(pwd)
 tput smcup # Switch to alternate screen so we preserve the terminal history
 tput civis
 
-trap clean_up INT
+trap clean_up_fail INT
 
 clean_up() {
     tput rmcup
@@ -86,8 +86,8 @@ run_menu() {
 # --- Installation ---
 
 check_installed() {
-    if ! [ -x "$(command -v $1)" ] then
-        clean_up_fail "Please check that you have $1 installed!"
+    if ! [ -x "$(command -v $1)" ]
+    then clean_up_fail "Please check that you have $1 installed!"
     fi
 }
 
