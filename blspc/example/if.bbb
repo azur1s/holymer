@@ -1,13 +1,19 @@
-1: STORE r1 $true
-2: JUMP_IF_FALSE r1 9
-3: STORE r2 $34
-4: STORE r3 $35
-5: IADD r2 r3 r4
-6: STORE r5 $1
-7: CALL r5 r4
-8: JUMP 12
-9: STORE r6 $"False"
-10: STORE r7 $1
-11: CALL r7 r6
-12: STORE r8 $0
-13: RETURN r8
+; ------------------------------
+; (if true (print (+ 34 35)) (print "False"))
+; ------- Condition block ------
+1: STORE r1 $true              ; r1 = True
+2: JUMP_IF_FALSE r1 9          ; if
+; --------- True block ---------
+3: STORE r2 $34                ; r2 = 34
+4: STORE r3 $35                ; r3 = 35
+5: IADD r2 r3 r4               ; r2 + r3 -> r4
+6: STORE r5 $1                 ; r5 = 1 (function calling)
+7: CALL r5 r4                  ; call 1 (print) 34 (r4)
+8: JUMP 12                     
+; -------- False block ---------
+9: STORE r6 $"False"           ; r6 = "False"
+10: STORE r7 $1                ; r7 = 1 (function calling)
+11: CALL r7 r6                 ; call 1 (print) "False" (r6)
+12: STORE r8 $0                ; r8 = 0 (return value)
+13: RETURN r8                  ; return 0 (exit code)
+; ------------ End -------------
