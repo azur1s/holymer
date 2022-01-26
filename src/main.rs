@@ -11,8 +11,8 @@ use util::cover_paren;
 mod parser;
 use parser::{tokenize, Parser};
 
-mod compile;
-use compile::Compiler;
+mod compiler;
+use compiler::compile::Compiler;
 
 fn main() {
     let args = Args::from_args();
