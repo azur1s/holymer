@@ -4,11 +4,7 @@ another lisp dialect
 
 ## Installation
 ```bash
-$ make
-```
-or
-```bash
-$ make debug
+$ bash <(curl -s https://raw.githubusercontent.com/azur1s/bobbylisp/master/install.sh)
 ```
 The binary will be installed in `~/bin/blspc` run it with:
 ```bash
