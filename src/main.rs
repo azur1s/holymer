@@ -26,12 +26,11 @@ fn main() {
 
     match args.verbose {
         0 => {
-            let mut compiler = Compiler::new();
-            let instrs = compiler.compile_sexpr(result.unwrap());
-            
             let mut file = File::create(format!("{}.bbb", file_name)).unwrap();
-            for instr in instrs {
-                file.write_all(format!("{}\n", instr).as_bytes()).unwrap();
+
+            let mut compiler = Compiler::new();
+            for instr in compiler.compile(result.unwrap()).unwrap() {
+                write!(file, "{}\n", instr).unwrap();
             }
         },
         1 => println!("{:?}", result),

@@ -2,150 +2,170 @@ use std::fmt::Display;
 
 use crate::parser::Sexpr::{self, *};
 
-#[derive(Clone, Debug, Copy)]
-pub struct Register { value: i64 }
-
-impl Display for Register {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-/// Literal types for the bytecode.
+/// Literal types for the assembler.
 #[derive(Clone, Debug)]
 pub enum Type {
     Int(i64),
     Float(f64),
-    Bool(bool),
+    Boolean(bool),
     String(String),
 }
 
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Type::Int(i) => write!(f, "{}", i),
-            Type::Float(fl) => write!(f, "{}", fl),
-            Type::Bool(b) => write!(f, "{}", b),
-            Type::String(s) => write!(f, "{}", s),
+            Type::Int(i)     => write!(f, "${}", i),
+            Type::Float(fl)  => write!(f, "${}", fl),
+            Type::Boolean(b) => write!(f, "${}", b),
+            Type::String(s)  => write!(f, "$\"{}\"", s),
         }
     }
 }
 
-/// Instructions for the bytecode.
+#[derive(Clone, Copy, Debug)]
+pub struct Register { pub value: usize }
+
+impl Display for Register {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "r{}", self.value)
+    }
+}
+
+/// Instructions for the assembler.
 #[derive(Clone, Debug)]
 pub enum Instr {
-    /// Call(Function Index, Arguments)
-    Call(usize, [Register; 6]),
-
-    /// Stack manipulators
-    Push(usize, Type), Pop(usize, Register),
-
-    JumpIfFalse(usize, Register, usize),
+    // Load a literal value onto the stack;
+    Load { address: Register },
+    // Store a literal value into a register.
+    Store { address: Register, value: Type, },
+    // Call intrinsic function.
+    Call { address: Register, args: Register },
+    // Stack arithmetic.
+    Add, Sub, Mul, Div,
+    // Immediate arithmetic.
+    IAdd { lhs: Register, rhs: Register, to: Register, },
+    ISub { lhs: Register, rhs: Register, to: Register, },
+    IMul { lhs: Register, rhs: Register, to: Register, },
+    IDiv { lhs: Register, rhs: Register, to: Register, },
 }
 
 impl Display for Instr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Instr::Call(idx, args)         => write!(f, "{} call {} {} {} {} {} {}", idx, args[0], args[1], args[2], args[3], args[4], args[5]),
-            Instr::Push(idx, t)            => write!(f, "{} push {}", idx, t),
-            Instr::Pop(idx, r)             => write!(f, "{} pop {}", idx, r),
-            Instr::JumpIfFalse(idx, r, to) => write!(f, "{} jmpf {} {}", idx, r, to),
+            Instr::Load { address } => write!(f, "load {}", address),
+            Instr::Store { address, value } => write!(f, "store {} {}", address, value),
+            Instr::Call { address, args } => write!(f, "call {} {}", address, args),
+            Instr::Add => write!(f, "add"),
+            Instr::Sub => write!(f, "sub"),
+            Instr::Mul => write!(f, "mul"),
+            Instr::Div => write!(f, "div"),
+            Instr::IAdd { lhs, rhs, to } => write!(f, "iadd {} {} {}", lhs, rhs, to),
+            Instr::ISub { lhs, rhs, to } => write!(f, "isub {} {} {}", lhs, rhs, to),
+            Instr::IMul { lhs, rhs, to } => write!(f, "imul {} {} {}", lhs, rhs, to),
+            Instr::IDiv { lhs, rhs, to } => write!(f, "idiv {} {} {}", lhs, rhs, to),
         }
     }
 }
 
 pub struct Compiler {
-    /// The bytecode.
-    pub bytecode: Vec<Instr>,
-    /// The stack.
-    pub stack: Vec<Type>,
-    /// The current register index.
-    pub register: Register,
-    /// The current label index.
-    pub label: usize,
+    pub instructions: Vec<Instr>,
+    pub register_pointer: usize,
 }
 
 impl Compiler {
     pub fn new() -> Compiler {
         Compiler {
-            bytecode: Vec::new(),
-            stack: Vec::new(),
-            register: Register { value: 1 },
-            label: 0,
+            instructions: Vec::new(),
+            register_pointer: 1,
         }
     }
-
+    
     fn next_register(&mut self) -> Register {
-        let r = self.register;
-        self.register.value += 1;
+        let r = Register { value: self.register_pointer };
+        self.register_pointer += 1;
         r
     }
 
-    fn next_label(&mut self) -> usize {
-        let l = self.label;
-        self.label += 1;
-        l
+    fn current_pointer(&self) -> Register {
+        Register { value: self.register_pointer - 1 }
     }
-
-    pub fn compile_sexpr(&mut self, ast: Sexpr) -> Vec<Instr> {
-        let mut result: Vec<Instr> = Vec::new();
     
+    pub fn compile(&mut self, ast: Sexpr) -> Result<Vec<Instr>, String> {
+        let mut result = Vec::new();
+        
         match ast {
             Cons(car, cdr) => {
                 match *car {
-                    Symbol(f) => {
-                        match f.as_str() {
+                    Symbol(ref s) => {
+                        match s.as_str() {
                             "do" => {
                                 for c in cdr {
-                                    result.append(&mut self.compile_sexpr(c));
+                                    result.append(&mut self.compile(c)?);
                                 }
-                            },
+                            }
                             "print" => {
-                                let function_register = self.next_register();
-                                result.push(Instr::Push(self.next_label(), Type::Int(1)));
-                                result.push(Instr::Pop(self.next_label(), function_register));
-
-                                let arg = &cdr[0];
-                                let instrs = &mut self.compile_ast(arg);
-                                result.append(&mut instrs.clone());
-
-                                let arg_register = match instrs.last().unwrap() {
-                                    Instr::Pop(_, r) => *r,
-                                    _ => panic!("Expected mov instruction in `print`"),
-                                };
-
-                                result.push(
-                                    Instr::Call(self.next_label(), [
-                                        function_register,
-                                        arg_register,
-                                        Register { value: 0 },
-                                        Register { value: 0 },
-                                        Register { value: 0 },
-                                        Register { value: 0 }
-                                        ])
-                                );
+                                let mut arg = self.compile_atom(&cdr[0])?;
+                                result.append(&mut arg);
+                                let arg_pointer = self.current_pointer();
+                                
+                                let call_register = self.next_register();
+                                result.push(Instr::Store {
+                                    address: call_register,
+                                    value: Type::Int(1),
+                                });
+                                
+                                result.push(Instr::Call {
+                                    address: call_register,
+                                    args: arg_pointer,
+                                });
                             },
-                            _ => todo!(),
+                            _ => return Err(format!("Unknown symbol: {}", s)),
                         }
-                    },
-                    _ => todo!(),
+                    }
+                    _ => return Err(format!("Expected symbol, got {:?}", car)),
                 }
-            },
-            _ => todo!()
+            }
+            _ => { dbg!(ast); unimplemented!() }
         }
-
-        result
+        
+        Ok(result)
     }
-
-    fn compile_ast(&mut self, ast: &Sexpr) -> Vec<Instr> {
+    
+    fn compile_atom(&mut self, atom: &Sexpr) -> Result<Vec<Instr>, String> {
         let mut result = Vec::new();
-        match ast {
+        
+        match atom {
+            Int(i) => {
+                let r = self.next_register();
+                result.push(Instr::Store {
+                    address: r,
+                    value: Type::Int(*i),
+                });
+            }
+            Float(f) => {
+                let r = self.next_register();
+                result.push(Instr::Store {
+                    address: r,
+                    value: Type::Float(*f),
+                });
+            }
+            Boolean(b) => {
+                let r = self.next_register();
+                result.push(Instr::Store {
+                    address: r,
+                    value: Type::Boolean(*b),
+                });
+            }
             Str(s) => {
-                result.push(Instr::Push(self.next_label(), Type::String(format!("\"{}\"", s))));
-                result.push(Instr::Pop(self.next_label(), self.next_register()));
-            },
-            _ => todo!()
+                let r = self.next_register();
+                result.push(Instr::Store {
+                    address: r,
+                    value: Type::String(s.to_string()),
+                });
+            }
+            _ => return Err(format!("Expected atom, got {:?}", atom)),
         }
-        result
+        
+        Ok(result)
     }
 }
