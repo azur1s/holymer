@@ -1,7 +1,0 @@
-STORE r1 $345
-STORE r2 $345
-IADD r1 r2 r3
-STORE r4 $10
-IDIV r3 r4 r5
-STORE r6 $1
-CALL r6 r5
