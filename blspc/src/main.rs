@@ -1,4 +1,4 @@
-use std::{fs::{read_to_string, File}, path::Path, io::Write};
+use std::{fs::{read_to_string, File}, path::Path, io::Write, time::Instant};
 
 use structopt::StructOpt;
 
@@ -15,6 +15,7 @@ mod compiler;
 use compiler::compile::Compiler;
 
 fn main() {
+    let start = Instant::now();
     let args = Args::from_args();
     
     let src = cover_paren(read_to_string(&args.file).unwrap());
@@ -29,14 +30,45 @@ fn main() {
             let mut file = File::create(format!("{}.bbb", file_name)).unwrap();
 
             let mut compiler = Compiler::new();
+            let before = Instant::now();
             for instr in compiler.compile(result.unwrap(), 0).unwrap() {
                 write!(file, "{}\n", instr).unwrap();
             }
+            let spent = before.elapsed();
+            let total = start.elapsed();
+
+            println!("Compiled in {}.{}s, Total of {}.{}s", spent.as_secs(), spent.subsec_millis(), total.as_secs(), total.subsec_millis());
         },
-        1 => println!("{:?}", result),
+        1 => {
+            println!("Parsed AST: {:#?}", result);
+
+            let mut file = File::create(format!("{}.bbb", file_name)).unwrap();
+
+            let mut compiler = Compiler::new();
+            let before = Instant::now();
+            for instr in compiler.compile(result.unwrap(), 0).unwrap() {
+                write!(file, "{}\n", instr).unwrap();
+            }
+            let spent = before.elapsed();
+            let total = start.elapsed();
+
+            println!("Compiled in {}.{}s, Total of {}.{}s", spent.as_secs(), spent.subsec_millis(), total.as_secs(), total.subsec_millis());
+        },
         2 | _ => {
             println!("Tokens: {:?}", tokens);
-            println!("Parsed: {:#?}", result);
+            println!("Parsed AST: {:#?}", result);
+
+            let mut file = File::create(format!("{}.bbb", file_name)).unwrap();
+
+            let mut compiler = Compiler::new();
+            let before = Instant::now();
+            for instr in compiler.compile(result.unwrap(), 0).unwrap() {
+                write!(file, "{}\n", instr).unwrap();
+            }
+            let spent = before.elapsed();
+            let total = start.elapsed();
+
+            println!("Compiled in {}.{}s, Total of {}.{}s", spent.as_secs(), spent.subsec_millis(), total.as_secs(), total.subsec_millis());
         }
     }
 }

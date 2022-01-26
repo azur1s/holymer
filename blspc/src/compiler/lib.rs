@@ -33,7 +33,7 @@ impl Display for Register {
 #[derive(Clone, Debug)]
 pub enum Instr {
     // Load a literal value onto the stack.
-    Load { address: Register, label: usize },
+    // Load { address: Register, label: usize },
     // Store a literal value into a register.
     Store { address: Register, value: Type, label: usize },
     // Call intrinsic function.
@@ -53,7 +53,7 @@ pub enum Instr {
 impl Display for Instr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Instr::Load { address, label }         => write!(f, "{}: LOAD {}", label, address),
+            // Instr::Load { address, label }         => write!(f, "{}: LOAD {}", label, address),
             Instr::Store { address, value , label} => write!(f, "{}: STORE {} {}", label, address, value),
             Instr::Call { address, args, label }   => write!(f, "{}: CALL {} {}", label, address, args),
             Instr::IAdd { lhs, rhs, to, label }    => write!(f, "{}: IADD {} {} {}", label, lhs, rhs, to),
