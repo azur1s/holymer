@@ -1,6 +1,6 @@
-use crate::compiler::instr::*;
+use crate::vm::instr::*;
 
-pub fn parse(src: &str) -> Vec<Instr> {
+pub fn parse_instr(src: &str) -> Vec<Instr> {
     let mut result = Vec::new();
 
     for line in src.lines() {
@@ -17,7 +17,7 @@ pub fn parse(src: &str) -> Vec<Instr> {
         while let Some(part) = parts.next() { match in_quote {
                 true => {
                     if part.ends_with("\"") {
-                        str.push_str(&format!(" {}", part));
+                        str.push_str(&format!(" {}", part.trim_end_matches("\"")));
                         args.push(str);
                         str = String::new();
                         in_quote = false;
@@ -25,7 +25,7 @@ pub fn parse(src: &str) -> Vec<Instr> {
                 },
                 false => {
                     if part.starts_with("$\"") {
-                        str.push_str(&part);
+                        str.push_str(&part.trim_start_matches("$\""));
                         in_quote = true;
                     } else { args.push(part.to_string()); }
                 }

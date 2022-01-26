@@ -1,4 +1,4 @@
-use crate::{compiler::instr::*, parser::Sexpr::{self, *}};
+use crate::{vm::instr::*, compiler::parser::Sexpr::{self, *}};
 pub struct Compiler {
     pub instructions: Vec<Instr>,
     pub register_pointer: usize,
