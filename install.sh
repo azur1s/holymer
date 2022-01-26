@@ -14,6 +14,13 @@ clean_up() {
     exit 0
 }
 
+clean_up_fail() {
+    tput rmcup
+    tput cnorm
+    echo "${1:-Installation failed! :(}"
+    exit 1
+}
+
 # --- Displaying ---
 
 print_menu() {
@@ -78,6 +85,12 @@ run_menu() {
 
 # --- Installation ---
 
+check_installed() {
+    if ! [ -x "$(command -v $1)" ] then
+        clean_up_fail "Please check that you have $1 installed!"
+    fi
+}
+
 install() {
     local selected_install_item=0
     local install_opts=("Download" "Compile" "Compile(Debug)" "Exit")
@@ -87,6 +100,9 @@ install() {
     case "$install_chosen" in
         0) echo "There is no release yet, please hold tight!";;
         1)
+            echo "Testing dependencies..."
+            check_installed git
+            check_installed cargo
             echo "Setting up folders..."
             mkdir -p ~/.cache/
             rm -rf ~/.cache/bobbylisp/
@@ -99,6 +115,9 @@ install() {
             mv ~/.cache/bobbylisp/target/release/blspc ~/bin/blspc
             clean_up "Done! Thanks a lot for trying out Bobbylisp!";;
         2)
+            echo "Testing dependencies..."
+            check_installed git
+            check_installed cargo
             echo "Setting up folders..."
             mkdir -p ~/.cache/
             rm -rf ~/.cache/bobbylisp/
