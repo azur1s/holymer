@@ -1,6 +1,4 @@
 [workspace]
 members = [
     "blspc",
-    "blvm",
-    "middle",
 ]

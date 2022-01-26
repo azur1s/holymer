@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
 /// Literal types for the assembler.
 #[derive(Clone, Debug)]
@@ -20,12 +20,50 @@ impl Display for Type {
     }
 }
 
+impl FromStr for Type {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if !s.starts_with("$") {
+            return Err(format!("Invalid literal: {}", s));
+        }
+
+        let s = &s[1..];
+        match s {
+            "true"  => Ok(Type::Boolean(true)),
+            "false" => Ok(Type::Boolean(false)),
+            _ => {
+                let fl = s.parse::<f64>();
+                if fl.is_ok() {
+                    Ok(Type::Float(fl.unwrap()))
+                } else {
+                    let i = s.parse::<i64>();
+                    if i.is_ok() {
+                        Ok(Type::Int(i.unwrap()))
+                    } else {
+                        Ok(Type::String(s.to_string()))
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Register { pub value: usize }
 
 impl Display for Register {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "r{}", self.value)
+    }
+}
+
+impl FromStr for Register {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let value = s[1..].parse::<usize>().map_err(|_| ())?;
+        Ok(Register { value })
     }
 }
 
