@@ -21,7 +21,11 @@ Hello, World!
 ```
 
 ## <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="25"> Progress:
+DONE:
+- Parsing, Compiling, Running(VM)
+- Intrinsic: `fun`, `do`, `print`
 TODO:
+- Do the intrinsic left
 - Quote, Quasiquote, etc.
 - Optimizing
 - Remove unnecessary copying in the entire codebase
