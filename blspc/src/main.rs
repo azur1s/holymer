@@ -1,4 +1,4 @@
-use std::{fs::{read_to_string, File}, path::{Path, PathBuf}, io::{Write, Seek}, time::Instant};
+use std::{fs::{read_to_string, File}, path::{Path, PathBuf}, io::{Write, Seek}, time::Instant, process::exit};
 
 use structopt::StructOpt;
 
@@ -12,7 +12,7 @@ mod compiler;
 use compiler::{compile::Compiler, parser::{tokenize, Parser}};
 
 mod vm;
-use vm::parser::parse_instr;
+use vm::{vm::VM, parser::parse_instr};
 
 fn main() {
     let start = Instant::now();
@@ -31,7 +31,7 @@ fn main() {
         // Run
         (false, true) => {
             let src = read_to_string(&args.file).unwrap();
-            run_src(src, start);
+            run_src(src);
         },
         (false, false) => {
             if args.file.extension() == Some("blsp".as_ref()) {
@@ -39,7 +39,7 @@ fn main() {
                 compile_src(src, args.output, args.file, start);
             } else if args.file.extension() == Some("bsm".as_ref()) {
                 let src = read_to_string(&args.file).unwrap();
-                run_src(src, start);
+                run_src(src);
             } else {
                 panic!("No mode specified");
             }
@@ -84,11 +84,16 @@ fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, start: Instant
     }
 }
 
-fn run_src(src: String, start: Instant) {
+fn run_src(src: String) {
     let instrs = parse_instr(&src);
-    for i in instrs {
-        println!("{}", i);
+    let mut vm = VM::new();
+    match vm.run(instrs) {
+        Ok(()) => {
+            exit(0);
+        },
+        Err(e) => {
+            eprintln!("{}", e);
+            exit(1);
+        }
     }
-    let elapsed = start.elapsed();
-    println!("Executed in {}.{}s", elapsed.as_secs(), elapsed.subsec_millis());
 }

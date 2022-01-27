@@ -1,4 +1,6 @@
-use std::{fmt::Display, str::FromStr};
+use std::{fmt::Display, str::FromStr, ops::{Add, Sub, Mul, Div}};
+
+use crate::vm::vm::Error::{self, InvalidAriphmeticOperation};
 
 /// Literal types for the assembler.
 #[derive(Clone, Debug)]
@@ -7,6 +9,92 @@ pub enum Type {
     Float(f64),
     Boolean(bool),
     String(String),
+}
+
+impl Type {
+    pub fn as_bool(&self) -> bool {
+        match self {
+            Type::Boolean(b) => *b,
+            Type::Int(i) => *i != 0,
+            Type::Float(f) => *f != 0.0,
+            Type::String(s) => !s.is_empty(),
+        }
+    }
+
+    pub fn trim(&self) -> Type {
+        match self {
+            Type::Int(i) => Type::Int(*i),
+            Type::Float(f) => Type::Float(*f),
+            Type::Boolean(b) => Type::Boolean(*b),
+            Type::String(s) => Type::String(s[1..s.len() - 1].to_string()),
+        }
+    }
+
+    pub fn fmt(&self) -> String {
+        match self {
+            Type::Int(i) => i.to_string(),
+            Type::Float(f) => f.to_string(),
+            Type::Boolean(b) => b.to_string(),
+            Type::String(s) => s.clone(),
+        }
+    }
+}
+
+impl Add for Type {
+    type Output = Result<Type, Error>;
+
+    fn add(self, other: Type) -> Result<Type, Error> {
+        match (self, other) {
+            (Type::Int(lhs), Type::Int(rhs)) => Ok(Type::Int(lhs + rhs)),
+            (Type::Int(lhs), Type::Float(rhs)) => Ok(Type::Float(lhs as f64 + rhs)),
+            (Type::Float(lhs), Type::Int(rhs)) => Ok(Type::Float(lhs + rhs as f64)),
+            (Type::Float(lhs), Type::Float(rhs)) => Ok(Type::Float(lhs + rhs)),
+            (Type::String(lhs), Type::String(rhs)) => Ok(Type::String(format!("{}{}", lhs, rhs))),
+            _ => Err(InvalidAriphmeticOperation),
+        }
+    }
+}
+
+impl Sub for Type {
+    type Output = Result<Type, Error>;
+
+    fn sub(self, other: Type) -> Result<Type, Error> {
+        match (self, other) {
+            (Type::Int(lhs), Type::Int(rhs)) => Ok(Type::Int(lhs - rhs)),
+            (Type::Int(lhs), Type::Float(rhs)) => Ok(Type::Float(lhs as f64 - rhs)),
+            (Type::Float(lhs), Type::Int(rhs)) => Ok(Type::Float(lhs - rhs as f64)),
+            (Type::Float(lhs), Type::Float(rhs)) => Ok(Type::Float(lhs - rhs)),
+            _ => Err(InvalidAriphmeticOperation),
+        }
+    }
+}
+
+impl Mul for Type {
+    type Output = Result<Type, Error>;
+
+    fn mul(self, other: Type) -> Result<Type, Error> {
+        match (self, other) {
+            (Type::Int(lhs), Type::Int(rhs)) => Ok(Type::Int(lhs * rhs)),
+            (Type::Int(lhs), Type::Float(rhs)) => Ok(Type::Float(lhs as f64 * rhs)),
+            (Type::Float(lhs), Type::Int(rhs)) => Ok(Type::Float(lhs * rhs as f64)),
+            (Type::Float(lhs), Type::Float(rhs)) => Ok(Type::Float(lhs * rhs)),
+            _ => Err(InvalidAriphmeticOperation),
+        }
+    }
+}
+
+impl Div for Type {
+    type Output = Result<Type, Error>;
+
+    fn div(self, other: Type) -> Result<Type, Error> {
+        match (self, other) {
+            (Type::Int(lhs), Type::Int(rhs)) => Ok(Type::Int(lhs / rhs)),
+            (Type::Int(lhs), Type::Float(rhs)) => Ok(Type::Float(lhs as f64 / rhs)),
+            (Type::Float(lhs), Type::Int(rhs)) => Ok(Type::Float(lhs / rhs as f64)),
+            (Type::Float(lhs), Type::Float(rhs)) => Ok(Type::Float(lhs / rhs)),
+            _ => Err(InvalidAriphmeticOperation),
+        }
+    }
 }
 
 impl Display for Type {
@@ -33,13 +121,13 @@ impl FromStr for Type {
             "true"  => Ok(Type::Boolean(true)),
             "false" => Ok(Type::Boolean(false)),
             _ => {
-                let fl = s.parse::<f64>();
-                if fl.is_ok() {
-                    Ok(Type::Float(fl.unwrap()))
+                let i = s.parse::<i64>();
+                if i.is_ok() {
+                    Ok(Type::Int(i.unwrap()))
                 } else {
-                    let i = s.parse::<i64>();
-                    if i.is_ok() {
-                        Ok(Type::Int(i.unwrap()))
+                    let fl = s.parse::<f64>();
+                    if fl.is_ok() {
+                        Ok(Type::Float(fl.unwrap()))
                     } else {
                         Ok(Type::String(s.to_string()))
                     }
@@ -51,6 +139,10 @@ impl FromStr for Type {
 
 #[derive(Clone, Copy, Debug)]
 pub struct Register { pub value: usize }
+
+impl Register {
+    pub fn value(&self) -> usize { self.value }
+}
 
 impl Display for Register {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
