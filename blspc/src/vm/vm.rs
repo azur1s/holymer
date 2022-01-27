@@ -39,14 +39,10 @@ impl VM {
     pub fn run(&mut self, instrs: Vec<Instr>, debug: bool) -> VMReturn {
         'tco: loop {
             self.instr_pointer += 1;
-            if self.instr_pointer - 1 == instrs.len() as isize {
-                return Ok(());
-            }
+            if self.instr_pointer - 1 == instrs.len() as isize { return Ok(()); }
             
             let instr = &instrs[self.instr_pointer as usize - 1];
-            if debug {
-                println!("ptr: {} | stack: {:?} | curr: {}", self.instr_pointer - 1, &self.stack, &instr);
-            }
+            if debug { println!("ptr: {} | stack: {:?} | curr: {}", self.instr_pointer - 1, &self.stack, &instr); }
             match instr {
                 Store { address, value, .. } => {
                     self.store(&address, &value)?;
@@ -97,14 +93,10 @@ impl VM {
                 },
                 PopJumpIfFalse { to, .. } => {
                     let value = self.stack.pop().unwrap();
-                    if !value.as_bool() {
-                        self.instr_pointer = *to as isize - 1;
-                    }
+                    if !value.as_bool() { self.instr_pointer = *to as isize - 1; }
                     continue 'tco;
                 },
-                Return { .. } => {
-                    return Ok(());
-                },
+                Return { .. } => return Ok(()),
             };
         }
     }
