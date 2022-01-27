@@ -111,34 +111,26 @@ impl Compiler {
         
         match atom {
             Int(i) => {
-                let r = self.next_register();
-                result.push(Instr::Store {
-                    address: r,
+                result.push(Instr::Push {
                     value: Type::Int(*i),
                     label: self.next_label(),
                 });
             }
             Float(f) => {
-                let r = self.next_register();
-                result.push(Instr::Store {
-                    address: r,
+                result.push(Instr::Push {
                     value: Type::Float(*f),
                     label: self.next_label(),
                 });
             }
             Boolean(b) => {
-                let r = self.next_register();
-                result.push(Instr::Store {
-                    address: r,
+                result.push(Instr::Push {
                     value: Type::Boolean(*b),
                     label: self.next_label(),
                 });
             }
             Str(s) => {
-                let r = self.next_register();
-                result.push(Instr::Store {
-                    address: r,
-                    value: Type::String(s.to_string()),
+                result.push(Instr::Push {
+                    value: Type::String(s.clone()),
                     label: self.next_label(),
                 });
             }
@@ -158,6 +150,10 @@ impl Compiler {
                 let mut arg = self.compile_atom(&args[0], depth + 1)?;
                 result.append(&mut arg);
                 let arg_pointer = self.current_register();
+                result.push(Instr::Pop {
+                    address: arg_pointer,
+                    label: self.next_label(),
+                });
                 
                 let call_register = self.next_register();
                 result.push(Instr::Store {
@@ -174,71 +170,39 @@ impl Compiler {
             },
             "add" | "+" => {
                 let mut lhs = self.compile_atom(&args[0], depth + 1)?;
-                let lhs_pointer = self.current_register();
                 result.append(&mut lhs);
 
                 let mut rhs = self.compile_atom(&args[1], depth + 1)?;
-                let rhs_pointer = self.current_register();
                 result.append(&mut rhs);
 
-                let result_register = self.next_register();
-                result.push(Instr::IAdd {
-                    lhs: lhs_pointer,
-                    rhs: rhs_pointer,
-                    to: result_register,
-                    label: self.next_label(),
-                });
+                result.push(Instr::Add { label: self.next_label() });
             },
             "sub" | "-" => {
                 let mut lhs = self.compile_atom(&args[0], depth + 1)?;
-                let lhs_pointer = self.current_register();
                 result.append(&mut lhs);
 
                 let mut rhs = self.compile_atom(&args[1], depth + 1)?;
-                let rhs_pointer = self.current_register();
                 result.append(&mut rhs);
 
-                let result_register = self.next_register();
-                result.push(Instr::ISub {
-                    lhs: lhs_pointer,
-                    rhs: rhs_pointer,
-                    to: result_register,
-                    label: self.next_label(),
-                });
+                result.push(Instr::Sub { label: self.next_label() });
             },
             "mul" | "*" => {
                 let mut lhs = self.compile_atom(&args[0], depth + 1)?;
-                let lhs_pointer = self.current_register();
                 result.append(&mut lhs);
 
                 let mut rhs = self.compile_atom(&args[1], depth + 1)?;
-                let rhs_pointer = self.current_register();
                 result.append(&mut rhs);
 
-                let result_register = self.next_register();
-                result.push(Instr::IMul {
-                    lhs: lhs_pointer,
-                    rhs: rhs_pointer,
-                    to: result_register,
-                    label: self.next_label(),
-                });
+                result.push(Instr::Mul { label: self.next_label() });
             },
             "div" | "/" => {
                 let mut lhs = self.compile_atom(&args[0], depth + 1)?;
-                let lhs_pointer = self.current_register();
                 result.append(&mut lhs);
 
                 let mut rhs = self.compile_atom(&args[1], depth + 1)?;
-                let rhs_pointer = self.current_register();
                 result.append(&mut rhs);
 
-                let result_register = self.next_register();
-                result.push(Instr::IDiv {
-                    lhs: lhs_pointer,
-                    rhs: rhs_pointer,
-                    to: result_register,
-                    label: self.next_label(),
-                });
+                result.push(Instr::Div { label: self.next_label() });
             },
             _ => return Err(format!("Unknown intrinsic: {}", intrinsic)),
         }

@@ -76,6 +76,11 @@ pub enum Instr {
     Store { address: Register, value: Type, label: usize },
     // Call intrinsic function.
     Call { address: Register, args: Register, label: usize },
+    // Stack operations.
+    Push { value: Type, label: usize }, Pop { address: Register, label: usize },
+    // Stack arithmetic.
+    Add { label: usize }, Sub { label: usize },
+    Mul { label: usize }, Div { label: usize },
     // Immediate arithmetic.
     IAdd { lhs: Register, rhs: Register, to: Register, label: usize },
     ISub { lhs: Register, rhs: Register, to: Register, label: usize },
@@ -94,6 +99,12 @@ impl Display for Instr {
             // Instr::Load { address, label }         => write!(f, "{}: LOAD {}", label, address),
             Instr::Store { address, value , label} => write!(f, "{}: STORE {} {}", label, address, value),
             Instr::Call { address, args, label }   => write!(f, "{}: CALL {} {}", label, address, args),
+            Instr::Push { value, label }           => write!(f, "{}: PUSH {}", label, value),
+            Instr::Pop { address, label }          => write!(f, "{}: POP {}", label, address),
+            Instr::Add { label }                   => write!(f, "{}: ADD", label),
+            Instr::Sub { label }                   => write!(f, "{}: SUB", label),
+            Instr::Mul { label }                   => write!(f, "{}: MUL", label),
+            Instr::Div { label }                   => write!(f, "{}: DIV", label),
             Instr::IAdd { lhs, rhs, to, label }    => write!(f, "{}: IADD {} {} {}", label, lhs, rhs, to),
             Instr::ISub { lhs, rhs, to, label }    => write!(f, "{}: ISUB {} {} {}", label, lhs, rhs, to),
             Instr::IMul { lhs, rhs, to, label }    => write!(f, "{}: IMUL {} {} {}", label, lhs, rhs, to),
