@@ -55,9 +55,9 @@ impl Type {
             Type::String(s) => s.clone(),
             Type::Array(a) => {
                 let mut s = "[".to_string();
-                for t in a {
+                for (i, t) in a.iter().enumerate() {
                     s.push_str(&t.fmt());
-                    s.push_str(", ");
+                    if i < a.len() - 1 { s.push_str(", "); }
                 }
                 s.push_str("]");
                 s
@@ -132,12 +132,12 @@ impl Display for Type {
             Type::Boolean(b) => write!(f, ":{}", b),
             Type::String(s)  => write!(f, "$\"{}\"", s),
             Type::Array(a)   => {
-                write!(f, "[[")?;
-                for t in a {
+                write!(f, "[[ ")?;
+                for (i, t) in a.iter().enumerate() {
                     write!(f, "{}", t)?;
-                    write!(f, ", ")?;
+                    if i < a.len() - 1 { write!(f, ", ")?; }
                 }
-                write!(f, "]]")
+                write!(f, " ]]")
             }
         }
     }

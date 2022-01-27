@@ -19,17 +19,17 @@ impl Compiler {
         self.register_pointer += 1;
         r
     }
-
+    
     fn current_register(&self) -> Register {
         Register { value: self.register_pointer - 1 }
     }
-
+    
     fn next_label(&mut self) -> usize {
         let l = self.label_pointer;
         self.label_pointer += 1;
         l
     }
-
+    
     fn current_label(&self) -> usize {
         self.label_pointer - 1
     }
@@ -56,7 +56,7 @@ impl Compiler {
                                 // TODO: Remove .clone()
                                 let mut cond = self.compile(cdr[0].clone(), depth + 1)?;
                                 result.append(&mut cond);
-
+                                
                                 result.push(Instr::PopJumpIfFalse {
                                     to: 999, // To be replaced later
                                     label: self.next_label(),
@@ -64,10 +64,10 @@ impl Compiler {
                                 
                                 let mut then = self.compile(cdr[1].clone(), depth + 1)?;
                                 let jump_label = self.next_label();
-
+                                
                                 let mut else_ = self.compile(cdr[2].clone(), depth + 1)?;
                                 let else_label = self.current_label() - else_.len() + 1;
-
+                                
                                 let idx = result.len() - 1;
                                 match result[idx] {
                                     Instr::PopJumpIfFalse { to: _, label: l } => {
@@ -75,7 +75,7 @@ impl Compiler {
                                     }
                                     _ => unreachable!(),
                                 }
-
+                                
                                 result.append(&mut then);
                                 result.push(Instr::Jump {
                                     to: self.current_label() + 1,
@@ -105,17 +105,6 @@ impl Compiler {
                 label: self.next_label(),
             });
         }
-        Ok(result)
-    }
-
-    fn compile_quoted(&mut self, atom: &Vec<Sexpr>) -> Result<Vec<Instr>, String> {
-        let mut result = Vec::new();
-
-        result.push(Instr::Push {
-            value: Type::String(format!("({})", atom.iter().map(|x| format!("{}", x)).collect::<Vec<String>>().join(" "))),
-            label: self.next_label(),
-        });
-
         Ok(result)
     }
     
@@ -154,7 +143,7 @@ impl Compiler {
         
         Ok(result)
     }
-
+    
     fn compile_intrinsic(&mut self, intrinsic: &String, args: &[Sexpr], depth: usize) -> Result<Vec<Instr>, String> {
         let mut result = Vec::new();
         
@@ -184,42 +173,78 @@ impl Compiler {
             "add" | "+" => {
                 let mut lhs = self.compile_atom(&args[0], depth + 1)?;
                 result.append(&mut lhs);
-
+                
                 let mut rhs = self.compile_atom(&args[1], depth + 1)?;
                 result.append(&mut rhs);
-
+                
                 result.push(Instr::Add { label: self.next_label() });
             },
             "sub" | "-" => {
                 let mut lhs = self.compile_atom(&args[0], depth + 1)?;
                 result.append(&mut lhs);
-
+                
                 let mut rhs = self.compile_atom(&args[1], depth + 1)?;
                 result.append(&mut rhs);
-
+                
                 result.push(Instr::Sub { label: self.next_label() });
             },
             "mul" | "*" => {
                 let mut lhs = self.compile_atom(&args[0], depth + 1)?;
                 result.append(&mut lhs);
-
+                
                 let mut rhs = self.compile_atom(&args[1], depth + 1)?;
                 result.append(&mut rhs);
-
+                
                 result.push(Instr::Mul { label: self.next_label() });
             },
             "div" | "/" => {
                 let mut lhs = self.compile_atom(&args[0], depth + 1)?;
                 result.append(&mut lhs);
-
+                
                 let mut rhs = self.compile_atom(&args[1], depth + 1)?;
                 result.append(&mut rhs);
-
+                
                 result.push(Instr::Div { label: self.next_label() });
             },
             _ => return Err(format!("Unknown intrinsic: {}", intrinsic)),
         }
         
         Ok(result)
+    }
+    
+    fn compile_quoted(&mut self, atom: &Vec<Sexpr>) -> Result<Vec<Instr>, String> {
+        let mut result = Vec::new();
+        
+        // Vec<Sexpr> -> Vec<Type>
+        let mut types = Vec::new();
+        for a in atom {
+            types.push(sexpr_to_type(a)?);
+        }
+        
+        result.push(Instr::Push {
+            value: Type::Array(types),
+            label: self.next_label(),
+        }); 
+        
+        Ok(result)
+    }
+}
+
+fn sexpr_to_type(sexpr: &Sexpr) -> Result<Type, String> {
+    match sexpr {
+        Int(i) => Ok(Type::Int(*i)),
+        Float(f) => Ok(Type::Float(*f)),
+        Str(s) => Ok(Type::String(s.clone())),
+        Boolean(b) => Ok(Type::Boolean(*b)),
+        Symbol(s) => Ok(Type::String(s.to_string())),
+        Cons(car, cdr) => {
+            let mut array = Vec::new();
+            array.push(sexpr_to_type(car)?);
+            for item in cdr {
+                array.push(sexpr_to_type(item)?);
+            }
+            Ok(Type::Array(array))
+        },
+        _ => unimplemented!(),
     }
 }
