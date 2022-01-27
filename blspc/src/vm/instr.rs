@@ -12,9 +12,9 @@ pub enum Type {
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Type::Int(i)     => write!(f, "${}", i),
-            Type::Float(fl)  => write!(f, "${}", fl),
-            Type::Boolean(b) => write!(f, "${}", b),
+            Type::Int(i)     => write!(f, ":{}", i),
+            Type::Float(fl)  => write!(f, ":{}", fl),
+            Type::Boolean(b) => write!(f, ":{}", b),
             Type::String(s)  => write!(f, "$\"{}\"", s),
         }
     }
@@ -24,7 +24,7 @@ impl FromStr for Type {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if !s.starts_with("$") {
+        if !s.starts_with("$") && !s.starts_with(":") {
             return Err(format!("Invalid literal: {}", s));
         }
 
@@ -92,17 +92,17 @@ impl Display for Instr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             // Instr::Load { address, label }         => write!(f, "{}: LOAD {}", label, address),
-            Instr::Store { address, value , label} => write!(f, "{}: STORE {} {}", label, address, value),
-            Instr::Call { address, args, label }   => write!(f, "{}: CALL {} {}", label, address, args),
-            Instr::Push { value, label }           => write!(f, "{}: PUSH {}", label, value),
-            Instr::Pop { address, label }          => write!(f, "{}: POP {}", label, address),
-            Instr::Add { label }                   => write!(f, "{}: ADD", label),
-            Instr::Sub { label }                   => write!(f, "{}: SUB", label),
-            Instr::Mul { label }                   => write!(f, "{}: MUL", label),
-            Instr::Div { label }                   => write!(f, "{}: DIV", label),
-            Instr::Jump { to, label }              => write!(f, "{}: JUMP {}", label, to),
-            Instr::PopJumpIfFalse { to, label }    => write!(f, "{}: POP_JUMP_IF_FALSE {}", label, to),
-            Instr::Return { value, label }         => write!(f, "{}: RETURN {}", label, value),
+            Instr::Store { address, value , label} => write!(f, "{} STORE {} {}", label, address, value),
+            Instr::Call { address, args, label }   => write!(f, "{} CALL {} {}", label, address, args),
+            Instr::Push { value, label }           => write!(f, "{} PUSH {}", label, value),
+            Instr::Pop { address, label }          => write!(f, "{} POP {}", label, address),
+            Instr::Add { label }                   => write!(f, "{} ADD", label),
+            Instr::Sub { label }                   => write!(f, "{} SUB", label),
+            Instr::Mul { label }                   => write!(f, "{} MUL", label),
+            Instr::Div { label }                   => write!(f, "{} DIV", label),
+            Instr::Jump { to, label }              => write!(f, "{} JMP {}", label, to),
+            Instr::PopJumpIfFalse { to, label }    => write!(f, "{} POP_JUMP_IF_FALSE {}", label, to),
+            Instr::Return { value, label }         => write!(f, "{} RETURN {}", label, value),
         }
     }
 }
