@@ -5,6 +5,7 @@ use crate::vm::vm::Error::{self, InvalidAriphmeticOperation};
 /// Literal types for the assembler.
 #[derive(Clone, Debug)]
 pub enum Type {
+    Null,
     Int(i64),
     Float(f64),
     Boolean(bool),
@@ -14,6 +15,7 @@ pub enum Type {
 impl Type {
     pub fn as_bool(&self) -> bool {
         match self {
+            Type::Null => false,
             Type::Boolean(b) => *b,
             Type::Int(i) => *i != 0,
             Type::Float(f) => *f != 0.0,
@@ -21,8 +23,16 @@ impl Type {
         }
     }
 
+    pub fn is_null(&self) -> bool {
+        match self {
+            Type::Null => true,
+            _ => false,
+        }
+    }
+
     pub fn trim(&self) -> Type {
         match self {
+            Type::Null => Type::Null,
             Type::Int(i) => Type::Int(*i),
             Type::Float(f) => Type::Float(*f),
             Type::Boolean(b) => Type::Boolean(*b),
@@ -32,6 +42,7 @@ impl Type {
 
     pub fn fmt(&self) -> String {
         match self {
+            Type::Null => "null".to_string(),
             Type::Int(i) => i.to_string(),
             Type::Float(f) => f.to_string(),
             Type::Boolean(b) => match b {
@@ -103,6 +114,7 @@ impl Div for Type {
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            Type::Null       => write!(f, ":NULL"),
             Type::Int(i)     => write!(f, ":{}", i),
             Type::Float(fl)  => write!(f, ":{}", fl),
             Type::Boolean(b) => write!(f, ":{}", b),

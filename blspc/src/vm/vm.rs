@@ -31,7 +31,7 @@ impl VM {
     pub fn new() -> Self {
         VM {
             instr_pointer: 0,
-            registers: vec![Type::Int(0); 1024],
+            registers: vec![Type::Null; 1024],
             stack: Vec::new(),
         }
     }
@@ -42,7 +42,7 @@ impl VM {
             if self.instr_pointer - 1 == instrs.len() as isize { return Ok(()); }
             
             let instr = &instrs[self.instr_pointer as usize - 1];
-            if debug { println!("ptr: {} | stack: {:?} | curr: {}", self.instr_pointer - 1, &self.stack, &instr); }
+            if debug { print_debug(&self, instr); }
             match instr {
                 Store { address, value, .. } => {
                     self.store(&address, &value)?;
@@ -112,6 +112,14 @@ impl VM {
         // TODO: Remove .clone()
         Ok(self.registers[address.value()] = value.clone())
     }
+}
+
+fn print_debug(vm: &VM, curr_instr: &Instr) {
+    // get all register that are not null
+    let regs = vm.registers.iter().enumerate().filter(|(_, v)| !v.is_null()).collect::<Vec<_>>();
+    println!("regis: {:?}", regs);
+    println!("stack: {:?}", vm.stack);
+    println!("currn: {} {}", vm.instr_pointer, curr_instr);
 }
 
 fn call(index: &Type, args: &Type, line: isize) -> Result<(), Error> {
