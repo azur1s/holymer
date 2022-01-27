@@ -17,6 +17,13 @@ use vm::{vm::VM, parser::parse_instr};
 fn main() {
     let start = Instant::now();
     let args = Args::from_args();
+
+    let debug = match args.verbose {
+        0 => false,
+        1 => true,
+        2 => true,
+        _ => true,
+    };
     
     match (args.compile, args.run) {
         (true, true) => {
@@ -31,7 +38,7 @@ fn main() {
         // Run
         (false, true) => {
             let src = read_to_string(&args.file).unwrap();
-            run_src(src);
+            run_src(src, debug);
         },
         (false, false) => {
             if args.file.extension() == Some("blsp".as_ref()) {
@@ -39,7 +46,7 @@ fn main() {
                 compile_src(src, args.output, args.file, start);
             } else if args.file.extension() == Some("bsm".as_ref()) {
                 let src = read_to_string(&args.file).unwrap();
-                run_src(src);
+                run_src(src, debug);
             } else {
                 panic!("No mode specified");
             }
@@ -84,10 +91,10 @@ fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, start: Instant
     }
 }
 
-fn run_src(src: String) {
+fn run_src(src: String, debug: bool) {
     let instrs = parse_instr(&src);
     let mut vm = VM::new();
-    match vm.run(instrs) {
+    match vm.run(instrs, debug) {
         Ok(()) => {
             exit(0);
         },

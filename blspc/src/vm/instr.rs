@@ -34,7 +34,10 @@ impl Type {
         match self {
             Type::Int(i) => i.to_string(),
             Type::Float(f) => f.to_string(),
-            Type::Boolean(b) => b.to_string(),
+            Type::Boolean(b) => match b {
+                true => "true".to_string(),
+                false => "false".to_string(),
+            },
             Type::String(s) => s.clone(),
         }
     }
