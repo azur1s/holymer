@@ -50,12 +50,9 @@ impl Compiler {
                             "if" => {
                                 // TODO: Remove .clone()
                                 let mut cond = self.compile(cdr[0].clone(), depth + 1)?;
-                                let cond_register = self.current_register();
-
                                 result.append(&mut cond);
 
-                                result.push(Instr::JumpIfFalse {
-                                    cond: cond_register,
+                                result.push(Instr::PopJumpIfFalse {
                                     to: 999, // To be replaced later
                                     label: self.next_label(),
                                 });
@@ -68,8 +65,8 @@ impl Compiler {
 
                                 let idx = result.len() - 1;
                                 match result[idx] {
-                                    Instr::JumpIfFalse { cond: c, to: _, label: l } => {
-                                        result[idx] = Instr::JumpIfFalse { cond: c, to: else_label, label: l, };
+                                    Instr::PopJumpIfFalse { to: _, label: l } => {
+                                        result[idx] = Instr::PopJumpIfFalse { to: else_label, label: l, };
                                     }
                                     _ => unreachable!(),
                                 }

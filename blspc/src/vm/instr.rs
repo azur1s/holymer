@@ -81,14 +81,9 @@ pub enum Instr {
     // Stack arithmetic.
     Add { label: usize }, Sub { label: usize },
     Mul { label: usize }, Div { label: usize },
-    // Immediate arithmetic.
-    IAdd { lhs: Register, rhs: Register, to: Register, label: usize },
-    ISub { lhs: Register, rhs: Register, to: Register, label: usize },
-    IMul { lhs: Register, rhs: Register, to: Register, label: usize },
-    IDiv { lhs: Register, rhs: Register, to: Register, label: usize },
     // Jumping
     Jump { to: usize, label: usize },
-    JumpIfFalse { cond: Register, to: usize, label: usize },
+    PopJumpIfFalse { to: usize, label: usize },
 
     Return { value: Register, label: usize },
 }
@@ -105,12 +100,8 @@ impl Display for Instr {
             Instr::Sub { label }                   => write!(f, "{}: SUB", label),
             Instr::Mul { label }                   => write!(f, "{}: MUL", label),
             Instr::Div { label }                   => write!(f, "{}: DIV", label),
-            Instr::IAdd { lhs, rhs, to, label }    => write!(f, "{}: IADD {} {} {}", label, lhs, rhs, to),
-            Instr::ISub { lhs, rhs, to, label }    => write!(f, "{}: ISUB {} {} {}", label, lhs, rhs, to),
-            Instr::IMul { lhs, rhs, to, label }    => write!(f, "{}: IMUL {} {} {}", label, lhs, rhs, to),
-            Instr::IDiv { lhs, rhs, to, label }    => write!(f, "{}: IDIV {} {} {}", label, lhs, rhs, to),
             Instr::Jump { to, label }              => write!(f, "{}: JUMP {}", label, to),
-            Instr::JumpIfFalse { cond, to, label } => write!(f, "{}: JUMP_IF_FALSE {} {}", label, cond, to),
+            Instr::PopJumpIfFalse { to, label }    => write!(f, "{}: POP_JUMP_IF_FALSE {}", label, to),
             Instr::Return { value, label }         => write!(f, "{}: RETURN {}", label, value),
         }
     }
