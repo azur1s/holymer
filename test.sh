@@ -1,12 +1,13 @@
-in=$1         # Get first's file name 
-name=${in%.*} # Remove extension
+in=$1             # Get first's file name 
+noext=${in%.*}    # Remove extension
+name=${noext##*/} # Remove path
 
 make debug
-blspc compile $name.blsp
+blspc compile $noext.blsp
 echo -e   "------------------------------------------- SOURCE"
-cat ./$name.blsp
+cat $noext.blsp
 echo -e "\n----------------------------------------- COMPILED"
-cat ./$name.bsm
+cat $noext.bsm
 echo -e   "------------------------------------------- OUTPUT"
 blspc run $name.bsm
 echo -e   "--------------------------------------------------"
