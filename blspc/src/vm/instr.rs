@@ -5,23 +5,22 @@ use crate::vm::vm::Error::{self, InvalidAriphmeticOperation};
 /// Literal types for the assembler.
 #[derive(Clone, Debug)]
 pub enum Type {
-    Null,
+    Null, StackGuard,
     Int(i64),
     Float(f64),
     Boolean(bool),
     String(String),
-    Array(Vec<Type>),
+    Symbol(String),
 }
 
 impl Type {
     pub fn as_bool(&self) -> bool {
         match self {
-            Type::Null => false,
             Type::Boolean(b) => *b,
             Type::Int(i) => *i != 0,
             Type::Float(f) => *f != 0.0,
             Type::String(s) => !s.is_empty(),
-            Type::Array(a) => !a.is_empty(),
+            _ => unreachable!(),
         }
     }
 
@@ -34,12 +33,8 @@ impl Type {
 
     pub fn trim(&self) -> Type {
         match self {
-            Type::Null => Type::Null,
-            Type::Int(i) => Type::Int(*i),
-            Type::Float(f) => Type::Float(*f),
-            Type::Boolean(b) => Type::Boolean(*b),
             Type::String(s) => Type::String(s[1..s.len() - 1].to_string()),
-            Type::Array(a) => Type::Array(a.iter().map(|t| t.trim()).collect()),
+            _ => self.clone(),
         }
     }
 
@@ -53,15 +48,7 @@ impl Type {
                 false => "false".to_string(),
             },
             Type::String(s) => s.clone(),
-            Type::Array(a) => {
-                let mut s = "[".to_string();
-                for (i, t) in a.iter().enumerate() {
-                    s.push_str(&t.fmt());
-                    if i < a.len() - 1 { s.push_str(", "); }
-                }
-                s.push_str("]");
-                s
-            }
+            _ => unreachable!(),
         }
     }
 }
@@ -126,19 +113,12 @@ impl Div for Type {
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Type::Null       => write!(f, ":NULL"),
             Type::Int(i)     => write!(f, ":{}", i),
             Type::Float(fl)  => write!(f, ":{}", fl),
             Type::Boolean(b) => write!(f, ":{}", b),
             Type::String(s)  => write!(f, "$\"{}\"", s),
-            Type::Array(a)   => {
-                write!(f, "[[ ")?;
-                for (i, t) in a.iter().enumerate() {
-                    write!(f, "{}", t)?;
-                    if i < a.len() - 1 { write!(f, ", ")?; }
-                }
-                write!(f, " ]]")
-            }
+            Type::Symbol(s)  => write!(f, "function_{}", s),
+            _ => unreachable!(),
         }
     }
 }
@@ -197,39 +177,41 @@ impl FromStr for Register {
 /// Instructions for the assembler.
 #[derive(Clone, Debug)]
 pub enum Instr {
-    // Load a literal value onto the stack.
-    // Load { address: Register, label: usize },
+    Label { name: String }, Comment { text: String },
     // Store a literal value into a register.
-    Store { address: Register, value: Type, label: usize },
+    Store { address: Register, value: Type },
     // Call intrinsic function.
-    Call { address: Register, args: Register, label: usize },
+    Call { address: Register, args: Register },
     // Stack operations.
-    Push { value: Type, label: usize }, Pop { address: Register, label: usize },
+    Push { value: Type }, Pop { address: Register },
     // Stack arithmetic.
-    Add { label: usize }, Sub { label: usize },
-    Mul { label: usize }, Div { label: usize },
+    Add, Sub,
+    Mul, Div,
     // Jumping
-    Jump { to: usize, label: usize },
-    PopJumpIfFalse { to: usize, label: usize },
+    Jump { to: String },
+    PopJumpIfFalse { to: usize },
 
-    Return { value: Register, label: usize },
+    Return,
 }
 
 impl Display for Instr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            // Instr::Load { address, label }         => write!(f, "{}: LOAD {}", label, address),
-            Instr::Store { address, value , label} => write!(f, "{} STORE {} {}", label, address, value),
-            Instr::Call { address, args, label }   => write!(f, "{} CALL {} {}", label, address, args),
-            Instr::Push { value, label }           => write!(f, "{} PUSH {}", label, value),
-            Instr::Pop { address, label }          => write!(f, "{} POP {}", label, address),
-            Instr::Add { label }                   => write!(f, "{} ADD", label),
-            Instr::Sub { label }                   => write!(f, "{} SUB", label),
-            Instr::Mul { label }                   => write!(f, "{} MUL", label),
-            Instr::Div { label }                   => write!(f, "{} DIV", label),
-            Instr::Jump { to, label }              => write!(f, "{} JMP {}", label, to),
-            Instr::PopJumpIfFalse { to, label }    => write!(f, "{} POP_JUMP_IF_FALSE {}", label, to),
-            Instr::Return { value, label }         => write!(f, "{} RETURN {}", label, value),
+            //                                           --4-- Padding
+            //                                           ----------20--------- Parameter start
+            Instr::Label { name }           => write!(f, ".{}:", name),
+            Instr::Comment { text }         => write!(f, ";{}", text),
+            Instr::Store { address, value } => write!(f, "    STORE           {} {}", address, value),
+            Instr::Call { address, args }   => write!(f, "    CALL            {} {}", address, args),
+            Instr::Push { value }           => write!(f, "    PUSH            {}", value),
+            Instr::Pop { address }          => write!(f, "    POP             {}", address),
+            Instr::Add                      => write!(f, "    ADD"),
+            Instr::Sub                      => write!(f, "    SUB"),
+            Instr::Mul                      => write!(f, "    MUL"),
+            Instr::Div                      => write!(f, "    DIV"),
+            Instr::Jump { to }              => write!(f, "    JMP             {}", to),
+            Instr::PopJumpIfFalse { to }    => write!(f, "    PJMPF           {}", to),
+            Instr::Return                   => write!(f, "    RET"),
         }
     }
 }

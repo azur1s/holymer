@@ -3,7 +3,9 @@ use std::fmt::Display;
 use crate::vm::instr::{Instr::{self, *}, Type, Register};
 
 pub enum Error {
+    NoMainFunction,
     StackOverflow,
+    UnknownFunction(String),
     UnknownFunctionCall(isize, isize),
     InvalidAriphmeticOperation,
 }
@@ -11,7 +13,9 @@ pub enum Error {
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            Error::NoMainFunction => write!(f, "Main function not found"),
             Error::StackOverflow => write!(f, "Stack overflow"),
+            Error::UnknownFunction(name) => write!(f, "Unknown function: {}", name),
             Error::UnknownFunctionCall(l, e) => write!(f, "Unknown function call at {}: {}", l, e),
             Error::InvalidAriphmeticOperation => write!(f, "Invalid ariphmetic operation"),
         }
@@ -20,9 +24,11 @@ impl Display for Error {
 
 #[derive(Debug)]
 pub struct VM {
-    pub instr_pointer: isize,
-    pub registers: Vec<Type>,
-    pub stack: Vec<Type>,
+    instr_pointer: isize,
+    jumped_from: isize,
+    registers: Vec<Type>,
+    stack: Vec<Type>,
+    function_pointer: Vec<(String, isize)>, // (name, index)
 }
 
 pub type VMReturn = Result<(), Error>;
@@ -31,18 +37,34 @@ impl VM {
     pub fn new() -> Self {
         VM {
             instr_pointer: 0,
+            jumped_from: 0,
             registers: vec![Type::Null; 1024],
             stack: Vec::new(),
+            function_pointer: Vec::new(),
         }
     }
     
     pub fn run(&mut self, instrs: Vec<Instr>, debug: bool) -> VMReturn {
+        let mut result: VMReturn;
+
+        for (idx, instr) in instrs.iter().enumerate() {
+            match instr {
+                Label { name } => {
+                    if name == "function_main" { self.instr_pointer = idx as isize; }
+                    self.function_pointer.push((name.clone(), idx as isize));
+                },
+                _ => {}
+            }
+        }
+
         'tco: loop {
             self.instr_pointer += 1;
-            if self.instr_pointer - 1 == instrs.len() as isize { return Ok(()); }
-            
-            let instr = &instrs[self.instr_pointer as usize - 1];
-            if debug { print_debug(&self, instr); }
+            if self.instr_pointer - 1 == instrs.len() as isize {
+                result = Ok(());
+                break 'tco;
+            }
+
+            let instr = &instrs[(self.instr_pointer - 1) as usize];
             match instr {
                 Store { address, value, .. } => {
                     self.store(&address, &value)?;
@@ -54,51 +76,57 @@ impl VM {
                     call(address, args, self.instr_pointer)?;
                     continue 'tco;
                 },
-                Push { value, .. } => {
+                Push { value } => {
                     self.push(value.trim().clone())?;
                     continue 'tco;
                 },
-                Pop { address, .. } => {
+                Pop { address } => {
                     let value = self.stack.pop();
                     self.store(&address, &value.unwrap())?;
                     continue 'tco;
                 },
-                Add { .. } => {
+                Add => {
                     let lhs = self.stack.pop().unwrap();
                     let rhs = self.stack.pop().unwrap();
                     self.push((lhs + rhs)?)?;
                     continue 'tco;
                 },
-                Sub { .. } => {
+                Sub => {
                     let lhs = self.stack.pop().unwrap();
                     let rhs = self.stack.pop().unwrap();
                     self.push((lhs - rhs)?)?;
                     continue 'tco;
                 },
-                Mul { .. } => {
+                Mul => {
                     let lhs = self.stack.pop().unwrap();
                     let rhs = self.stack.pop().unwrap();
                     self.push((lhs * rhs)?)?;
                     continue 'tco;
                 },
-                Div { .. } => {
+                Div => {
                     let lhs = self.stack.pop().unwrap();
                     let rhs = self.stack.pop().unwrap();
                     self.push((lhs / rhs)?)?;
                     continue 'tco;
                 },
-                Jump { to, .. } => {
-                    self.instr_pointer = *to as isize - 1;
+                Jump { to } => {
+                    let pointer = self.get_function_pointer(to.to_string())?;
+                    self.jumped_from = self.instr_pointer;
+                    self.instr_pointer = pointer;
                     continue 'tco;
                 },
-                PopJumpIfFalse { to, .. } => {
-                    let value = self.stack.pop().unwrap();
-                    if !value.as_bool() { self.instr_pointer = *to as isize - 1; }
+                Return => {
+                    if self.jumped_from == 0 { return Ok(()); }
+                    self.instr_pointer = self.jumped_from;
+                    self.jumped_from = 0;
                     continue 'tco;
                 },
-                Return { .. } => return Ok(()),
-            };
+                Label { .. } => {},
+                _ => unimplemented!(),
+            }
         }
+
+        result
     }
     
     fn push(&mut self, value: Type) -> Result<(), Error> {
@@ -111,6 +139,15 @@ impl VM {
     fn store(&mut self, address: &Register, value: &Type) -> Result<(), Error> {
         // TODO: Remove .clone()
         Ok(self.registers[address.value()] = value.clone())
+    }
+
+    fn get_function_pointer(&mut self, name: String) -> Result<isize, Error> {
+        for (idx, (n, _)) in self.function_pointer.iter().enumerate() {
+            if n == &name {
+                return Ok(idx as isize);
+            }
+        }
+        Err(Error::UnknownFunction(name))
     }
 }
 

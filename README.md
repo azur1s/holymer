@@ -24,3 +24,4 @@ Hello, World!
 TODO:
 - Quote, Quasiquote, etc.
 - Optimizing
+- Remove unnecessary copying in the entire codebase

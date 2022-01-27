@@ -1,1 +1,4 @@
-(print "Hello, world!")
+(fun str "Hello, world!")
+
+(fun main
+    (print str))

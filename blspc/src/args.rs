@@ -4,24 +4,38 @@ use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "blspc")]
-pub struct Args {
-    /// Verbose mode (-v, -vv, -vvv, etc.). Max is 2 currently.
-    #[structopt(short, long, parse(from_occurrences))]
-    pub verbose: u8,
+pub struct Opts {
+    #[structopt(subcommand)]
+    pub commands: Option<Args>,
+}
 
-    /// Compliation mode (-c).
-    #[structopt(short, long)]
-    pub compile: bool,
+#[derive(StructOpt, Debug)]
+#[structopt(name = "args")]
+pub enum Args {
+    #[structopt(name = "compile")]
+    Compile (CompileOpts),
+    #[structopt(name = "run")]
+    Run (RunOpts),
+}
 
-    /// Run mode (-r).
-    #[structopt(short, long)]
-    pub run: bool,
-
-    /// Files to process.
+#[derive(StructOpt, Debug)]
+#[structopt(name = "compile", about = "Compile Options")]
+pub struct CompileOpts {
     #[structopt(name = "FILE", parse(from_os_str))]
     pub file: PathBuf,
-
-    /// Output file.
-    #[structopt(short, long, parse(from_os_str))]
+    #[structopt(name = "OUTPUT", parse(from_os_str))]
     pub output: Option<PathBuf>,
+    #[structopt(short, long)]
+    pub debug: bool,
+    #[structopt(short = "b", long)]
+    pub with_comment: bool,
+}
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "run", about = "Run Options")]
+pub struct RunOpts {
+    #[structopt(name = "FILE", parse(from_os_str))]
+    pub file: PathBuf,
+    #[structopt(short, long)]
+    pub debug: bool,
 }

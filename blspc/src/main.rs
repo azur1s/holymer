@@ -3,7 +3,7 @@ use std::{fs::{read_to_string, File}, path::{Path, PathBuf}, io::{Write, Seek}, 
 use structopt::StructOpt;
 
 mod args;
-use args::Args;
+use args::Opts;
 
 mod util;
 use util::cover_paren;
@@ -16,43 +16,22 @@ use vm::{vm::VM, parser::parse_instr};
 
 fn main() {
     let start = Instant::now();
-    let args = Args::from_args();
-
-    let debug = match args.verbose {
-        0 => false,
-        1 => true,
-        2 => true,
-        _ => true,
-    };
+    let args = Opts::from_args();
     
-    match (args.compile, args.run) {
-        (true, true) => {
-            eprintln!("TODO: Compile and run at the same time.");
-            std::process::exit(1);
-        },
-        // Compile
-        (true, false) => {
-            let src = read_to_string(&args.file).unwrap();
-            compile_src(src, args.output, args.file, debug, start);
-        },
-        // Run
-        (false, true) => {
-            let src = read_to_string(&args.file).unwrap();
-            run_src(src, debug);
-        },
-        (false, false) => {
-            if args.file.extension() == Some("blsp".as_ref()) {
+    if let Some(commands) = args.commands {
+        match commands {
+            args::Args::Compile(args) => {
                 let src = read_to_string(&args.file).unwrap();
+                let debug = args.debug;
                 compile_src(src, args.output, args.file, debug, start);
-            } else if args.file.extension() == Some("bsm".as_ref()) {
+            },
+            args::Args::Run(args) => {
                 let src = read_to_string(&args.file).unwrap();
+                let debug = args.debug;
                 run_src(src, debug);
-            } else {
-                panic!("No mode specified");
-            }
-        },
+            },
+        }
     }
-
 }
 
 fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, debug: bool, start: Instant) {
@@ -69,11 +48,12 @@ fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, debug: bool, s
     match result {
         Ok(ast) => {
             let mut compiler = Compiler::new();
-            let code = compiler.compile(ast, 0);
+            let code = compiler.compile(ast);
             match code {
                 Ok(code) => {
                     let mut file = File::create(format!("{}.bsm", file_name)).unwrap();
                     for line in code {
+                        if line.to_string().starts_with(";") { continue; }
                         write!(file, "{}\n", line).unwrap();
                     }
                     file.seek(std::io::SeekFrom::End(-1)).unwrap(); // Trim last newline

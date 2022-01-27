@@ -14,7 +14,7 @@ impl std::fmt::Display for Sexpr {
         match self {
             Int(i) => write!(f, "{}", i),
             Float(fl) => write!(f, "{}", fl),
-            Str(s) => write!(f, "{}", s),
+            Str(s) => write!(f, "\"{}\"", s),
             Boolean(b) => write!(f, "{}", b),
             Symbol(s) => write!(f, "{}", s),
             Cons(car, cdr) => {
@@ -59,7 +59,6 @@ impl Parser {
             Some(s) => match s.as_str() {
                 ")" => Err(format!("Unexpected ')' at position {}", self.position)),
                 // TODO: Handle quote and that stuff.
-                "'" => { unimplemented!() },
                 "(" => self.parse_sequence(")"),
                 _ => self.parse_atom(),
             }
@@ -73,24 +72,6 @@ impl Parser {
 
         let mut cdr = Vec::new();
         
-        loop {
-            let token = match self.peek() {
-                Some(token) => token,
-                None => return Err(format!("Unexpected end of input, expected '{}'", end)),
-            };
-            if token == end { break; }
-            cdr.push(self.parse()?)
-        }
-
-        self.next();
-        Ok(Sexpr::Cons(Box::new(car), cdr))
-    }
-
-    fn parse_quote_sequence(&mut self, end: &str) -> ParseResult {
-        let car = Symbol("list".to_string());
-        
-        self.next();
-        let mut cdr = Vec::new();
         loop {
             let token = match self.peek() {
                 Some(token) => token,
