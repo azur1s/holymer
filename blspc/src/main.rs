@@ -33,7 +33,7 @@ fn main() {
         // Compile
         (true, false) => {
             let src = read_to_string(&args.file).unwrap();
-            compile_src(src, args.output, args.file, start);
+            compile_src(src, args.output, args.file, debug, start);
         },
         // Run
         (false, true) => {
@@ -43,7 +43,7 @@ fn main() {
         (false, false) => {
             if args.file.extension() == Some("blsp".as_ref()) {
                 let src = read_to_string(&args.file).unwrap();
-                compile_src(src, args.output, args.file, start);
+                compile_src(src, args.output, args.file, debug, start);
             } else if args.file.extension() == Some("bsm".as_ref()) {
                 let src = read_to_string(&args.file).unwrap();
                 run_src(src, debug);
@@ -55,7 +55,7 @@ fn main() {
 
 }
 
-fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, start: Instant) {
+fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, debug: bool, start: Instant) {
     let file_name = match path {
         Some(path) => path,
         None => Path::new(&file).to_path_buf(),
@@ -64,7 +64,8 @@ fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, start: Instant
     let tokens = tokenize(&cover_paren(src));
     let mut parser = Parser::new(tokens.clone());
     let result = parser.parse();
-
+    
+    if debug { println!("{:#?}", &result); }
     match result {
         Ok(ast) => {
             let mut compiler = Compiler::new();

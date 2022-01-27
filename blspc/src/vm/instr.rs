@@ -10,6 +10,7 @@ pub enum Type {
     Float(f64),
     Boolean(bool),
     String(String),
+    Array(Vec<Type>),
 }
 
 impl Type {
@@ -20,6 +21,7 @@ impl Type {
             Type::Int(i) => *i != 0,
             Type::Float(f) => *f != 0.0,
             Type::String(s) => !s.is_empty(),
+            Type::Array(a) => !a.is_empty(),
         }
     }
 
@@ -37,6 +39,7 @@ impl Type {
             Type::Float(f) => Type::Float(*f),
             Type::Boolean(b) => Type::Boolean(*b),
             Type::String(s) => Type::String(s[1..s.len() - 1].to_string()),
+            Type::Array(a) => Type::Array(a.iter().map(|t| t.trim()).collect()),
         }
     }
 
@@ -50,6 +53,15 @@ impl Type {
                 false => "false".to_string(),
             },
             Type::String(s) => s.clone(),
+            Type::Array(a) => {
+                let mut s = "[".to_string();
+                for t in a {
+                    s.push_str(&t.fmt());
+                    s.push_str(", ");
+                }
+                s.push_str("]");
+                s
+            }
         }
     }
 }
@@ -119,6 +131,14 @@ impl Display for Type {
             Type::Float(fl)  => write!(f, ":{}", fl),
             Type::Boolean(b) => write!(f, ":{}", b),
             Type::String(s)  => write!(f, "$\"{}\"", s),
+            Type::Array(a)   => {
+                write!(f, "[[")?;
+                for t in a {
+                    write!(f, "{}", t)?;
+                    write!(f, ", ")?;
+                }
+                write!(f, "]]")
+            }
         }
     }
 }

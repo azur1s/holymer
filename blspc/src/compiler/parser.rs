@@ -58,7 +58,7 @@ impl Parser {
         match self.peek() {
             Some(s) => match s.as_str() {
                 ")" => Err(format!("Unexpected ')' at position {}", self.position)),
-                "'" => { self.next(); Ok(Cons(Box::new(Str("quote".to_string())), vec![self.parse()?])) },
+                "'" => { self.next(); self.parse_quote_sequence(")")},
                 "(" => self.parse_sequence(")"),
                 _ => self.parse_atom(),
             }
@@ -72,6 +72,24 @@ impl Parser {
 
         let mut cdr = Vec::new();
         
+        loop {
+            let token = match self.peek() {
+                Some(token) => token,
+                None => return Err(format!("Unexpected end of input, expected '{}'", end)),
+            };
+            if token == end { break; }
+            cdr.push(self.parse()?)
+        }
+
+        self.next();
+        Ok(Sexpr::Cons(Box::new(car), cdr))
+    }
+
+    fn parse_quote_sequence(&mut self, end: &str) -> ParseResult {
+        let car = Symbol("list".to_string());
+        
+        self.next();
+        let mut cdr = Vec::new();
         loop {
             let token = match self.peek() {
                 Some(token) => token,

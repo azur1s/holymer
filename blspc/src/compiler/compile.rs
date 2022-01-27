@@ -47,6 +47,11 @@ impl Compiler {
                                     result.append(&mut self.compile(c, depth + 1)?);
                                 }
                             }
+                            "list" => {
+                                let mut joined = Vec::new();
+                                for c in cdr { joined.push(c); }
+                                result.append(&mut self.compile_quoted(&joined)?);
+                            }
                             "if" => {
                                 // TODO: Remove .clone()
                                 let mut cond = self.compile(cdr[0].clone(), depth + 1)?;
@@ -102,6 +107,17 @@ impl Compiler {
         }
         Ok(result)
     }
+
+    fn compile_quoted(&mut self, atom: &Vec<Sexpr>) -> Result<Vec<Instr>, String> {
+        let mut result = Vec::new();
+
+        result.push(Instr::Push {
+            value: Type::String(format!("({})", atom.iter().map(|x| format!("{}", x)).collect::<Vec<String>>().join(" "))),
+            label: self.next_label(),
+        });
+
+        Ok(result)
+    }
     
     fn compile_atom(&mut self, atom: &Sexpr, depth: usize) -> Result<Vec<Instr>, String> {
         let mut result = Vec::new();
@@ -112,25 +128,25 @@ impl Compiler {
                     value: Type::Int(*i),
                     label: self.next_label(),
                 });
-            }
+            },
             Float(f) => {
                 result.push(Instr::Push {
                     value: Type::Float(*f),
                     label: self.next_label(),
                 });
-            }
+            },
             Boolean(b) => {
                 result.push(Instr::Push {
                     value: Type::Boolean(*b),
                     label: self.next_label(),
                 });
-            }
+            },
             Str(s) => {
                 result.push(Instr::Push {
                     value: Type::String(s.clone()),
                     label: self.next_label(),
                 });
-            }
+            },
             _ => {
                 result.append(&mut self.compile(atom.clone(), depth + 1)?);
             }
