@@ -46,12 +46,7 @@ impl Compiler {
                                 for c in cdr {
                                     result.append(&mut self.compile(c, depth + 1)?);
                                 }
-                            }
-                            "list" => {
-                                let mut joined = Vec::new();
-                                for c in cdr { joined.push(c); }
-                                result.append(&mut self.compile_quoted(&joined)?);
-                            }
+                            },
                             "if" => {
                                 // TODO: Remove .clone()
                                 let mut cond = self.compile(cdr[0].clone(), depth + 1)?;
@@ -210,41 +205,5 @@ impl Compiler {
         }
         
         Ok(result)
-    }
-    
-    fn compile_quoted(&mut self, atom: &Vec<Sexpr>) -> Result<Vec<Instr>, String> {
-        let mut result = Vec::new();
-        
-        // Vec<Sexpr> -> Vec<Type>
-        let mut types = Vec::new();
-        for a in atom {
-            types.push(sexpr_to_type(a)?);
-        }
-        
-        result.push(Instr::Push {
-            value: Type::Array(types),
-            label: self.next_label(),
-        }); 
-        
-        Ok(result)
-    }
-}
-
-fn sexpr_to_type(sexpr: &Sexpr) -> Result<Type, String> {
-    match sexpr {
-        Int(i) => Ok(Type::Int(*i)),
-        Float(f) => Ok(Type::Float(*f)),
-        Str(s) => Ok(Type::String(s.clone())),
-        Boolean(b) => Ok(Type::Boolean(*b)),
-        Symbol(s) => Ok(Type::String(s.to_string())),
-        Cons(car, cdr) => {
-            let mut array = Vec::new();
-            array.push(sexpr_to_type(car)?);
-            for item in cdr {
-                array.push(sexpr_to_type(item)?);
-            }
-            Ok(Type::Array(array))
-        },
-        _ => unimplemented!(),
     }
 }

@@ -58,7 +58,8 @@ impl Parser {
         match self.peek() {
             Some(s) => match s.as_str() {
                 ")" => Err(format!("Unexpected ')' at position {}", self.position)),
-                "'" => { self.next(); self.parse_quote_sequence(")")},
+                // TODO: Handle quote and that stuff.
+                "'" => { unimplemented!() },
                 "(" => self.parse_sequence(")"),
                 _ => self.parse_atom(),
             }

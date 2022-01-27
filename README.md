@@ -21,7 +21,6 @@ Hello, World!
 ```
 
 ## <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="25"> Progress:
-- [X] Lexer & Parser
-- [ ] Syntax checker & Type checker
-- [ ] Interpreter
-- [X] Compiler
+TODO:
+- Quote, Quasiquote, etc.
+- Optimizing
