@@ -6,7 +6,7 @@ use structopt::StructOpt;
 #[structopt(name = "blspc")]
 pub struct Opts {
     #[structopt(subcommand)]
-    pub commands: Option<Args>,
+    pub commands: Args,
 }
 
 #[derive(StructOpt, Debug)]

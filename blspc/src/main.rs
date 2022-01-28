@@ -17,20 +17,17 @@ use vm::{vm::VM, parser::parse_instr};
 fn main() {
     let start = Instant::now();
     let args = Opts::from_args();
-    
-    if let Some(commands) = args.commands {
-        match commands {
-            args::Args::Compile(args) => {
-                let src = read_to_string(&args.file).unwrap();
-                let debug = args.debug;
-                compile_src(src, args.output, args.file, debug, start);
-            },
-            args::Args::Run(args) => {
-                let src = read_to_string(&args.file).unwrap();
-                let debug = args.debug;
-                run_src(src, debug);
-            },
-        }
+    match args.commands {
+        args::Args::Compile(args) => {
+            let src = read_to_string(&args.file).unwrap();
+            let debug = args.debug;
+            compile_src(src, args.output, args.file, debug, start);
+        },
+        args::Args::Run(args) => {
+            let src = read_to_string(&args.file).unwrap();
+            let debug = args.debug;
+            run_src(src, debug);
+        },
     }
 }
 
@@ -57,7 +54,7 @@ fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, debug: bool, s
                         write!(file, "{}\n", line).unwrap();
                     }
                     file.seek(std::io::SeekFrom::End(-1)).unwrap(); // Trim last newline
-
+                    
                     let elapsed = start.elapsed();
                     println!("Compiled in {}.{}s", elapsed.as_secs(), elapsed.subsec_millis());
                 },
