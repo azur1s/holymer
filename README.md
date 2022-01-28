@@ -28,6 +28,7 @@ DONE:
   - Math:
 
 TODO:
+- Prove turing complete
 - Do the intrinsic left
 - Quote, Quasiquote, etc.
 - Optimizing

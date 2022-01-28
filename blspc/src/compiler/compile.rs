@@ -52,7 +52,6 @@ impl Compiler {
                                 _ => {
                                     result.append(&mut self.compile_intrinsic(call, &cdr)?);
                                 }
-                                _ => { dbg!(call); unimplemented!() },
                             } // End `match call`
                         }, // End `Symbol(call)`
                         _ => { dbg!(car); unimplemented!() },

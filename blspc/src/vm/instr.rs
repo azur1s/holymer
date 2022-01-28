@@ -161,15 +161,17 @@ impl Register {
 
 impl Display for Register {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "r{}", self.value)
+        write!(f, "%{}", self.value)
     }
 }
 
 impl FromStr for Register {
-    type Err = ();
+    type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let value = s[1..].parse::<usize>().map_err(|_| ())?;
+        if !s.starts_with("%") { return Err(format!("Invalid register: {}", s)); }
+
+        let value = s[1..].parse::<usize>().map_err(|_| (format!("Invalid register: {}", s)))?;
         Ok(Register { value })
     }
 }
