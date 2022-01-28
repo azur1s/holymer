@@ -7,7 +7,7 @@ blspc compile $noext.blsp
 echo -e   "------------------------------------------- SOURCE"
 cat $noext.blsp
 echo -e "\n----------------------------------------- COMPILED"
-cat $noext.bsm
+cat $name.bsm
 echo -e   "------------------------------------------- OUTPUT"
 blspc run $name.bsm
 echo -e   "--------------------------------------------------"

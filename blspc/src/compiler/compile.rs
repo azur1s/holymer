@@ -49,20 +49,8 @@ impl Compiler {
                                     result.append(&mut self.compile(body.clone())?);
                                     result.push(Instr::Return);
                                 },
-                                "print" => {
-                                    result.append(&mut self.compile(cdr[0].clone())?);
-                                    let to = self.next_register();
-                                    let call_register = self.next_register();
-                                    
-                                    result.push(Instr::Pop { address: to });
-                                    result.push(Instr::Store {
-                                        address: call_register,
-                                        value: Type::Int(1),
-                                    });
-                                    result.push(Instr::Call {
-                                        address: call_register,
-                                        args: to,
-                                    });
+                                _ => {
+                                    result.append(&mut self.compile_intrinsic(call, &cdr)?);
                                 }
                                 _ => { dbg!(call); unimplemented!() },
                             } // End `match call`
@@ -70,7 +58,7 @@ impl Compiler {
                         _ => { dbg!(car); unimplemented!() },
                     } // End `match car`
                 }, // End `Cons(car, cdr)`
-                _ => { result.append(&mut self.compile_atom(src)?); },
+                _ => { result.append(&mut self.compile_atom(&src)?); },
             } // End `match src`
             
             break 'tco;
@@ -78,33 +66,96 @@ impl Compiler {
         
         Ok(result)
     }
+
+    fn compile_intrinsic(&mut self, intrinsic: &String, args: &[Sexpr]) -> Result<Vec<Instr>, String> {
+        let mut result = Vec::new();
+        
+        match intrinsic.as_str() {
+            "print" => {
+                result.append(&mut self.compile(args[0].clone())?);
+                let to = self.next_register();
+                let call_register = self.next_register();
+                
+                result.push(Instr::Pop { address: to });
+                result.push(Instr::Store {
+                    address: call_register,
+                    value: Type::Int(1),
+                });
+                result.push(Instr::Call {
+                    address: call_register,
+                    args: to,
+                });
+            },
+            "add" | "+" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                result.append(&mut lhs);
+                
+                let mut rhs = self.compile_atom(&args[1])?;
+                result.append(&mut rhs);
+                
+                result.push(Instr::Add);
+            },
+            "sub" | "-" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                result.append(&mut lhs);
+                
+                let mut rhs = self.compile_atom(&args[1])?;
+                result.append(&mut rhs);
+                
+                result.push(Instr::Swap);
+                result.push(Instr::Sub);
+            },
+            "mul" | "*" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                result.append(&mut lhs);
+                
+                let mut rhs = self.compile_atom(&args[1])?;
+                result.append(&mut rhs);
+                
+                result.push(Instr::Mul);
+            },
+            "div" | "/" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                result.append(&mut lhs);
+                
+                let mut rhs = self.compile_atom(&args[1])?;
+                result.append(&mut rhs);
+                
+                result.push(Instr::Swap);
+                result.push(Instr::Div);
+            },
+            _ => return Err(format!("Unknown intrinsic: {}", intrinsic)),
+        }
+
+        Ok(result)
+    }
     
-    fn compile_atom(&mut self, atom: Sexpr) -> Result<Vec<Instr>, String> {
+    fn compile_atom(&mut self, atom: &Sexpr) -> Result<Vec<Instr>, String> {
         let mut result = Vec::new();
         let comp = atom.clone(); // Used for commenting
         
         match atom {
             Int(i) => {
                 result.push(Instr::Comment { text: format!("----- {}", comp) });
-                result.push(Instr::Push { value: Type::Int(i) });
+                result.push(Instr::Push { value: Type::Int(*i) });
             },
             Float(f) => {
                 result.push(Instr::Comment { text: format!("----- {}", comp) });
-                result.push(Instr::Push { value: Type::Float(f) });
+                result.push(Instr::Push { value: Type::Float(*f) });
             },
             Str(s) => {
                 result.push(Instr::Comment { text: format!("----- {}", comp) });
-                result.push(Instr::Push { value: Type::String(s) });
+                result.push(Instr::Push { value: Type::String(s.to_string()) });
             },
             Boolean(b) => {
                 result.push(Instr::Comment { text: format!("----- {}", comp) });
-                result.push(Instr::Push { value: Type::Boolean(b) });
+                result.push(Instr::Push { value: Type::Boolean(*b) });
             },
             Symbol(s) => {
                 result.push(Instr::Comment { text: format!("----- {} variable", comp) });
                 result.push(Instr::Jump { to: format!("function_{}", s), });
             },
-            _ => { dbg!(atom); unimplemented!() },
+            _ => { result.append(&mut self.compile(atom.clone())?); }
         }
         
         Ok(result)

@@ -45,17 +45,19 @@ impl VM {
     }
     
     pub fn run(&mut self, instrs: Vec<Instr>, debug: bool) -> VMReturn {
-        let mut result: VMReturn;
+        let result: VMReturn;
 
+        let mut found = false;
         for (idx, instr) in instrs.iter().enumerate() {
             match instr {
                 Label { name } => {
-                    if name == "function_main" { self.instr_pointer = idx as isize; }
+                    if name == "function_main" { self.instr_pointer = idx as isize; found = true; }
                     self.function_pointer.push((name.clone(), idx as isize));
                 },
                 _ => {}
             }
         }
+        if !found { return Err(Error::NoMainFunction); }
 
         'tco: loop {
             self.instr_pointer += 1;
@@ -65,6 +67,7 @@ impl VM {
             }
 
             let instr = &instrs[(self.instr_pointer - 1) as usize];
+            if debug { print_debug(self, &instr); }
             match instr {
                 Store { address, value, .. } => {
                     self.store(&address, &value)?;
@@ -83,6 +86,13 @@ impl VM {
                 Pop { address } => {
                     let value = self.stack.pop();
                     self.store(&address, &value.unwrap())?;
+                    continue 'tco;
+                },
+                Swap => {
+                    let top = self.stack.pop().unwrap();
+                    let bottom = self.stack.pop().unwrap();
+                    self.stack.push(top);
+                    self.stack.push(bottom);
                     continue 'tco;
                 },
                 Add => {

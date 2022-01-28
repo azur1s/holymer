@@ -23,7 +23,10 @@ Hello, World!
 ## <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="25"> Progress:
 DONE:
 - Parsing, Compiling, Running(VM)
-- Intrinsic: `fun`, `do`, `print`
+- Intrinsic:
+  - `fun`, `do`, `print`
+  - Math:
+
 TODO:
 - Do the intrinsic left
 - Quote, Quasiquote, etc.

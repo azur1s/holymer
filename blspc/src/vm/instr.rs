@@ -5,7 +5,7 @@ use crate::vm::vm::Error::{self, InvalidAriphmeticOperation};
 /// Literal types for the assembler.
 #[derive(Clone, Debug)]
 pub enum Type {
-    Null, StackGuard,
+    Null,
     Int(i64),
     Float(f64),
     Boolean(bool),
@@ -183,7 +183,7 @@ pub enum Instr {
     // Call intrinsic function.
     Call { address: Register, args: Register },
     // Stack operations.
-    Push { value: Type }, Pop { address: Register },
+    Push { value: Type }, Pop { address: Register }, Swap,
     // Stack arithmetic.
     Add, Sub,
     Mul, Div,
@@ -205,6 +205,7 @@ impl Display for Instr {
             Instr::Call { address, args }   => write!(f, "    CALL            {} {}", address, args),
             Instr::Push { value }           => write!(f, "    PUSH            {}", value),
             Instr::Pop { address }          => write!(f, "    POP             {}", address),
+            Instr::Swap                     => write!(f, "    SWAP"),
             Instr::Add                      => write!(f, "    ADD"),
             Instr::Sub                      => write!(f, "    SUB"),
             Instr::Mul                      => write!(f, "    MUL"),

@@ -26,6 +26,7 @@ pub fn parse_instr(src: &str) -> Vec<Instr> {
             }); },
             "PUSH"  => { result.push(Instr::Push { value: value!(tokens[1]) }); },
             "POP"   => { result.push(Instr::Pop { address: register!(tokens[1]) }); },
+            "SWAP"  => { result.push(Instr::Swap); },
             "ADD"   => { result.push(Instr::Add); },
             "SUB"   => { result.push(Instr::Sub); },
             "MUL"   => { result.push(Instr::Mul); },
