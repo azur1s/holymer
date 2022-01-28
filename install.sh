@@ -24,63 +24,63 @@ clean_up_fail() {
 # --- Displaying ---
 
 print_menu() {
-	local function_arguments=($@)
+    local function_arguments=($@)
 
-	local selected_item="$1"
-	local menu_items=(${function_arguments[@]:1})
-	local menu_size="${#menu_items[@]}"
+    local selected_item="$1"
+    local menu_items=(${function_arguments[@]:1})
+    local menu_size="${#menu_items[@]}"
 
-	for (( i = 0; i < $menu_size; ++i )) do
-		if [ "$i" = "$selected_item" ]
+    for (( i = 0; i < $menu_size; ++i )) do
+        if [ "$i" = "$selected_item" ]
         then echo -e "\033[2K\e[1m>\e[0m \e[1;33m${menu_items[i]}\e[0m"
-		else echo -e "\033[2K  ${menu_items[i]}"
-		fi
-	done
+        else echo -e "\033[2K  ${menu_items[i]}"
+        fi
+    done
 }
 
 run_menu() {
-	local function_arguments=($@)
+    local function_arguments=($@)
 
-	local selected_item="$1"
-	local menu_items=(${function_arguments[@]:1})
-	local menu_size="${#menu_items[@]}"
-	local menu_limit=$((menu_size - 1))
+    local selected_item="$1"
+    local menu_items=(${function_arguments[@]:1})
+    local menu_size="${#menu_items[@]}"
+    local menu_limit=$((menu_size - 1))
 
-	clear
-	print_menu "$selected_item" "${menu_items[@]}"
-	
-	while read -rsn1 input
-	do
-		case "$input" in
-			$'\x1B')
-				read -rsn1 -t 0.1 input
-				if [ "$input" = "[" ] 
-				then
-					read -rsn1 -t 0.1 input
-					case "$input"
-					in
-						A) # Arrow up
-							if [ "$selected_item" -ge 1 ]
-							then
-								selected_item=$((selected_item - 1))
-								clear
-								print_menu "$selected_item" "${menu_items[@]}"
-							fi;;
-						B) # Arrow down
-							if [ "$selected_item" -lt "$menu_limit" ]
-							then
-								selected_item=$((selected_item + 1))
-								clear
-								print_menu "$selected_item" "${menu_items[@]}"
-							fi;;
-					esac
-				fi
+    clear
+    print_menu "$selected_item" "${menu_items[@]}"
+    
+    while read -rsn1 input
+    do
+        case "$input" in
+            $'\x1B')
+                read -rsn1 -t 0.1 input
+                if [ "$input" = "[" ] 
+                then
+                    read -rsn1 -t 0.1 input
+                    case "$input"
+                    in
+                        A) # Arrow up
+                            if [ "$selected_item" -ge 1 ]
+                            then
+                                selected_item=$((selected_item - 1))
+                                clear
+                                print_menu "$selected_item" "${menu_items[@]}"
+                            fi;;
+                        B) # Arrow down
+                            if [ "$selected_item" -lt "$menu_limit" ]
+                            then
+                                selected_item=$((selected_item + 1))
+                                clear
+                                print_menu "$selected_item" "${menu_items[@]}"
+                            fi;;
+                    esac
+                fi
                 # stdin flush
-				read -rsn5 -t 0.1;;
-			"") # Enter
-				return "$selected_item";;
-		esac
-	done
+                read -rsn5 -t 0.1;;
+            "") # Enter
+                return "$selected_item";;
+        esac
+    done
 }
 
 # --- Installation ---
@@ -152,7 +152,7 @@ run_menu "$selected_item" "${menu_opts[@]}"
 menu_chosen="$?"
 
 case "$menu_chosen" in
-	0) install;;
-	1) uninstall;;
-	2) clean_up;;
+    0) install;;
+    1) uninstall;;
+    2) clean_up;;
 esac
