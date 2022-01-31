@@ -38,7 +38,7 @@ impl Compiler {
                                     }
                                 },
                                 "fun" => {
-                                    result.push(Instr::Comment { text: format!("--- {}", comp) });
+                                    result.push(Instr::Comment { text: format!("function {}", comp) });
                                     let function_name = match &cdr[0] {
                                         Symbol(ref name) => format!("function_{}", name.clone()),
                                         _ => return Err(format!("Expected function name, got {}", cdr[0])),
@@ -75,15 +75,8 @@ impl Compiler {
                 let to = self.next_register();
                 let call_register = self.next_register();
                 
-                result.push(Instr::Pop { address: to });
-                result.push(Instr::Store {
-                    address: call_register,
-                    value: Type::Int(1),
-                });
-                result.push(Instr::Call {
-                    address: call_register,
-                    args: to,
-                });
+                result.push(Instr::Push { value: Type::Int(1) });
+                result.push(Instr::Call);
             },
             "add" | "+" => {
                 let mut lhs = self.compile_atom(&args[0])?;
@@ -135,23 +128,19 @@ impl Compiler {
         
         match atom {
             Int(i) => {
-                result.push(Instr::Comment { text: format!("----- {}", comp) });
                 result.push(Instr::Push { value: Type::Int(*i) });
             },
             Float(f) => {
-                result.push(Instr::Comment { text: format!("----- {}", comp) });
                 result.push(Instr::Push { value: Type::Float(*f) });
             },
             Str(s) => {
-                result.push(Instr::Comment { text: format!("----- {}", comp) });
                 result.push(Instr::Push { value: Type::String(s.to_string()) });
             },
             Boolean(b) => {
-                result.push(Instr::Comment { text: format!("----- {}", comp) });
                 result.push(Instr::Push { value: Type::Boolean(*b) });
             },
             Symbol(s) => {
-                result.push(Instr::Comment { text: format!("----- {} variable", comp) });
+                result.push(Instr::Comment { text: format!("{} variable", comp) });
                 result.push(Instr::Jump { to: format!("function_{}", s), });
             },
             _ => { result.append(&mut self.compile(atom.clone())?); }

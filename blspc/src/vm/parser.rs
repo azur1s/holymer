@@ -20,10 +20,7 @@ pub fn parse_instr(src: &str) -> Vec<Instr> {
                 address: register!(tokens[1]),
                 value: value!(tokens[2]),
             }); },
-            "CALL" => { result.push(Instr::Call {
-                address: register!(tokens[1]),
-                args: register!(tokens[2]),
-            }); },
+            "CALL"  => { result.push(Instr::Call); },
             "PUSH"  => { result.push(Instr::Push { value: value!(tokens[1]) }); },
             "POP"   => { result.push(Instr::Pop { address: register!(tokens[1]) }); },
             "SWAP"  => { result.push(Instr::Swap); },

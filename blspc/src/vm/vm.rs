@@ -73,10 +73,10 @@ impl VM {
                     self.store(&address, &value)?;
                     continue 'tco;
                 },
-                Call { address, args, .. } => {
-                    let args = &self.registers[args.value()];
-                    let address = &self.registers[address.value()];
-                    call(address, args, self.instr_pointer)?;
+                Call => {
+                    let index = &self.stack.pop().unwrap();
+                    let args = &self.stack.pop().unwrap();
+                    call(index, args, self.instr_pointer)?;
                     continue 'tco;
                 },
                 Push { value } => {

@@ -183,7 +183,7 @@ pub enum Instr {
     // Store a literal value into a register.
     Store { address: Register, value: Type },
     // Call intrinsic function.
-    Call { address: Register, args: Register },
+    Call,
     // Stack operations.
     Push { value: Type }, Pop { address: Register }, Swap,
     // Stack arithmetic.
@@ -204,7 +204,7 @@ impl Display for Instr {
             Instr::Label { name }           => write!(f, ".{}:", name),
             Instr::Comment { text }         => write!(f, ";{}", text),
             Instr::Store { address, value } => write!(f, "    STORE           {} {}", address, value),
-            Instr::Call { address, args }   => write!(f, "    CALL            {} {}", address, args),
+            Instr::Call                     => write!(f, "    CALL"),
             Instr::Push { value }           => write!(f, "    PUSH            {}", value),
             Instr::Pop { address }          => write!(f, "    POP             {}", address),
             Instr::Swap                     => write!(f, "    SWAP"),
