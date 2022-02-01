@@ -119,10 +119,14 @@ impl VM {
                     self.push((lhs / rhs)?)?;
                     continue 'tco;
                 },
-                Jump { to } => {
+                JumpLabel { to } => {
                     let pointer = self.get_function_pointer(to.to_string())?;
                     self.jumped_from = self.instr_pointer;
                     self.instr_pointer = pointer;
+                    continue 'tco;
+                },
+                Jump { to } => {
+                    self.instr_pointer += *to as isize + 1;
                     continue 'tco;
                 },
                 Return => {

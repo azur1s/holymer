@@ -189,9 +189,10 @@ pub enum Instr {
     // Stack arithmetic.
     Add, Sub,
     Mul, Div,
-    // Jumping
-    Jump { to: String },
-    PopJumpIfFalse { to: usize },
+    // Jumping.
+    JumpLabel { to: String }, // Jump to (function) label.
+    Jump { to: usize }, // Jump with offset.
+    JumpIfFalse { to: usize },
 
     Return,
 }
@@ -212,8 +213,9 @@ impl Display for Instr {
             Instr::Sub                      => write!(f, "    SUB"),
             Instr::Mul                      => write!(f, "    MUL"),
             Instr::Div                      => write!(f, "    DIV"),
+            Instr::JumpLabel { to }         => write!(f, "    JMPL            {}", to),
             Instr::Jump { to }              => write!(f, "    JMP             {}", to),
-            Instr::PopJumpIfFalse { to }    => write!(f, "    PJMPF           {}", to),
+            Instr::JumpIfFalse { to }       => write!(f, "    JMPF            {}", to),
             Instr::Return                   => write!(f, "    RET"),
         }
     }

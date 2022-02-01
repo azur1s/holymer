@@ -49,6 +49,18 @@ impl Compiler {
                                     result.append(&mut self.compile(body.clone())?);
                                     result.push(Instr::Return);
                                 },
+                                "if" => {
+                                    let mut cond = self.compile(cdr[0].clone())?;
+                                    result.append(&mut cond);
+
+                                    let mut then = self.compile(cdr[1].clone())?;
+                                    let mut else_ = self.compile(cdr[2].clone())?;
+
+                                    result.push(Instr::JumpIfFalse { to: then.len() + 1}); // +1 for the jump instr
+                                    result.append(&mut then);
+                                    result.push(Instr::Jump { to: else_.len() });
+                                    result.append(&mut else_);
+                                }
                                 _ => {
                                     result.append(&mut self.compile_intrinsic(call, &cdr)?);
                                 }
@@ -72,8 +84,6 @@ impl Compiler {
         match intrinsic.as_str() {
             "print" => {
                 result.append(&mut self.compile(args[0].clone())?);
-                let to = self.next_register();
-                let call_register = self.next_register();
                 
                 result.push(Instr::Push { value: Type::Int(1) });
                 result.push(Instr::Call);
@@ -141,7 +151,7 @@ impl Compiler {
             },
             Symbol(s) => {
                 result.push(Instr::Comment { text: format!("{} variable", comp) });
-                result.push(Instr::Jump { to: format!("function_{}", s), });
+                result.push(Instr::JumpLabel { to: format!("function_{}", s), });
             },
             _ => { result.append(&mut self.compile(atom.clone())?); }
         }

@@ -1,3 +1,4 @@
-(if true
-    (print (+ 34 35))
-    (print "False"))
+(fun main
+    (if true
+        (print "True")
+        (print "False")))

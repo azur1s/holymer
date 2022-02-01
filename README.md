@@ -24,12 +24,16 @@ Hello, World!
 DONE:
 - Parsing, Compiling, Running(VM)
 - Intrinsic:
-  - `fun`, `do`, `print`
-  - Math:
+  - `fun`, `do`, `print`, `if`
+  - Math: 
+    - `+` , `add`
+    - `-` , `sub`
+    - `*` , `mul`
+    - `/` , `div`
 
 TODO:
 - Prove turing complete
 - Do the intrinsic left
 - Quote, Quasiquote, etc.
 - Optimizing
-- Remove unnecessary copying in the entire codebase
+- Remove unnecessary copying in the entire codebase (also with `.unwrap()`)

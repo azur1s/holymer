@@ -28,7 +28,8 @@ pub fn parse_instr(src: &str) -> Vec<Instr> {
             "SUB"   => { result.push(Instr::Sub); },
             "MUL"   => { result.push(Instr::Mul); },
             "DIV"   => { result.push(Instr::Div); },
-            "JMP"   => { result.push(Instr::Jump { to: tokens[1].to_string() }); },
+            "JMPL"  => { result.push(Instr::JumpLabel { to: tokens[1].to_string() }); },
+            "JMP"   => { result.push(Instr::Jump { to: tokens[1].parse::<usize>().unwrap() }); },
             "PJMPF" => todo!(),
             "RET"   => { result.push(Instr::Return); },
             _ => {
