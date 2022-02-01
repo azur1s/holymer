@@ -7,12 +7,12 @@ another lisp dialect
 $ bash <(curl -s https://raw.githubusercontent.com/azur1s/bobbylisp/master/install.sh)
 ```
 The binary will be installed in `~/bin/blspc` run it with:
-```bash
+```console
 $ blspc help
 ```
 
 ### <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="15"> Example
-```bash
+```console
 $ blspc compile ./example/hello.blsp
 $ blspc run ./hello.bsm
 Hello, World!
