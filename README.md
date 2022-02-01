@@ -3,7 +3,7 @@ another lisp dialect
 > Also available on https://git.ablecorp.us/azur/bobbylisp
 
 ## <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="25"> Installation
-```bash
+```console
 $ bash <(curl -s https://raw.githubusercontent.com/azur1s/bobbylisp/master/install.sh)
 ```
 The binary will be installed in `~/bin/blspc` run it with:
