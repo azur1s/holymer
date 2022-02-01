@@ -56,9 +56,9 @@ impl Compiler {
                                     let mut then = self.compile(cdr[1].clone())?;
                                     let mut else_ = self.compile(cdr[2].clone())?;
 
-                                    result.push(Instr::JumpIfFalse { to: then.len() + 1}); // +1 for the jump instr
+                                    result.push(Instr::JumpIfFalse { to: len(&then) + 1}); // +1 for the jump instr
                                     result.append(&mut then);
-                                    result.push(Instr::Jump { to: else_.len() });
+                                    result.push(Instr::Jump { to: len(&else_) });
                                     result.append(&mut else_);
                                 }
                                 _ => {
@@ -158,4 +158,16 @@ impl Compiler {
         
         Ok(result)
     }
+}
+
+fn len(vec: &Vec<Instr>) -> usize {
+    let mut result = 0;
+    for i in vec {
+        match i {
+            Instr::Comment { .. } => {},
+            Instr::Label { .. } => {},
+            _ => { result += 1; },
+        }
+    }
+    result
 }
