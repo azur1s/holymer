@@ -8,15 +8,13 @@ $ bash <(curl -s https://raw.githubusercontent.com/azur1s/bobbylisp/master/insta
 ```
 The binary will be installed in `~/bin/blspc` run it with:
 ```bash
-$ blspc -h
+$ blspc help
 ```
 
 ### <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="15"> Example
-If no `-r` or `-c` specified. It will check for file extension instead.
-If found `.blsp`, it will compile, if found `.bsm` it will run vm and interpret the bytecode.
 ```bash
-$ blspc ./example/hello.blsp
-$ blspc ./hello.bsm
+$ blspc compile ./example/hello.blsp
+$ blspc run ./hello.bsm
 Hello, World!
 ```
 
