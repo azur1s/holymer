@@ -181,7 +181,7 @@ impl FromStr for Register {
 pub enum Instr {
     Label { name: String }, Comment { text: String },
     // Store a literal value into a register.
-    Store { address: Register, value: Type },
+    Store { name: String },
     // Call intrinsic function.
     Call,
     // Stack operations.
@@ -200,23 +200,23 @@ pub enum Instr {
 impl Display for Instr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            //                                           --4-- Padding
-            //                                           ----------20--------- Parameter start
-            Instr::Label { name }           => write!(f, ".{}:", name),
-            Instr::Comment { text }         => write!(f, ";{}", text),
-            Instr::Store { address, value } => write!(f, "    STORE           {} {}", address, value),
-            Instr::Call                     => write!(f, "    CALL"),
-            Instr::Push { value }           => write!(f, "    PUSH            {}", value),
-            Instr::Pop { address }          => write!(f, "    POP             {}", address),
-            Instr::Swap                     => write!(f, "    SWAP"),
-            Instr::Add                      => write!(f, "    ADD"),
-            Instr::Sub                      => write!(f, "    SUB"),
-            Instr::Mul                      => write!(f, "    MUL"),
-            Instr::Div                      => write!(f, "    DIV"),
-            Instr::JumpLabel { to }         => write!(f, "    JMPL            {}", to),
-            Instr::Jump { to }              => write!(f, "    JMP             {}", to),
-            Instr::JumpIfFalse { to }       => write!(f, "    JMPF            {}", to),
-            Instr::Return                   => write!(f, "    RET"),
+            //                                        --4-- Padding
+            //                                        ----------20--------- Parameter start
+            Instr::Label { name }        => write!(f, ".{}:", name),
+            Instr::Comment { text }      => write!(f, ";{}", text),
+            Instr::Store { name }        => write!(f, "    STORE           {}", name),
+            Instr::Call                  => write!(f, "    CALL"),
+            Instr::Push { value }        => write!(f, "    PUSH            {}", value),
+            Instr::Pop { address }       => write!(f, "    POP             {}", address),
+            Instr::Swap                  => write!(f, "    SWAP"),
+            Instr::Add                   => write!(f, "    ADD"),
+            Instr::Sub                   => write!(f, "    SUB"),
+            Instr::Mul                   => write!(f, "    MUL"),
+            Instr::Div                   => write!(f, "    DIV"),
+            Instr::JumpLabel { to }      => write!(f, "    JMPL            {}", to),
+            Instr::Jump { to }           => write!(f, "    JMP             {}", to),
+            Instr::JumpIfFalse { to }    => write!(f, "    JMPF            {}", to),
+            Instr::Return                => write!(f, "    RET"),
         }
     }
 }

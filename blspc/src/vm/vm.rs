@@ -28,6 +28,7 @@ pub struct VM {
     jumped_from: isize,
     registers: Vec<Type>,
     stack: Vec<Type>,
+    variables: Vec<(String, Type)>,
     function_pointer: Vec<(String, isize)>, // (name, index)
 }
 
@@ -40,6 +41,7 @@ impl VM {
             jumped_from: 0,
             registers: vec![Type::Null; 1024],
             stack: Vec::new(),
+            variables: Vec::new(),
             function_pointer: Vec::new(),
         }
     }
@@ -69,8 +71,9 @@ impl VM {
             let instr = &instrs[(self.instr_pointer - 1) as usize];
             if debug { print_debug(self, &instr); }
             match instr {
-                Store { address, value, .. } => {
-                    self.store(&address, &value)?;
+                Store { name } => {
+                    let value = &self.stack.pop().unwrap();
+                    self.store(name, value)?;
                     continue 'tco;
                 },
                 Call => {
@@ -85,7 +88,7 @@ impl VM {
                 },
                 Pop { address } => {
                     let value = self.stack.pop();
-                    self.store(&address, &value.unwrap())?;
+                    self.pop(&address, &value.unwrap())?;
                     continue 'tco;
                 },
                 Swap => {
@@ -150,9 +153,13 @@ impl VM {
         Ok(self.stack.push(value))
     }
     
-    fn store(&mut self, address: &Register, value: &Type) -> Result<(), Error> {
+    fn pop(&mut self, address: &Register, value: &Type) -> Result<(), Error> {
         // TODO: Remove .clone()
         Ok(self.registers[address.value()] = value.clone())
+    }
+
+    fn store(&mut self, name: &String, value: &Type) -> Result<(), Error> {
+        Ok(self.variables.push((name.clone(), value.clone())))
     }
 
     fn get_function_pointer(&mut self, name: String) -> Result<isize, Error> {

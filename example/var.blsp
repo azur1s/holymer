@@ -1,0 +1,2 @@
+(fun main
+    (def name "bobby"))

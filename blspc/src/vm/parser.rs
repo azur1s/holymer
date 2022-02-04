@@ -16,10 +16,7 @@ pub fn parse_instr(src: &str) -> Vec<Instr> {
         if tokens[0].starts_with(";") { continue; }
 
         match tokens[0] {
-            "STORE" => { result.push(Instr::Store {
-                address: register!(tokens[1]),
-                value: value!(tokens[2]),
-            }); },
+            "STORE" => { result.push(Instr::Store { name: tokens[1].to_string() }); },
             "CALL"  => { result.push(Instr::Call); },
             "PUSH"  => { result.push(Instr::Push { value: value!(tokens[1]) }); },
             "POP"   => { result.push(Instr::Pop { address: register!(tokens[1]) }); },

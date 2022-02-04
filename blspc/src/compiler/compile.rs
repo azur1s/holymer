@@ -60,7 +60,17 @@ impl Compiler {
                                     result.append(&mut then);
                                     result.push(Instr::Jump { to: len(&else_) });
                                     result.append(&mut else_);
-                                }
+                                },
+                                "def" => {
+                                    let var_name = match &cdr[0] {
+                                        Symbol(ref name) => name.clone(),
+                                        _ => return Err(format!("Expected variable name, got {}", cdr[0])),
+                                    };
+                                    let body = &cdr[1];
+
+                                    result.append(&mut self.compile(body.clone())?);
+                                    result.push(Instr::Store { name: var_name });
+                                },
                                 _ => {
                                     result.append(&mut self.compile_intrinsic(call, &cdr)?);
                                 }
