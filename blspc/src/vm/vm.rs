@@ -7,6 +7,7 @@ pub enum Error {
     StackOverflow,
     UnknownFunction(String),
     UnknownFunctionCall(isize, isize),
+    UnknownVariable(String),
     InvalidAriphmeticOperation,
 }
 
@@ -17,6 +18,7 @@ impl Display for Error {
             Error::StackOverflow => write!(f, "Stack overflow"),
             Error::UnknownFunction(name) => write!(f, "Unknown function: {}", name),
             Error::UnknownFunctionCall(l, e) => write!(f, "Unknown function call at {}: {}", l, e),
+            Error::UnknownVariable(name) => write!(f, "Unknown variable: {}", name),
             Error::InvalidAriphmeticOperation => write!(f, "Invalid ariphmetic operation"),
         }
     }
@@ -71,6 +73,10 @@ impl VM {
             let instr = &instrs[(self.instr_pointer - 1) as usize];
             if debug { print_debug(self, &instr); }
             match instr {
+                Load { name } => {
+                    self.load(name)?;
+                    continue 'tco;
+                }
                 Store { name } => {
                     let value = &self.stack.pop().unwrap();
                     self.store(name, value)?;
@@ -160,6 +166,14 @@ impl VM {
 
     fn store(&mut self, name: &String, value: &Type) -> Result<(), Error> {
         Ok(self.variables.push((name.clone(), value.clone())))
+    }
+
+    fn load(&mut self, name: &String) -> Result<(), Error> {
+        let value = self.variables.iter().find(|(n, _)| n == name);
+        if value.is_none() { return Err(Error::UnknownVariable(name.clone())); }
+        let value = value.unwrap();
+        self.stack.push(value.1.clone());
+        Ok(())
     }
 
     fn get_function_pointer(&mut self, name: String) -> Result<isize, Error> {

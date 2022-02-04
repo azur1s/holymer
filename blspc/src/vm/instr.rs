@@ -180,8 +180,8 @@ impl FromStr for Register {
 #[derive(Clone, Debug)]
 pub enum Instr {
     Label { name: String }, Comment { text: String },
-    // Store a literal value into a register.
-    Store { name: String },
+    // Variable declaration
+    Load { name: String }, Store { name: String },
     // Call intrinsic function.
     Call,
     // Stack operations.
@@ -204,6 +204,7 @@ impl Display for Instr {
             //                                        ----------20--------- Parameter start
             Instr::Label { name }        => write!(f, ".{}:", name),
             Instr::Comment { text }      => write!(f, ";{}", text),
+            Instr::Load { name }         => write!(f, "    LOAD            {}", name),
             Instr::Store { name }        => write!(f, "    STORE           {}", name),
             Instr::Call                  => write!(f, "    CALL"),
             Instr::Push { value }        => write!(f, "    PUSH            {}", value),

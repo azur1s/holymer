@@ -1,4 +1,4 @@
 (fun str "Hello, world!")
 
 (fun main
-    (print str))
+    (print (str)))

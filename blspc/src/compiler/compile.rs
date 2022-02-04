@@ -136,7 +136,10 @@ impl Compiler {
                 result.push(Instr::Swap);
                 result.push(Instr::Div);
             },
-            _ => return Err(format!("Unknown intrinsic: {}", intrinsic)),
+            _ => {
+                result.push(Instr::Comment { text: format!("{} function", intrinsic) });
+                result.push(Instr::JumpLabel { to: format!("function_{}", intrinsic), });
+            }
         }
 
         Ok(result)
@@ -144,7 +147,6 @@ impl Compiler {
     
     fn compile_atom(&mut self, atom: &Sexpr) -> Result<Vec<Instr>, String> {
         let mut result = Vec::new();
-        let comp = atom.clone(); // Used for commenting
         
         match atom {
             Int(i) => {
@@ -160,8 +162,7 @@ impl Compiler {
                 result.push(Instr::Push { value: Type::Boolean(*b) });
             },
             Symbol(s) => {
-                result.push(Instr::Comment { text: format!("{} variable", comp) });
-                result.push(Instr::JumpLabel { to: format!("function_{}", s), });
+                result.push(Instr::Load { name: s.clone() });
             },
             _ => { result.append(&mut self.compile(atom.clone())?); }
         }
