@@ -37,5 +37,6 @@ TODO:
 - Prove turing complete
 - Do the intrinsic left
 - Quote, Quasiquote, etc.
+- Linter, for stuff like undefined variables, etc.
 - Optimizing
 - Remove unnecessary copying in the entire codebase (also with `.unwrap()`)
