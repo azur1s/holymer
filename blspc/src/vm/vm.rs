@@ -30,7 +30,6 @@ pub struct VM {
     jumped_from: isize,
     registers: Vec<Type>,
     stack: Vec<Type>,
-    variables: Vec<(String, Type)>,
     function_pointer: Vec<(String, isize)>, // (name, index)
 }
 
@@ -43,7 +42,6 @@ impl VM {
             jumped_from: 0,
             registers: vec![Type::Null; 1024],
             stack: Vec::new(),
-            variables: Vec::new(),
             function_pointer: Vec::new(),
         }
     }
@@ -73,13 +71,13 @@ impl VM {
             let instr = &instrs[(self.instr_pointer - 1) as usize];
             if debug { print_debug(self, &instr); }
             match instr {
-                Load { name } => {
-                    self.load(name)?;
+                Load { address } => {
+                    self.load(address)?;
                     continue 'tco;
-                }
-                Store { name } => {
+                },
+                Store { address } => {
                     let value = &self.stack.pop().unwrap();
-                    self.store(name, value)?;
+                    self.store(address, value)?;
                     continue 'tco;
                 },
                 Call => {
@@ -164,16 +162,12 @@ impl VM {
         Ok(self.registers[address.value()] = value.clone())
     }
 
-    fn store(&mut self, name: &String, value: &Type) -> Result<(), Error> {
-        Ok(self.variables.push((name.clone(), value.clone())))
+    fn store(&mut self, address: &Register, value: &Type) -> Result<(), Error> {
+        Ok(self.registers[address.value()] = value.clone())
     }
 
-    fn load(&mut self, name: &String) -> Result<(), Error> {
-        let value = self.variables.iter().find(|(n, _)| n == name);
-        if value.is_none() { return Err(Error::UnknownVariable(name.clone())); }
-        let value = value.unwrap();
-        self.stack.push(value.1.clone());
-        Ok(())
+    fn load(&mut self, address: &Register) -> Result<(), Error> {
+        Ok(self.stack.push(self.registers[address.value()].clone()))
     }
 
     fn get_function_pointer(&mut self, name: String) -> Result<isize, Error> {

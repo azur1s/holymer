@@ -1,6 +1,10 @@
 use crate::{vm::instr::*, compiler::parser::Sexpr::{self, *}};
 pub struct Compiler {
+    // Compiled instructions
     pub instructions: Vec<Instr>,
+    // Compiled variables's register address
+    pub variables: Vec<(String, Register)>,
+    // Current register index
     pub register_pointer: usize,
 }
 
@@ -8,6 +12,7 @@ impl Compiler {
     pub fn new() -> Compiler {
         Compiler {
             instructions: Vec::new(),
+            variables: Vec::new(),
             register_pointer: 1,
         }
     }
@@ -68,8 +73,11 @@ impl Compiler {
                                     };
                                     let body = &cdr[1];
 
+                                    let var_pointer = self.next_register();
+                                    self.variables.push((var_name, var_pointer));
+
                                     result.append(&mut self.compile(body.clone())?);
-                                    result.push(Instr::Store { name: var_name });
+                                    result.push(Instr::Store { address: var_pointer });
                                 },
                                 _ => {
                                     result.append(&mut self.compile_intrinsic(call, &cdr)?);
@@ -162,7 +170,8 @@ impl Compiler {
                 result.push(Instr::Push { value: Type::Boolean(*b) });
             },
             Symbol(s) => {
-                result.push(Instr::Load { name: s.clone() });
+                let var_pointer = self.variables.iter().find(|&(ref name, _)| name == s).unwrap().1;
+                result.push(Instr::Load { address: var_pointer });
             },
             _ => { result.append(&mut self.compile(atom.clone())?); }
         }
