@@ -1,3 +1,7 @@
-(fun main
-    (do (def name "Bobby")
-        (print name)))
+(fun return_true true)
+
+(fun main (do
+    (let name "John")
+    (if (return_true)
+        (print name)
+        (print "no"))))

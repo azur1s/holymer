@@ -22,7 +22,11 @@ Hello, World!
 DONE:
 - Parsing, Compiling, Running(VM)
 - Intrinsic:
-  - `fun`, `do`, `print`, `if`
+  - Function definition: `fun`
+  - Variable definition: `let`
+  - Do blocks: `do`
+  - Printing: `print`
+  - Condition: `if`
   - Math: 
     - `+` , `add`
     - `-` , `sub`

@@ -7,7 +7,6 @@ pub enum Error {
     StackOverflow,
     UnknownFunction(String),
     UnknownFunctionCall(isize, isize),
-    UnknownVariable(String),
     InvalidAriphmeticOperation,
 }
 
@@ -18,7 +17,6 @@ impl Display for Error {
             Error::StackOverflow => write!(f, "Stack overflow"),
             Error::UnknownFunction(name) => write!(f, "Unknown function: {}", name),
             Error::UnknownFunctionCall(l, e) => write!(f, "Unknown function call at {}: {}", l, e),
-            Error::UnknownVariable(name) => write!(f, "Unknown variable: {}", name),
             Error::InvalidAriphmeticOperation => write!(f, "Invalid ariphmetic operation"),
         }
     }

@@ -66,7 +66,7 @@ impl Compiler {
                                     result.push(Instr::Jump { to: len(&else_) });
                                     result.append(&mut else_);
                                 },
-                                "def" => {
+                                "let" => {
                                     let var_name = match &cdr[0] {
                                         Symbol(ref name) => name.clone(),
                                         _ => return Err(format!("Expected variable name, got {}", cdr[0])),

@@ -10,19 +10,9 @@ pub enum Type {
     Float(f64),
     Boolean(bool),
     String(String),
-    Symbol(String),
 }
 
 impl Type {
-    pub fn as_bool(&self) -> bool {
-        match self {
-            Type::Boolean(b) => *b,
-            Type::Int(i) => *i != 0,
-            Type::Float(f) => *f != 0.0,
-            Type::String(s) => !s.is_empty(),
-            _ => unreachable!(),
-        }
-    }
 
     pub fn is_null(&self) -> bool {
         match self {
@@ -48,7 +38,6 @@ impl Type {
                 false => "false".to_string(),
             },
             Type::String(s) => s.clone(),
-            _ => unreachable!(),
         }
     }
 }
@@ -117,7 +106,6 @@ impl Display for Type {
             Type::Float(fl)  => write!(f, ":{}", fl),
             Type::Boolean(b) => write!(f, ":{}", b),
             Type::String(s)  => write!(f, "$\"{}\"", s),
-            Type::Symbol(s)  => write!(f, "function_{}", s),
             _ => unreachable!(),
         }
     }
