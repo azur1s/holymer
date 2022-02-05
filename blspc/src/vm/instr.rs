@@ -13,7 +13,6 @@ pub enum Type {
 }
 
 impl Type {
-
     pub fn is_null(&self) -> bool {
         match self {
             Type::Null => true,
@@ -102,10 +101,10 @@ impl Div for Type {
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Type::Int(i)     => write!(f, ":{}", i),
-            Type::Float(fl)  => write!(f, ":{}", fl),
-            Type::Boolean(b) => write!(f, ":{}", b),
-            Type::String(s)  => write!(f, "$\"{}\"", s),
+            Type::Int(i)     => write!(f, "{}", i),
+            Type::Float(fl)  => write!(f, "{}", fl),
+            Type::Boolean(b) => write!(f, "{}", b),
+            Type::String(s)  => write!(f, "\"{}\"", s),
             _ => unreachable!(),
         }
     }
@@ -115,11 +114,6 @@ impl FromStr for Type {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if !s.starts_with("$") && !s.starts_with(":") {
-            return Err(format!("Invalid literal: {}", s));
-        }
-
-        let s = &s[1..];
         match s {
             "true"  => Ok(Type::Boolean(true)),
             "false" => Ok(Type::Boolean(false)),

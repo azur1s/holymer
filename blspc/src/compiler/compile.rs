@@ -106,6 +106,11 @@ impl Compiler {
                 result.push(Instr::Push { value: Type::Int(1) });
                 result.push(Instr::Call);
             },
+            "read" => {
+                result.push(Instr::Push { value: Type::Int(0) }); // read doesn't need an argument
+                result.push(Instr::Push { value: Type::Int(2) });
+                result.push(Instr::Call);
+            }
             "add" | "+" => {
                 let mut lhs = self.compile_atom(&args[0])?;
                 result.append(&mut lhs);

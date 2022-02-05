@@ -25,6 +25,7 @@ DONE:
   - Function definition: `fun`
   - Variable definition: `let`
   - Do blocks: `do`
+  - User input: `read`
   - Printing: `print`
   - Condition: `if`
   - Math: 

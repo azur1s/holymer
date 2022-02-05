@@ -1,0 +1,4 @@
+(fun main (do
+    (let in (read))
+    (print "Your input was: ")
+    (print in)))

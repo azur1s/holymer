@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{io, fmt::Display};
 
 use crate::vm::instr::{Instr::{self, *}, Type, Register};
 
@@ -81,7 +81,7 @@ impl VM {
                 Call => {
                     let index = &self.stack.pop().unwrap();
                     let args = &self.stack.pop().unwrap();
-                    call(index, args, self.instr_pointer)?;
+                    self.call(index, args, self.instr_pointer)?;
                     continue 'tco;
                 },
                 Push { value } => {
@@ -176,6 +176,29 @@ impl VM {
         }
         Err(Error::UnknownFunction(name))
     }
+
+    fn call(&mut self, index: &Type, args: &Type, line: isize) -> Result<(), Error> {
+        match index {
+            Type::Int(i) => {
+                match i {
+                    0 => Err(Error::UnknownFunctionCall(line, 0)),
+                    1 => {
+                        print!("{}", args.fmt());
+                        Ok(())
+                    },
+                    2 => {
+                        let mut input = String::new();
+                        io::stdin().read_line(&mut input).unwrap();
+                        let input = input.trim().parse::<Type>().unwrap();
+                        self.stack.push(input);
+                        Ok(())
+                    }
+                    _ => Err(Error::UnknownFunctionCall(line, *i as isize)),
+                }
+            }
+            _ => {dbg!(index); Err(Error::UnknownFunctionCall(line, -1))},
+        }
+    }
 }
 
 fn print_debug(vm: &VM, curr_instr: &Instr) {
@@ -184,20 +207,4 @@ fn print_debug(vm: &VM, curr_instr: &Instr) {
     println!("regis: {:?}", regs);
     println!("stack: {:?}", vm.stack);
     println!("currn: {} {}", vm.instr_pointer, curr_instr);
-}
-
-fn call(index: &Type, args: &Type, line: isize) -> Result<(), Error> {
-    match index {
-        Type::Int(i) => {
-            match i {
-                0 => Err(Error::UnknownFunctionCall(line, 0)),
-                1 => {
-                    println!("{}", args.fmt());
-                    Ok(())
-                },
-                _ => Err(Error::UnknownFunctionCall(line, *i as isize)),
-            }
-        }
-        _ => {dbg!(index); Err(Error::UnknownFunctionCall(line, -1))},
-    }
 }
