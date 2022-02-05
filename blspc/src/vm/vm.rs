@@ -6,7 +6,7 @@ pub enum Error {
     NoMainFunction,
     StackOverflow,
     UnknownFunction(String),
-    UnknownFunctionCall(isize, isize),
+    UnknownFunctionCall(String),
     InvalidAriphmeticOperation,
 }
 
@@ -16,7 +16,7 @@ impl Display for Error {
             Error::NoMainFunction => write!(f, "Main function not found"),
             Error::StackOverflow => write!(f, "Stack overflow"),
             Error::UnknownFunction(name) => write!(f, "Unknown function: {}", name),
-            Error::UnknownFunctionCall(l, e) => write!(f, "Unknown function call at {}: {}", l, e),
+            Error::UnknownFunctionCall(function) => write!(f, "Unknown function call: {}", function),
             Error::InvalidAriphmeticOperation => write!(f, "Invalid ariphmetic operation"),
         }
     }
@@ -81,10 +81,8 @@ impl VM {
                     continue 'tco;
                 },
 
-                Call => {
-                    let index = &self.stack.pop().unwrap();
-                    let args = &self.stack.pop().unwrap();
-                    self.call(index, args, self.instr_pointer)?;
+                Call { function } => {
+                    self.call(function)?;
                     continue 'tco;
                 },
 
@@ -205,26 +203,21 @@ impl VM {
         Err(Error::UnknownFunction(name))
     }
 
-    fn call(&mut self, index: &Type, args: &Type, line: isize) -> Result<(), Error> {
-        match index {
-            Type::Int(i) => {
-                match i {
-                    0 => Err(Error::UnknownFunctionCall(line, 0)),
-                    1 => {
-                        print!("{}", args.fmt());
-                        Ok(())
-                    },
-                    2 => {
-                        let mut input = String::new();
-                        io::stdin().read_line(&mut input).unwrap();
-                        let input = input.trim().parse::<Type>().unwrap();
-                        self.stack.push(input);
-                        Ok(())
-                    }
-                    _ => Err(Error::UnknownFunctionCall(line, *i as isize)),
-                }
-            }
-            _ => {dbg!(index); Err(Error::UnknownFunctionCall(line, -1))},
+    fn call(&mut self, function: &String) -> Result<(), Error> {
+        match function.as_str() {
+            "print" => {
+                let value = self.stack.pop().unwrap();
+                println!("{}", value.fmt());
+                return Ok(());
+            },
+            "read" => {
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).unwrap();
+                let input = input.trim().parse::<Type>().unwrap();
+                self.stack.push(input);
+                Ok(())
+            },
+            _ => { dbg!(function); Err(Error::UnknownFunctionCall(function.to_string())) },
         }
     }
 }

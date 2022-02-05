@@ -23,10 +23,6 @@ impl Compiler {
         r
     }
     
-    fn current_register(&self) -> Register {
-        Register { value: self.register_pointer - 1 }
-    }
-    
     pub fn compile(&mut self, src: Sexpr) -> Result<Vec<Instr>, String> {
         let mut result = Vec::new();
         let comp = src.clone(); // Used for commenting
@@ -121,15 +117,10 @@ impl Compiler {
         match intrinsic.as_str() {
             "print" => {
                 result.append(&mut self.compile(args[0].clone())?);
-                
-                result.push(Instr::Push { value: Type::Int(1) });
-                result.push(Instr::Call);
+                result.push(Instr::Call { function: "print".to_string() });
             },
-            "read" => {
-                result.push(Instr::Push { value: Type::Int(0) }); // read doesn't need an argument
-                result.push(Instr::Push { value: Type::Int(2) });
-                result.push(Instr::Call);
-            }
+            "read" => { result.push(Instr::Call { function: "read".to_string() }); }
+
             "add" | "+" => {
                 let mut lhs = self.compile_atom(&args[0])?;
                 result.append(&mut lhs);

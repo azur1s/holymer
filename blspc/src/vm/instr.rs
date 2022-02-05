@@ -176,7 +176,7 @@ pub enum Instr {
     // Variable declaration
     Load { address: Register }, Store { address: Register },
     // Call intrinsic function.
-    Call,
+    Call { function: String },
     // Stack operations.
     Push { value: Type }, Pop { address: Register }, Swap,
     // Stack arithmetic operations.
@@ -204,7 +204,7 @@ impl Display for Instr {
             Instr::Load { address }      => write!(f, "    LOAD            {}", address),
             Instr::Store { address }     => write!(f, "    STORE           {}", address),
 
-            Instr::Call                  => write!(f, "    CALL"),
+            Instr::Call { function }     => write!(f, "    CALL            {}", function),
 
             Instr::Push { value }        => write!(f, "    PUSH            {}", value),
             Instr::Pop { address }       => write!(f, "    POP             {}", address),
