@@ -18,17 +18,26 @@ pub fn parse_instr(src: &str) -> Vec<Instr> {
         match tokens[0] {
             "LOAD"  => { result.push(Instr::Load { address: register!(tokens[1].to_string()) }); },
             "STORE" => { result.push(Instr::Store { address: register!(tokens[1].to_string()) }); },
+
             "CALL"  => { result.push(Instr::Call); },
+
             "PUSH"  => { result.push(Instr::Push { value: value!(tokens[1]) }); },
             "POP"   => { result.push(Instr::Pop { address: register!(tokens[1]) }); },
             "SWAP"  => { result.push(Instr::Swap); },
+
             "ADD"   => { result.push(Instr::Add); },
             "SUB"   => { result.push(Instr::Sub); },
             "MUL"   => { result.push(Instr::Mul); },
             "DIV"   => { result.push(Instr::Div); },
+
+            "NOT"   => { result.push(Instr::Not); },
+
             "JMPL"  => { result.push(Instr::JumpLabel { to: tokens[1].to_string() }); },
-            "JMP"   => { result.push(Instr::Jump { to: tokens[1].parse::<usize>().unwrap() }); },
-            "PJMPF" => todo!(),
+            "JMP"   => { result.push(Instr::Jump { to: tokens[1].parse::<isize>().unwrap() }); },
+            "JMPF" => { result.push(Instr::JumpIfFalse { to: tokens[1].parse::<isize>().unwrap() }); },
+
+            "EQ"    => { result.push(Instr::Equal); },
+
             "RET"   => { result.push(Instr::Return); },
             _ => {
                 if tokens[0].starts_with(".") {

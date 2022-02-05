@@ -60,6 +60,8 @@ impl VM {
         if !found { return Err(Error::NoMainFunction); }
 
         'tco: loop {
+            // std::thread::sleep(std::time::Duration::from_millis(1000));
+
             self.instr_pointer += 1;
             if self.instr_pointer - 1 == instrs.len() as isize {
                 result = Ok(());
@@ -78,12 +80,14 @@ impl VM {
                     self.store(address, value)?;
                     continue 'tco;
                 },
+
                 Call => {
                     let index = &self.stack.pop().unwrap();
                     let args = &self.stack.pop().unwrap();
                     self.call(index, args, self.instr_pointer)?;
                     continue 'tco;
                 },
+
                 Push { value } => {
                     self.push(value.trim().clone())?;
                     continue 'tco;
@@ -100,6 +104,7 @@ impl VM {
                     self.stack.push(bottom);
                     continue 'tco;
                 },
+
                 Add => {
                     let lhs = self.stack.pop().unwrap();
                     let rhs = self.stack.pop().unwrap();
@@ -124,6 +129,13 @@ impl VM {
                     self.push((lhs / rhs)?)?;
                     continue 'tco;
                 },
+
+                Not => {
+                    let value = self.stack.pop().unwrap();
+                    self.push((!value)?)?;
+                    continue 'tco;
+                },
+
                 JumpLabel { to } => {
                     let pointer = self.get_function_pointer(to.to_string())?;
                     self.jumped_from = self.instr_pointer;
@@ -134,6 +146,22 @@ impl VM {
                     self.instr_pointer += *to as isize + 1;
                     continue 'tco;
                 },
+                JumpIfFalse { to } => {
+                    let cond = self.stack.pop().unwrap();
+                    if cond == Type::Boolean(false) {
+                        if *to < 0 { self.instr_pointer += *to as isize - 2; }
+                        else { self.instr_pointer += *to as isize + 1; }
+                        continue 'tco;
+                    }
+                },
+
+                Equal => {
+                    let lhs = self.stack.pop().unwrap();
+                    let rhs = self.stack.pop().unwrap();
+                    self.push(Type::Boolean(lhs == rhs))?;
+                    continue 'tco;
+                },
+
                 Return => {
                     if self.jumped_from == 0 { return Ok(()); }
                     self.instr_pointer = self.jumped_from;
@@ -141,7 +169,7 @@ impl VM {
                     continue 'tco;
                 },
                 Label { .. } => {},
-                _ => unimplemented!(),
+                _ => { dbg!(instr); unimplemented!()},
             }
         }
 

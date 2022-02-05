@@ -61,23 +61,42 @@ impl Compiler {
                                     let mut then = self.compile(cdr[1].clone())?;
                                     let mut else_ = self.compile(cdr[2].clone())?;
 
-                                    result.push(Instr::JumpIfFalse { to: len(&then) + 1}); // +1 for the jump instr
+                                    result.push(Instr::JumpIfFalse { to: len(&then) as isize + 1 }); // +1 for the jump instr
                                     result.append(&mut then);
-                                    result.push(Instr::Jump { to: len(&else_) });
+                                    result.push(Instr::Jump { to: len(&else_) as isize });
                                     result.append(&mut else_);
                                 },
-                                "let" => {
+                                "def" => {
                                     let var_name = match &cdr[0] {
                                         Symbol(ref name) => name.clone(),
                                         _ => return Err(format!("Expected variable name, got {}", cdr[0])),
                                     };
-                                    let body = &cdr[1];
 
-                                    let var_pointer = self.next_register();
-                                    self.variables.push((var_name, var_pointer));
+                                    if let Some(v) = self.variables.iter().find(|v| v.0 == var_name) {
+                                        let r = v.1;
+                                        self.variables.retain(|v| v.0 != var_name);
+                                        self.variables.push((var_name, r));
+                                        result.append(&mut self.compile(cdr[1].clone())?);
+                                        result.push(Instr::Store { address: r });
+                                    } else {
+                                        let var_pointer = self.next_register();
+                                        self.variables.push((var_name, var_pointer));
+                                        result.append(&mut self.compile(cdr[1].clone())?);
+                                        result.push(Instr::Store { address: var_pointer });
+                                    }
+                                },
+                                "while" => {
+                                    let mut cond = self.compile(cdr[0].clone())?;
+                                    let mut body = self.compile(cdr[1].clone())?;
 
-                                    result.append(&mut self.compile(body.clone())?);
-                                    result.push(Instr::Store { address: var_pointer });
+                                    let jump_length = (len(&body) as isize) + (len(&cond) as isize);
+
+                                    result.append(&mut cond.clone());
+                                    result.push(Instr::JumpIfFalse { to: jump_length + 1 });
+                                    result.append(&mut body);
+                                    result.append(&mut cond);
+                                    result.push(Instr::Not);
+                                    result.push(Instr::JumpIfFalse { to: -jump_length });
                                 },
                                 _ => {
                                     result.append(&mut self.compile_intrinsic(call, &cdr)?);
@@ -149,6 +168,21 @@ impl Compiler {
                 result.push(Instr::Swap);
                 result.push(Instr::Div);
             },
+            "equal" | "=" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                result.append(&mut lhs);
+                
+                let mut rhs = self.compile_atom(&args[1])?;
+                result.append(&mut rhs);
+                
+                result.push(Instr::Equal);
+            },
+            "not" | "!" => {
+                let mut lhs = self.compile_atom(&args[0])?;
+                result.append(&mut lhs);
+                
+                result.push(Instr::Not);
+            },
             _ => {
                 result.push(Instr::Comment { text: format!("{} function", intrinsic) });
                 result.push(Instr::JumpLabel { to: format!("function_{}", intrinsic), });
@@ -175,7 +209,10 @@ impl Compiler {
                 result.push(Instr::Push { value: Type::Boolean(*b) });
             },
             Symbol(s) => {
-                let var_pointer = self.variables.iter().find(|&(ref name, _)| name == s).unwrap().1;
+                let var_pointer = match self.variables.iter().find(|&(ref name, _)| name == s) {
+                    Some((_, pointer)) => *pointer,
+                    None => return Err(format!("Undefined variable {}", s)),
+                };
                 result.push(Instr::Load { address: var_pointer });
             },
             _ => { result.append(&mut self.compile(atom.clone())?); }

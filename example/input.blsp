@@ -1,4 +1,4 @@
 (fun main (do
-    (let in (read))
+    (def in (read))
     (print "Your input was: ")
     (print in)))

@@ -23,7 +23,7 @@ DONE:
 - Parsing, Compiling, Running(VM)
 - Intrinsic:
   - Function definition: `fun`
-  - Variable definition: `let`
+  - Variable definition: `def`
   - Do blocks: `do`
   - User input: `read`
   - Printing: `print`
@@ -33,6 +33,9 @@ DONE:
     - `-` , `sub`
     - `*` , `mul`
     - `/` , `div`
+  - Comparison:
+    - `=` , `equal`
+    - `!` , `not`
 
 TODO:
 - Prove turing complete

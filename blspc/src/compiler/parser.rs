@@ -89,8 +89,8 @@ impl Parser {
         let token = self.next().unwrap();
         match token.as_str() {
             "null" => Ok(Nil),
-            "true" => Ok(Boolean(true)),
-            "false" => Ok(Boolean(false)),
+            "true" | "True" => Ok(Boolean(true)),
+            "false" | "False" => Ok(Boolean(false)),
             _ => {
                 if Regex::new(r#"[+-]?([0-9]*[.])?[0-9]+"#).unwrap().is_match(&token) {
                 Ok(Int(token.parse().unwrap()))
