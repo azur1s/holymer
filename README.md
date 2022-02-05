@@ -28,6 +28,7 @@ DONE:
   - User input: `read`
   - Printing: `print`
   - Condition: `if`
+  - Loops: `while`
   - Math: 
     - `+` , `add`
     - `-` , `sub`
