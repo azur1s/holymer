@@ -1,4 +1,4 @@
-use std::{io, fmt::Display};
+use std::{io::{self, Read}, fmt::Display, fs::File};
 
 use crate::vm::instr::{Instr::{self, *}, Type, Register};
 
@@ -8,6 +8,7 @@ pub enum Error {
     UnknownFunction(String),
     UnknownFunctionCall(String),
     InvalidAriphmeticOperation,
+    FileError(String),
 }
 
 impl Display for Error {
@@ -18,6 +19,7 @@ impl Display for Error {
             Error::UnknownFunction(name) => write!(f, "Unknown function: {}", name),
             Error::UnknownFunctionCall(function) => write!(f, "Unknown function call: {}", function),
             Error::InvalidAriphmeticOperation => write!(f, "Invalid ariphmetic operation"),
+            Error::FileError(msg) => write!(f, "Could not open file: {}", msg),
         }
     }
 }
@@ -217,6 +219,14 @@ impl VM {
                 self.stack.push(input);
                 Ok(())
             },
+            "slurp" => {
+                let file_name = self.stack.pop().unwrap().fmt();
+                let mut result = String::new();
+                match File::open(file_name).and_then(|mut f| f.read_to_string(&mut result)) {
+                    Ok(_) => Ok(self.stack.push(Type::String(result))),
+                    Err(e) => Err(Error::FileError(e.to_string())),
+                }
+            }
             _ => { dbg!(function); Err(Error::UnknownFunctionCall(function.to_string())) },
         }
     }

@@ -119,7 +119,11 @@ impl Compiler {
                 result.append(&mut self.compile(args[0].clone())?);
                 result.push(Instr::Call { function: "print".to_string() });
             },
-            "read" => { result.push(Instr::Call { function: "read".to_string() }); }
+            "read" => { result.push(Instr::Call { function: "read".to_string() }); },
+            "slurp" => {
+                result.append(&mut self.compile(args[0].clone())?);
+                result.push(Instr::Call { function: "slurp".to_string() });
+            },
 
             "add" | "+" => {
                 let mut lhs = self.compile_atom(&args[0])?;
