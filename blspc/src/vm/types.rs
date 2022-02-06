@@ -10,6 +10,7 @@ pub enum Type {
     Float(f64),
     Boolean(bool),
     String(String),
+    Cons(Vec<Type>),
 }
 
 impl Type {
@@ -37,6 +38,16 @@ impl Type {
                 false => "false".to_string(),
             },
             Type::String(s) => s.clone(),
+            Type::Cons(v) => {
+                let mut s = String::new();
+                s.push('(');
+                for (i, t) in v.iter().enumerate() {
+                    if i != 0 {  s.push(','); }
+                    s.push_str(&t.fmt());
+                }
+                s.push(')');
+                s
+            }
         }
     }
 }
@@ -129,15 +140,25 @@ impl FromStr for Type {
             "true"  => Ok(Type::Boolean(true)),
             "false" => Ok(Type::Boolean(false)),
             _ => {
-                let i = s.parse::<i64>();
-                if i.is_ok() {
-                    Ok(Type::Int(i.unwrap()))
+                if s.starts_with("(") {
+                    let elems = s[1..s.len() - 1]
+                        .split(',')
+                        .collect::<Vec<&str>>()
+                        .iter()
+                        .map(|s| s.trim().parse::<Type>())
+                        .collect::<Result<Vec<Type>, Self::Err>>()?;
+                    Ok(Type::Cons(elems))
                 } else {
-                    let fl = s.parse::<f64>();
-                    if fl.is_ok() {
-                        Ok(Type::Float(fl.unwrap()))
+                    let i = s.parse::<i64>();
+                    if i.is_ok() {
+                        Ok(Type::Int(i.unwrap()))
                     } else {
-                        Ok(Type::String(s.to_string()))
+                        let fl = s.parse::<f64>();
+                        if fl.is_ok() {
+                            Ok(Type::Float(fl.unwrap()))
+                        } else {
+                            Ok(Type::String(s.to_string()))
+                        }
                     }
                 }
             }

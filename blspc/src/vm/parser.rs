@@ -2,7 +2,7 @@ use regex::Regex;
 
 use crate::vm::{instr::*, types::Type};
 
-const REGEX: &str = r###"[^\s\$";]+|"[^"]*"|;.*"###;
+const REGEX: &str = r###"\([^)]*\)|[^\s\$";]+|"[^"]*"|;.*"###;
 
 macro_rules! value    { ($s:expr) => { $s.parse::<Type>().unwrap() }; }
 macro_rules! register { ($s:expr) => { $s.parse::<Register>().unwrap() }; }
@@ -34,7 +34,7 @@ pub fn parse_instr(src: &str) -> Vec<Instr> {
 
             "JMPL"  => { result.push(Instr::JumpLabel { to: tokens[1].to_string() }); },
             "JMP"   => { result.push(Instr::Jump { to: tokens[1].parse::<isize>().unwrap() }); },
-            "JMPF" => { result.push(Instr::JumpIfFalse { to: tokens[1].parse::<isize>().unwrap() }); },
+            "JMPF"  => { result.push(Instr::JumpIfFalse { to: tokens[1].parse::<isize>().unwrap() }); },
 
             "EQ"    => { result.push(Instr::Equal); },
 
