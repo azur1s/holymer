@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::vm::instr::*;
+use crate::vm::{instr::*, types::Type};
 
 const REGEX: &str = r###"[^\s\$";]+|"[^"]*"|;.*"###;
 

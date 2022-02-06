@@ -1,6 +1,6 @@
 use std::{io::{self, Read}, fmt::Display, fs::File};
 
-use crate::vm::instr::{Instr::{self, *}, Type, Register};
+use crate::vm::{instr::{Instr::{self, *}, Register}, types::Type};
 
 pub enum Error {
     NoMainFunction,

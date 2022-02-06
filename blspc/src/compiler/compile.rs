@@ -1,4 +1,5 @@
-use crate::{vm::instr::*, compiler::parser::Sexpr::{self, *}};
+use crate::{vm::{instr::*, types::Type}, compiler::parser::Sexpr::{self, *}};
+
 pub struct Compiler {
     // Compiled instructions
     pub instructions: Vec<Instr>,
