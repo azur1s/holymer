@@ -2,7 +2,7 @@ use regex::Regex;
 
 use crate::vm::{instr::*, types::Type};
 
-const REGEX: &str = r###"\([^)]*\)|[^\s\$";]+|"[^"]*"|;.*"###;
+const REGEX: &str = r###"\((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*\)|[^\s\$";]+|"[^"]*"|;.*"###;
 
 macro_rules! value    { ($s:expr) => { $s.parse::<Type>().unwrap() }; }
 macro_rules! register { ($s:expr) => { $s.parse::<Register>().unwrap() }; }

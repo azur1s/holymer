@@ -209,7 +209,7 @@ impl VM {
         match function.as_str() {
             "print" => {
                 let value = self.stack.pop().unwrap();
-                println!("{}", value.fmt());
+                println!("{}", value.print());
                 return Ok(());
             },
             "read" => {
@@ -220,7 +220,7 @@ impl VM {
                 Ok(())
             },
             "slurp" => {
-                let file_name = self.stack.pop().unwrap().fmt();
+                let file_name = self.stack.pop().unwrap().to_string();
                 let mut result = String::new();
                 match File::open(file_name).and_then(|mut f| f.read_to_string(&mut result)) {
                     Ok(_) => Ok(self.stack.push(Type::String(result))),

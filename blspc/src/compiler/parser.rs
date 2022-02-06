@@ -9,6 +9,7 @@ pub enum Sexpr {
     Nil,
 }
 
+// Used for error displaying
 impl std::fmt::Display for Sexpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -58,7 +59,10 @@ impl Parser {
         match self.peek() {
             Some(s) => match s.as_str() {
                 ")" => Err(format!("Unexpected ')' at position {}", self.position)),
-                // TODO: Handle quote and that stuff.
+                "'" => {
+                    self.next();
+                    Ok(Cons(Box::new(Symbol("quote".to_string())), vec![self.parse()?]))
+                },
                 "(" => self.parse_sequence(")"),
                 _ => self.parse_atom(),
             }
@@ -92,12 +96,12 @@ impl Parser {
             "true" | "True" => Ok(Boolean(true)),
             "false" | "False" => Ok(Boolean(false)),
             _ => {
-                if Regex::new(r#"[+-]?([0-9]*[.])?[0-9]+"#).unwrap().is_match(&token) {
-                Ok(Int(token.parse().unwrap()))
+                if Regex::new(r#""(?:\\.|[^\\"])*""#).unwrap().is_match(&token) {
+                    Ok(Str(token[1..token.len() - 1].to_string()))
                 } else if Regex::new(r#"[+-]?([0-9]*[.])?[0-9]+"#).unwrap().is_match(&token) {
-                Ok(Float(token.parse().unwrap()))
-                } else if Regex::new(r#""(?:\\.|[^\\"])*""#).unwrap().is_match(&token) {
-                Ok(Str(token[1..token.len() - 1].to_string()))
+                    Ok(Int(token.parse().unwrap()))
+                } else if Regex::new(r#"[+-]?([0-9]*[.])?[0-9]+"#).unwrap().is_match(&token) {
+                    Ok(Float(token.parse().unwrap()))
                 } else {
                     Ok(Symbol(token))
                 }

@@ -93,6 +93,10 @@ impl Compiler {
                                     result.push(Instr::Not);
                                     result.push(Instr::JumpIfFalse { to: -jump_length });
                                 },
+                                "quote" => {
+                                    let value = quoted_sexpr(&cdr[0])?;
+                                    result.push(Instr::Push { value });
+                                }
                                 _ => {
                                     result.append(&mut self.compile_intrinsic(call, &cdr)?);
                                 }
@@ -214,6 +218,25 @@ impl Compiler {
         }
         
         Ok(result)
+    }
+}
+
+fn quoted_sexpr(cdr: &Sexpr) -> Result<Type, String> {
+    match cdr {
+        Cons(car, cdr) => {
+            let mut vec = Vec::new();
+            vec.push(quoted_sexpr(car)?);
+            for item in cdr {
+                vec.push(quoted_sexpr(item)?);
+            }
+            Ok(Type::Cons(vec))
+        },
+        Symbol(ref s)  => Ok(Type::String(s.to_string())),
+        Str(ref s)     => Ok(Type::String(s.to_string())),
+        Int(ref i)     => Ok(Type::Int(*i)),
+        Float(ref f)   => Ok(Type::Float(*f)),
+        Boolean(ref b) => Ok(Type::Boolean(*b)),
+        Nil => Ok(Type::Null),
     }
 }
 

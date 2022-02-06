@@ -28,26 +28,20 @@ impl Type {
         }
     }
 
-    pub fn fmt(&self) -> String {
+    pub fn print(&self) -> String {
         match self {
-            Type::Null => "null".to_string(),
-            Type::Int(i) => i.to_string(),
-            Type::Float(f) => f.to_string(),
-            Type::Boolean(b) => match b {
-                true => "true".to_string(),
-                false => "false".to_string(),
-            },
-            Type::String(s) => s.clone(),
             Type::Cons(v) => {
                 let mut s = String::new();
                 s.push('(');
                 for (i, t) in v.iter().enumerate() {
-                    if i != 0 {  s.push(','); }
-                    s.push_str(&t.fmt());
+                    if i != 0 { s.push(' '); }
+                    s.push_str(&t.print().to_string());
                 }
                 s.push(')');
                 s
-            }
+            },
+            Type::String(s) => s.trim().to_string(),
+            _ => self.clone().to_string(),
         }
     }
 }
@@ -127,6 +121,16 @@ impl Display for Type {
             Type::Float(fl)  => write!(f, "{}", fl),
             Type::Boolean(b) => write!(f, "{}", b),
             Type::String(s)  => write!(f, "\"{}\"", s),
+            Type::Cons(v)    => {
+                let mut s = String::new();
+                s.push('(');
+                for (i, t) in v.iter().enumerate() {
+                    if i != 0 { s.push(' '); }
+                    s.push_str(&t.to_string());
+                }
+                s.push(')');
+                write!(f, "{}", s)
+            },
             _ => unreachable!(),
         }
     }
@@ -140,14 +144,24 @@ impl FromStr for Type {
             "true"  => Ok(Type::Boolean(true)),
             "false" => Ok(Type::Boolean(false)),
             _ => {
-                if s.starts_with("(") {
-                    let elems = s[1..s.len() - 1]
-                        .split(',')
-                        .collect::<Vec<&str>>()
-                        .iter()
-                        .map(|s| s.trim().parse::<Type>())
-                        .collect::<Result<Vec<Type>, Self::Err>>()?;
-                    Ok(Type::Cons(elems))
+                if s.starts_with("(") && s.ends_with(")") {
+                    let mut v = Vec::new();
+                    let mut s = s[1..s.len() - 1].to_string();
+                    // TODO: This is pretty messy :(
+                    while !s.is_empty() {
+                        let mut i = 0;
+                        while i < s.len() && s.chars().nth(i).unwrap().is_whitespace() { i += 1; }
+                        s = s[i..s.len()].to_string();
+                        if s.is_empty() { break; }
+
+                        let mut j = 0;
+                        while j < s.len() && !s.chars().nth(j).unwrap().is_whitespace() { j += 1; }
+                        let t = &s[0..j];
+
+                        v.push(t.parse::<Type>()?);
+                        s = s[j..s.len()].to_string();
+                    }
+                    Ok(Type::Cons(v))
                 } else {
                     let i = s.parse::<i64>();
                     if i.is_ok() {
