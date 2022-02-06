@@ -1,4 +1,4 @@
-use std::{fs::{read_to_string, File}, path::{Path, PathBuf}, io::{Write, Seek}, time::Instant, process::exit};
+use std::{fs::{read_to_string, File}, path::{Path, PathBuf}, io::{Write, BufWriter}, time::Instant, process::exit};
 
 use structopt::StructOpt;
 
@@ -15,13 +15,12 @@ mod vm;
 use vm::{vm::VM, parser::parse_instr};
 
 fn main() {
-    let start = Instant::now();
     let args = Opts::from_args();
     match args.commands {
         args::Args::Compile(args) => {
             let src = read_to_string(&args.file).unwrap();
             let debug = args.debug;
-            compile_src(src, args.output, args.file, debug, start);
+            compile_src(src, args.output, args.file, debug);
         },
         args::Args::Run(args) => {
             let src = read_to_string(&args.file).unwrap();
@@ -31,12 +30,13 @@ fn main() {
     }
 }
 
-fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, debug: bool, start: Instant) {
+fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, debug: bool) {
     let file_name = match path {
         Some(path) => path,
         None => Path::new(&file).to_path_buf(),
     }.file_stem().unwrap().to_str().unwrap().to_string();
     
+    let start = Instant::now();
     let tokens = tokenize(&cover_paren(src));
     let mut parser = Parser::new(tokens.clone());
     let result = parser.parse();
@@ -48,12 +48,12 @@ fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, debug: bool, s
             let code = compiler.compile(ast);
             match code {
                 Ok(code) => {
-                    let mut file = File::create(format!("{}.bsm", file_name)).unwrap();
+                    let file = File::create(format!("{}.bsm", file_name)).unwrap();
+                    let mut buffer = BufWriter::new(file);
                     for line in code {
-                        if line.to_string().starts_with(";") { continue; }
-                        write!(file, "{}\n", line).unwrap();
+                        writeln!(buffer, "{}", line).unwrap();
                     }
-                    file.seek(std::io::SeekFrom::End(-1)).unwrap(); // Trim last newline
+                    buffer.flush().unwrap();
                     
                     let elapsed = start.elapsed();
                     println!("Compiled in {}.{}s", elapsed.as_secs(), elapsed.subsec_millis());
