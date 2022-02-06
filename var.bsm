@@ -1,0 +1,16 @@
+.function_return_true:
+    PUSH            true
+    RET
+.function_main:
+    PUSH            "John"
+    STORE           %1
+    ;               `return_true` function
+    JMPL            function_return_true
+    JMPF            3
+    ;               `name` variable
+    LOAD            %1
+    CALL            print
+    JMP             2
+    PUSH            "no"
+    CALL            print
+    RET

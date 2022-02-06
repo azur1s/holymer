@@ -56,7 +56,7 @@ impl Display for Instr {
             //                                        --4-- Padding
             //                                        ----------20--------- Parameter start
             Instr::Label { name }        => write!(f, ".{}:", name),
-            Instr::Comment { text }      => write!(f, ";{}", text),
+            Instr::Comment { text }      => write!(f, "    ;               {}", text),
 
             Instr::Load { address }      => write!(f, "    LOAD            {}", address),
             Instr::Store { address }     => write!(f, "    STORE           {}", address),

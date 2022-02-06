@@ -26,7 +26,6 @@ impl Compiler {
     
     pub fn compile(&mut self, src: Sexpr) -> Result<Vec<Instr>, String> {
         let mut result = Vec::new();
-        let comp = src.clone(); // Used for commenting
         
         'tco: loop {
             match src {
@@ -40,14 +39,13 @@ impl Compiler {
                                     }
                                 },
                                 "fun" => {
-                                    result.push(Instr::Comment { text: format!("function {}", comp) });
                                     let function_name = match &cdr[0] {
                                         Symbol(ref name) => format!("function_{}", name.clone()),
                                         _ => return Err(format!("Expected function name, got {}", cdr[0])),
                                     };
                                     let body = &cdr[1];
                                     
-                                    result.push(Instr::Label{ name: function_name });
+                                    result.push(Instr::Label { name: function_name });
                                     result.append(&mut self.compile(body.clone())?);
                                     result.push(Instr::Return);
                                 },
@@ -180,7 +178,7 @@ impl Compiler {
                 result.push(Instr::Not);
             },
             _ => {
-                result.push(Instr::Comment { text: format!("{} function", intrinsic) });
+                result.push(Instr::Comment { text: format!("`{}` function", intrinsic) });
                 result.push(Instr::JumpLabel { to: format!("function_{}", intrinsic), });
             }
         }
@@ -209,6 +207,7 @@ impl Compiler {
                     Some((_, pointer)) => *pointer,
                     None => return Err(format!("Undefined variable {}", s)),
                 };
+                result.push(Instr::Comment { text: format!("`{}` variable", s) });
                 result.push(Instr::Load { address: var_pointer });
             },
             _ => { result.append(&mut self.compile(atom.clone())?); }
