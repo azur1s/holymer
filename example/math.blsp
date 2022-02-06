@@ -1,3 +1,0 @@
-(fun cool_number (/ (+ 345 345) 10))
-(fun main
-    (print cool_number))

@@ -35,7 +35,7 @@ impl Type {
                 s.push('(');
                 for (i, t) in v.iter().enumerate() {
                     if i != 0 { s.push(' '); }
-                    s.push_str(&t.print().to_string());
+                    s.push_str(&t.print());
                 }
                 s.push(')');
                 s

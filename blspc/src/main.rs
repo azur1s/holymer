@@ -34,7 +34,7 @@ fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, debug: bool) {
     let file_name = match path {
         Some(path) => path,
         None => Path::new(&file).to_path_buf(),
-    }.file_stem().unwrap().to_str().unwrap().to_string();
+    }.file_stem().unwrap().to_str().unwrap().to_string(); // what
     
     let start = Instant::now();
     let tokens = tokenize(&cover_paren(src));
@@ -57,14 +57,17 @@ fn compile_src(src: String, path: Option<PathBuf>, file: PathBuf, debug: bool) {
                     
                     let elapsed = start.elapsed();
                     println!("Compiled in {}.{}s", elapsed.as_secs(), elapsed.subsec_millis());
+                    exit(0);
                 },
                 Err(err) => {
                     eprintln!("{}", err);
+                    exit(1);
                 }
             }
         },
         Err(e) => {
             eprintln!("{}", e);
+            exit(1);
         }
     }
 }

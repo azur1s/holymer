@@ -113,6 +113,28 @@ impl Compiler {
         
         Ok(result)
     }
+    
+    fn compile_atom(&mut self, atom: &Sexpr) -> Result<Vec<Instr>, String> {
+        let mut result = Vec::new();
+        
+        match atom {
+            Int(i) => { result.push(Instr::Push { value: Type::Int(*i) }); },
+            Float(f) => { result.push(Instr::Push { value: Type::Float(*f) }); },
+            Str(s) => { result.push(Instr::Push { value: Type::String(s.to_string()) }); },
+            Boolean(b) => { result.push(Instr::Push { value: Type::Boolean(*b) }); },
+            Symbol(s) => {
+                let var_pointer = match self.variables.iter().find(|&(ref name, _)| name == s) {
+                    Some((_, pointer)) => *pointer,
+                    None => return Err(format!("Undefined variable {}", s)),
+                };
+                result.push(Instr::Comment { text: format!("`{}` variable", s) });
+                result.push(Instr::Load { address: var_pointer });
+            },
+            _ => { result.append(&mut self.compile(atom.clone())?); }
+        }
+        
+        Ok(result)
+    }
 
     fn compile_intrinsic(&mut self, intrinsic: &String, args: &[Sexpr]) -> Result<Vec<Instr>, String> {
         let mut result = Vec::new();
@@ -127,6 +149,10 @@ impl Compiler {
                 result.append(&mut self.compile(args[0].clone())?);
                 result.push(Instr::Call { function: "slurp".to_string() });
             },
+            "throw" => {
+                result.append(&mut self.compile(args[0].clone())?);
+                result.push(Instr::Call { function: "throw".to_string() });
+            }
 
             "add" | "+" => {
                 let mut lhs = self.compile_atom(&args[0])?;
@@ -187,36 +213,6 @@ impl Compiler {
             }
         }
 
-        Ok(result)
-    }
-    
-    fn compile_atom(&mut self, atom: &Sexpr) -> Result<Vec<Instr>, String> {
-        let mut result = Vec::new();
-        
-        match atom {
-            Int(i) => {
-                result.push(Instr::Push { value: Type::Int(*i) });
-            },
-            Float(f) => {
-                result.push(Instr::Push { value: Type::Float(*f) });
-            },
-            Str(s) => {
-                result.push(Instr::Push { value: Type::String(s.to_string()) });
-            },
-            Boolean(b) => {
-                result.push(Instr::Push { value: Type::Boolean(*b) });
-            },
-            Symbol(s) => {
-                let var_pointer = match self.variables.iter().find(|&(ref name, _)| name == s) {
-                    Some((_, pointer)) => *pointer,
-                    None => return Err(format!("Undefined variable {}", s)),
-                };
-                result.push(Instr::Comment { text: format!("`{}` variable", s) });
-                result.push(Instr::Load { address: var_pointer });
-            },
-            _ => { result.append(&mut self.compile(atom.clone())?); }
-        }
-        
         Ok(result)
     }
 }

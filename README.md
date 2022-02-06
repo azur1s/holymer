@@ -22,13 +22,14 @@ Hello, World!
 DONE:
 - Parsing, Compiling, Running(VM)
 - Intrinsic:
-  - Function definition: `fun`
+  - Function definition: `fun` (no arguments yet)
   - Variable definition: `def`
   - Do blocks: `do`
   - User input: `read`
   - Printing: `print`
   - Condition: `if`
   - Loops: `while`
+  - Erroring: `throw`
   - Math: 
     - `+` , `add`
     - `-` , `sub`

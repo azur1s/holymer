@@ -9,6 +9,7 @@ pub enum Error {
     UnknownFunctionCall(String),
     InvalidAriphmeticOperation,
     FileError(String),
+    Throw(String),
 }
 
 impl Display for Error {
@@ -20,6 +21,7 @@ impl Display for Error {
             Error::UnknownFunctionCall(function) => write!(f, "Unknown function call: {}", function),
             Error::InvalidAriphmeticOperation => write!(f, "Invalid ariphmetic operation"),
             Error::FileError(msg) => write!(f, "Could not open file: {}", msg),
+            Error::Throw(msg) => write!(f, "{}", msg),
         }
     }
 }
@@ -226,7 +228,11 @@ impl VM {
                     Ok(_) => Ok(self.stack.push(Type::String(result))),
                     Err(e) => Err(Error::FileError(e.to_string())),
                 }
-            }
+            },
+            "throw" => {
+                let value = self.stack.pop().unwrap();
+                return Err(Error::Throw(value.print()));
+            },
             _ => { dbg!(function); Err(Error::UnknownFunctionCall(function.to_string())) },
         }
     }
