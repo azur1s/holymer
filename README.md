@@ -1,24 +1,23 @@
-# <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="35"> bobbylisp
+# vy
 another lisp dialect
-> Also available on https://git.ablecorp.us/azur/bobbylisp
 
-## <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="25"> Installation
+## Installation
 ```console
-$ bash <(curl -s https://raw.githubusercontent.com/azur1s/bobbylisp/master/install.sh)
+$ bash <(curl -s https://raw.githubusercontent.com/azur1s/vy/master/install.sh)
 ```
-The binary will be installed in `~/bin/blspc` run it with:
+The binary will be installed in `~/bin/vyc` run it with:
 ```console
-$ blspc help
+$ vyc help
 ```
 
-### <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="15"> Example
+### Example
 ```console
-$ blspc compile ./example/hello.blsp
-$ blspc run ./hello.bsm
+$ vyc compile ./example/hello.vy
+$ vyc run ./hello.bsm
 Hello, World!
 ```
 
-## <img src="https://raw.githubusercontent.com/azur1s/bobbylisp/master/assets/icon.png" width="25"> Progress:
+## Progress:
 DONE:
 - Parsing, Compiling, Running(VM)
 - Intrinsic:

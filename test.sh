@@ -6,17 +6,17 @@ echo $2
 # if $2 equal to "noecho"
 if [ $2 = "noecho" ];
 then
-    make debug; echo ""; blspc compile $noext.blsp; echo ""
-    cat $noext.blsp; echo -e "\n"; cat $name.bsm; echo ""
-    blspc run $name.bsm
+    make debug; echo ""; vyc compile $noext.vy; echo ""
+    cat $noext.vy; echo -e "\n"; cat $name.vyir; echo ""
+    vyc run $name.vyir
 else
     make debug
-    blspc compile $noext.blsp
+    vyc compile $noext.vy
     echo -e   "------------------------------------------- SOURCE"
-    cat $noext.blsp
+    cat $noext.vy
     echo -e "\n----------------------------------------- COMPILED"
-    cat $name.bsm
+    cat $name.vyir
     echo -e   "------------------------------------------- OUTPUT"
-    blspc run $name.bsm
+    blspc run $name.vyir
     echo -e   "--------------------------------------------------"
 fi

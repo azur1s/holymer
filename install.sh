@@ -105,42 +105,38 @@ install() {
             check_installed cargo
             echo "Setting up folders..."
             mkdir -p ~/.cache/
-            rm -rf ~/.cache/bobbylisp/
+            rm -rf ~/.cache/vy/
             echo "Cloning repository..."
             cd ~/.cache/
-            git clone https://github.com/azur1s/bobbylisp
-            cd ~/.cache/bobbylisp/
+            git clone https://github.com/azur1s/vy
+            cd ~/.cache/vy/
             echo "Compiling..."
             cargo build --release
-            mv ~/.cache/bobbylisp/target/release/blspc ~/bin/blspc
-            clean_up "Done! Thanks a lot for trying out Bobbylisp!";;
+            mv ~/.cache/vy/target/release/vyc ~/bin/vyc
+            clean_up "Done! Thanks a lot for trying out vy!";;
         2)
             echo "Testing dependencies..."
             check_installed git
             check_installed cargo
             echo "Setting up folders..."
             mkdir -p ~/.cache/
-            rm -rf ~/.cache/bobbylisp/
+            rm -rf ~/.cache/vy/
             echo "Cloning repository..."
             cd ~/.cache/
-            git clone https://github.com/azur1s/bobbylisp
-            cd ~/.cache/bobbylisp/
+            git clone https://github.com/azur1s/vy
+            cd ~/.cache/vy/
             echo "Compiling..."
             cargo build
-            mv ~/.cache/bobbylisp/target/debug/blspc ~/bin/blspc
-            clean_up "Done! Thanks a lot for trying out Bobbylisp!";;
+            mv ~/.cache/vy/target/debug/vyc ~/bin/vyc
+            clean_up "Done! Thanks a lot for trying out vy!";;
         3) clean_up;;
     esac
 }
 
 uninstall() {
-    echo "Uninstalling blspc..."
-    rm ~/bin/blspc -f
-    rm /usr/bin/blspc -f
-    sleep 1s
-    echo "Uninstalling trolley..."
-    rm ~/bin/trolley -f
-    rm /usr/bin/trolley -f
+    echo "Uninstalling vyc..."
+    rm ~/bin/vyc -f
+    rm /usr/bin/vyc -f
     sleep 1s
     clean_up "Sad to see you go! Goodbye! o/"
 }

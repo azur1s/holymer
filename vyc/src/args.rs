@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "blspc")]
+#[structopt(name = "vyc")]
 pub struct Opts {
     #[structopt(subcommand)]
     pub commands: Args,
