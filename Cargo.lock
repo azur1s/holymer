@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "vy"
+name = "vyc"
 version = "0.1.0"

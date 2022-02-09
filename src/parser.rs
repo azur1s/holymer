@@ -10,6 +10,10 @@ pub struct List {
     pub value: Option<Rc<RefCell<Cons>>>,
 }
 
+impl List {
+    pub const NIL: List = List { value: None };
+}
+
 /// Cons -> (car, [cdr])
 #[derive(Debug, Clone)]
 pub struct Cons {
@@ -25,11 +29,12 @@ pub enum Value {
     // Numbers
     Int(i64), Float(f64),
 
-    String(String), Symbol(String),
-    
+    String(String), Symbol(String),    
     List(List),
+}
 
-    Nil,
+impl Value {
+    pub const NIL: Value = Value::List(List::NIL);
 }
 
 #[derive(Debug, Clone)]
@@ -261,7 +266,7 @@ fn read<'a>(
                         if let Tree::List { vec, quote } = &finished {
                             if vec.is_empty() {
                                 finished = Tree::Atom {
-                                    atom: Value::Nil,
+                                    atom: Value::NIL,
                                     quote: *quote,
                                 };
                             }
@@ -300,7 +305,7 @@ fn read_atom(token: &str) -> Value {
     match lower.as_str() {
         "true" => Value::True,
         "false" => Value::False,
-        "nil" => Value::Nil,
+        "nil" => Value::NIL,
         _ => {
             // Parse number
             if let Ok(int) = token.parse::<i64>() { Value::Int(int) }
