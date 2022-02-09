@@ -36,6 +36,8 @@ fn main() {
                         if args_index < args.len() {
                             let file_path: &str = &args[args_index];
                             let file_content: String = read_to_string(file_path).unwrap();
+                            // Used for error reporting
+                            let file_content_joined: String = file_content.split("\n").collect::<Vec<&str>>().join(" ");
 
                             let parsed = parser::parse(&file_content);
                             let mut ast = Vec::new();
@@ -43,7 +45,7 @@ fn main() {
                                 match node {
                                     Ok(node) => { ast.push(node); },
                                     Err(error) => {
-                                        eprintln!("ERROR: {}", error);
+                                        eprintln!("{}", error.at(&file_content_joined));
                                         exit(1);
                                     }
                                 }

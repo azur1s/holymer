@@ -167,15 +167,14 @@ pub struct ParseError {
     pub pos: (usize, usize),
 }
 
-impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} at {}", self.kind, self.pos.0)
-    }
-}
-
 impl ParseError {
     fn new(kind: ParseErrorKind, pos: (usize, usize)) -> Self {
         ParseError { kind, pos }
+    }
+
+    pub fn at(&self, src: &str) -> String {
+        let snip = &src[(self.pos.0.saturating_sub(5))..(if self.pos.0 + 5 > src.len() { src.len() } else { self.pos.0 + 5 })];
+        format!("\n{}..{}\n{}\nError: {} at {}", " ".repeat(3), snip, format!("{}^", " ".repeat(10)), self.kind, self.pos.0)
     }
 }
 
@@ -192,7 +191,10 @@ fn read<'a>(
         match token {
             "(" => {
                 parenths += 1;
-                block_start = start;
+                
+                if parenths == 1 {
+                    block_start = start;
+                }
 
                 stack.push(Tree::List {
                     vec: Vec::new(),
