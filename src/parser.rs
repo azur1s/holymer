@@ -2,25 +2,7 @@
 // brundonsmith/rust_lisp (https://github.com/brundonsmith/rust_lisp)
 // go check them out!
 
-use std::{ rc::Rc, cell::RefCell };
-
-/// A List in Sexpr
-#[derive(Debug, Clone)]
-pub struct List {
-    pub value: Option<Rc<RefCell<Cons>>>,
-}
-
-impl List {
-    pub const NIL: List = List { value: None };
-}
-
-/// Cons -> (car, [cdr])
-#[derive(Debug, Clone)]
-pub struct Cons {
-    pub car: Value,
-    pub cdr: Option<Rc<RefCell<Cons>>>,
-}
-
+use std::{ rc::Rc, fmt };
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -30,11 +12,9 @@ pub enum Value {
     Int(i64), Float(f64),
 
     String(String), Symbol(String),    
-    List(List),
-}
+    List(Rc<Value>, Rc<Vec<Value>>),
 
-impl Value {
-    pub const NIL: Value = Value::List(List::NIL);
+    Nil,
 }
 
 #[derive(Debug, Clone)]
@@ -48,65 +28,30 @@ impl Tree {
         match self {
             Tree::Atom { atom, quote } => {
                 if quote {
-                    Value::List(List {
-                        value: Some(Rc::new(RefCell::new(Cons {
-                            car: Value::Symbol(String::from("quote")),
-                            cdr: Some(Rc::new(RefCell::new(Cons {
-                                car: atom, // car vroom vroom 🚗
-                                cdr: None,
-                            }))),
-                        }))),
-                    })
+                    Value::List(
+                        Rc::new(Value::Symbol(String::from("quote"))),
+                        Rc::new(vec![atom])
+                    )
                 } else {
                     atom
                 }
             },
             Tree::List { vec, quote } => {
                 let list = Value::List(
-                    vec.into_iter()
-                        .map(|tree| tree.into_expr())
-                        .collect::<List>(),
+                    Rc::new(vec[0].clone().into_expr()),
+                    Rc::new(vec[1..].iter().map(|a| a.clone().into_expr()).collect())
                 );
 
                 if quote {
-                    Value::List(List {
-                        value: Some(Rc::new(RefCell::new(Cons {
-                            car: Value::Symbol(String::from("quote")),
-                            cdr: Some(Rc::new(RefCell::new(Cons {
-                                car: list, // car vroom vroom 🚗
-                                cdr: None,
-                            }))),
-                        }))),
-                    })
+                    Value::List(
+                        Rc::new(Value::Symbol(String::from("quote"))),
+                        Rc::new(vec![list])
+                    )
                 } else {
                     list
                 }
             }
         }
-    }
-}
-
-impl FromIterator<Value> for List {
-    fn from_iter<I: IntoIterator<Item = Value>>(iter: I) -> Self {
-        let mut list = List { value: None };
-        let mut tail: Option<Rc<RefCell<Cons>>> = None;
-
-        for value in iter {
-            let new_cons = Rc::new(RefCell::new(Cons {
-                car: value,
-                cdr: None,
-            }));
-
-            if list.value.is_none() {
-                list.value = Some(new_cons.clone());
-            } else if let Some(ref tail_cons) = tail {
-                tail_cons.as_ref().borrow_mut().cdr = Some(new_cons.clone());
-            }
-
-            tail = Some(new_cons);
-        }
-
-        list
     }
 }
 
@@ -205,14 +150,27 @@ pub fn tokenize(src: &str) -> impl Iterator<Item = (&str, (usize, usize))> {
 
 #[derive(Debug)]
 pub enum ParseErrorKind {
-    UnexpectedParenOpen,
     UnexpectedParenClose,
+}
+
+impl fmt::Display for ParseErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ParseErrorKind::UnexpectedParenClose => write!(f, "Unexpected ')'"),
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct ParseError {
     pub kind: ParseErrorKind,
     pub pos: (usize, usize),
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} at {}", self.kind, self.pos.0)
+    }
 }
 
 impl ParseError {
@@ -266,7 +224,7 @@ fn read<'a>(
                         if let Tree::List { vec, quote } = &finished {
                             if vec.is_empty() {
                                 finished = Tree::Atom {
-                                    atom: Value::NIL,
+                                    atom: Value::Nil,
                                     quote: *quote,
                                 };
                             }
@@ -305,7 +263,7 @@ fn read_atom(token: &str) -> Value {
     match lower.as_str() {
         "true" => Value::True,
         "false" => Value::False,
-        "nil" => Value::NIL,
+        "nil" => Value::Nil,
         _ => {
             // Parse number
             if let Ok(int) = token.parse::<i64>() { Value::Int(int) }

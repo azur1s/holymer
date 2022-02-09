@@ -1,6 +1,7 @@
 use std::{process::exit, fs::read_to_string};
 
 pub mod parser;
+pub mod compile;
 
 const EXECUTABLE_NAME: &str = env!("CARGO_PKG_NAME");
 const HELP_MESSAGE: &str = "\
@@ -35,10 +36,19 @@ fn main() {
                         if args_index < args.len() {
                             let file_path: &str = &args[args_index];
                             let file_content: String = read_to_string(file_path).unwrap();
-                            let ast = parser::parse(&file_content);
-                            for node in ast {
-                                println!("{:?}", node);
+
+                            let parsed = parser::parse(&file_content);
+                            let mut ast = Vec::new();
+                            for node in parsed {
+                                match node {
+                                    Ok(node) => { ast.push(node); },
+                                    Err(error) => {
+                                        eprintln!("ERROR: {}", error);
+                                        exit(1);
+                                    }
+                                }
                             }
+                            println!("{:#?}", ast);
                         } else {
                             println!("No file provided.");
                             display_help(1);
