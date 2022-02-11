@@ -20,12 +20,12 @@ pub enum Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Value::True => write!(f, "#t"),
-            Value::False => write!(f, "#f"),
-            Value::Int(i) => write!(f, "{}", i),
-            Value::Float(fl) => write!(f, "{}", fl),
-            Value::String(s) => write!(f, "{}", s),
-            Value::Symbol(s) => write!(f, "{}", s),
+            Value::True      => write!(f, "$True"),
+            Value::False     => write!(f, "$False"),
+            Value::Int(i)    => write!(f, "${}", i),
+            Value::Float(fl) => write!(f, "${}", fl),
+            Value::String(s) => write!(f, "$\"{}\"", s),
+            Value::Symbol(s) => write!(f, "${}", s),
             Value::List(car, cdr) => {
                 write!(f, "(")?;
                 write!(f, "{}", car)?;

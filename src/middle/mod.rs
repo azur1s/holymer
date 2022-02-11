@@ -1,2 +1,1 @@
-pub mod instr;
-pub mod gen;
+pub mod hir;

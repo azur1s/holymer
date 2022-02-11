@@ -1,2 +1,2 @@
-(def message str "Hello, World")
+(def message "Hello, World")
 (print message)

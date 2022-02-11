@@ -12,9 +12,9 @@ pub mod front;
 use front::parser::parse;
 
 /// A middle-end for the compiler.
-/// Contains instructions generator.
+/// Contains high intermediate representation (HIR).
 pub mod middle;
-use middle::gen::generate_instructions;
+use crate::middle::hir::to_hirs;
 
 fn main() {
     let args = Args::parse();
@@ -29,19 +29,14 @@ fn main() {
                     let mut checked_tree = Vec::new();
                     for node in tree {
                         match node {
-                            Ok(node) => checked_tree.push(node),
+                            Ok(node) => checked_tree.push(node.0),
                             Err(err) => println!("{:?}", err),
                         }
                     };
 
-                    // Generate instructions
-                    let instructions = generate_instructions(checked_tree.into_iter());
-
-                    // Write instructions to file
-                    let mut file = File::create(format!("{}.vyir" , input.file_stem().unwrap().to_str().unwrap())).unwrap();
-                    for instruction in instructions {
-                        file.write_all(instruction.to_string().as_bytes()).expect("Failed to write instructions to file");
-                    }
+                    // Convert the tree to HIR
+                    let hir = to_hirs(&checked_tree);
+                    println!("{:#?}", hir);
                 },
             }
         },
