@@ -1,70 +1,44 @@
-use std::{process::exit, fs::read_to_string};
+use std::fs::read_to_string;
+use clap::Parser;
 
-pub mod parser;
-pub mod compile;
+/// Arguments handler.
+pub mod args;
+use args::{ Args, Options };
 
-const EXECUTABLE_NAME: &str = env!("CARGO_PKG_NAME");
-const HELP_MESSAGE: &str = "\
-    -h, --help
-        Print this help message and exit.
-    -v, --version
-        Print version information and exit.
-    -c FILE, --compile FILE
-        Compile the given file and exit.\
-";
+/// A front-end for the compiler.
+/// Contains parser and tokenizer.
+/// TODO: Semantic analysis and Type checking.
+pub mod front;
+use front::parser::parse;
+
+/// A middle-end for the compiler.
+/// Contains instructions generator.
+pub mod middle;
+use middle::gen::generate_instructions;
 
 fn main() {
-    let args = std::env::args().collect::<Vec<String>>();
-    let mut args_index: usize = 0;
-    match args.len() {
-        // No argument provided
-        1 => {
-            println!("No argument provided.");
-            display_help(1);
-        },
-        _ => {
-            while args.len() > args_index {
-                let arg: &str = &args[args_index];
-                match arg {
-                    "-h" | "--help" => { display_help(0); },
-                    "-v" | "--version" => {
-                        println!("{} version {}", EXECUTABLE_NAME, env!("CARGO_PKG_VERSION"));
-                        exit(0);
-                    },
-                    "-c" | "--compile" => {
-                        args_index += 1;
-                        if args_index < args.len() {
-                            let file_path: &str = &args[args_index];
-                            let file_content: String = read_to_string(file_path).unwrap();
-                            // Used for error reporting
-                            let file_content_joined: String = file_content.split("\n").collect::<Vec<&str>>().join(" ");
-
-                            let parsed = parser::parse(&file_content);
-                            let mut ast = Vec::new();
-                            for node in parsed {
-                                match node {
-                                    Ok(node) => { ast.push(node); },
-                                    Err(error) => {
-                                        eprintln!("{}", error.at(&file_content_joined));
-                                        exit(1);
-                                    }
-                                }
-                            }
-                            println!("{:#?}", ast);
-                        } else {
-                            println!("No file provided.");
-                            display_help(1);
+    let args = Args::parse();
+    match args.options {
+        Options::Compile { input, ast } => {
+            let code = read_to_string(input).unwrap();
+            let tree = parse(&code);
+            match ast {
+                true => for node in tree { println!("{:#?}", node) },
+                false => {
+                    let mut checked_tree = Vec::new();
+                    for node in tree {
+                        match node {
+                            Ok(node) => checked_tree.push(node),
+                            Err(err) => println!("{:?}", err),
                         }
-                    }
-                    _ => { args_index += 1; }
-                }
-            }
-        }
-    }
-}
+                    };
 
-fn display_help(exit_code: i32) {
-    println!("Usage: {} [OPTIONS]", EXECUTABLE_NAME);
-    println!("{}", HELP_MESSAGE);
-    exit(exit_code);
+                    let instructions = generate_instructions(checked_tree.into_iter());
+                    for instruction in instructions {
+                        println!("{:#?}", instruction);
+                    }
+                },
+            }
+        },
+    }
 }

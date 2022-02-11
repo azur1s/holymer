@@ -175,6 +175,12 @@ impl ParseError {
     pub fn at(&self, src: &str) -> String {
         let snip = &src[(self.pos.0.saturating_sub(5))..(if self.pos.0 + 5 > src.len() { src.len() } else { self.pos.0 + 5 })];
         format!("\n{}..{}\n{}\nError: {} at {}", " ".repeat(3), snip, format!("{}^", " ".repeat(10)), self.kind, self.pos.0)
+        
+        // Example:
+        //
+        //   .."))) ) (pr
+        //          ^
+        // Error: Unexpected ')' at 67
     }
 }
 
