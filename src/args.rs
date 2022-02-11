@@ -15,7 +15,7 @@ pub struct Args {
 
 #[derive(Subcommand, Debug)]
 pub enum Options {
-    #[clap(about = "Compile a file.")]
+    #[clap(about = "Compile an input file.")]
     Compile {
         /// The input file to compile.
         #[clap(parse(from_os_str))]
