@@ -17,6 +17,26 @@ pub enum Value {
     Nil,
 }
 
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Value::True => write!(f, "#t"),
+            Value::False => write!(f, "#f"),
+            Value::Int(i) => write!(f, "{}", i),
+            Value::Float(fl) => write!(f, "{}", fl),
+            Value::String(s) => write!(f, "{}", s),
+            Value::Symbol(s) => write!(f, "{}", s),
+            Value::List(car, cdr) => {
+                write!(f, "(")?;
+                write!(f, "{}", car)?;
+                for item in cdr.iter().cloned() { write!(f, " {}", item)?; }
+                write!(f, ")")
+            },
+            Value::Nil => write!(f, "nil"),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Tree {
     Atom { atom: Value, quote: bool },

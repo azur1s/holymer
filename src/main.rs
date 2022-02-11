@@ -1,4 +1,4 @@
-use std::fs::read_to_string;
+use std::{fs::{ read_to_string, File }, io::Write};
 use clap::Parser;
 
 /// Arguments handler.
@@ -20,11 +20,12 @@ fn main() {
     let args = Args::parse();
     match args.options {
         Options::Compile { input, ast } => {
-            let code = read_to_string(input).unwrap();
+            let code = read_to_string(&input).unwrap();
             let tree = parse(&code);
             match ast {
                 true => for node in tree { println!("{:#?}", node) },
                 false => {
+                    // Check if the tree is valid
                     let mut checked_tree = Vec::new();
                     for node in tree {
                         match node {
@@ -33,9 +34,13 @@ fn main() {
                         }
                     };
 
+                    // Generate instructions
                     let instructions = generate_instructions(checked_tree.into_iter());
+
+                    // Write instructions to file
+                    let mut file = File::create(format!("{}.vyir" , input.file_stem().unwrap().to_str().unwrap())).unwrap();
                     for instruction in instructions {
-                        println!("{:#?}", instruction);
+                        file.write_all(instruction.to_string().as_bytes()).expect("Failed to write instructions to file");
                     }
                 },
             }
