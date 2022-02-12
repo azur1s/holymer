@@ -1,3 +1,2 @@
-let msg :: String = "Hello, World";
-func add2 :: (a: Int, b: Int) -> Int = a + b;
-func main :: () = puts (msg);
+let foo :: String = "Hello, ";
+let bar :: String = "World!";
