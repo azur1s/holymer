@@ -19,6 +19,8 @@ macro_rules! tag_token (
     )
 );
 
+tag_token!(tag_import, Token::Import);
+
 tag_token!(tag_let, Token::Let);
 tag_token!(tag_func, Token::Func);
 tag_token!(tag_return, Token::Return);
@@ -271,8 +273,20 @@ fn parse_let_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
     )(input)
 }
 
+fn parse_import(input: Tokens) -> IResult<Tokens, Stmt> {
+    map(
+        tuple((
+            tag_import,
+            parse_literal,
+            opt(tag_semicolon),
+        )),
+        |(_, path, _)| Stmt::Import(path),
+    )(input)
+}
+
 fn parse_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
     alt((
+        parse_import,
         parse_let_stmt,
         parse_func_stmt,
         parse_call_stmt,

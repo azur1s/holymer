@@ -1,3 +1,5 @@
+import "path/to/library.hyc";
+
 // user defined function
 func foo :: (a, b) -> Bool = {
     return a == b;
@@ -6,7 +8,7 @@ func foo :: (a, b) -> Bool = {
 // entry point
 func main :: () -> Int = {
     // if else in variable definition
-    let cond_str :: String = if true { return "t" } else { return "f" };
+    let cond_str :: String = if foo(1, 1) { return "t" } else { return "f" };
 
     // Infix operator
     let n :: Bool = 2 == 2;

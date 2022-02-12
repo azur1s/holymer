@@ -92,6 +92,7 @@ fn lex_reserved_identifier(input: &Bytes) -> IResult<&Bytes, Token> {
         |s| {
             let c = str_from_bytes(s);
             c.map(|syntax| match syntax {
+                "import" => Token::Import,
                 "if" => Token::If,
                 "else" => Token::Else,
                 "let" => Token::Let,

@@ -19,6 +19,7 @@ pub enum Token {
     Semicolon, Colon, Comma,
 
     If, Else, Let, Func, Return,
+    Import,
 }
 
 /// Token struct with position information.
@@ -100,6 +101,8 @@ pub type Program = Vec<Stmt>;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Stmt {
+    Import(Literal),
+
     Let(Ident, Ident, Expr),
     Func(Ident, Vec<Ident>, Ident, Vec<Stmt>),
     Call(Ident, Vec<Expr>),
