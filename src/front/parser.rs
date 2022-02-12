@@ -1,7 +1,7 @@
 use nom::{
     branch::alt,
     bytes::complete::take,
-    combinator::{verify, map},
+    combinator::{verify, map, opt},
     Err,
     error::{Error, ErrorKind},
     IResult,
@@ -155,7 +155,7 @@ fn parse_return_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
         delimited(
             tag_return,
             parse_expr_lowest,
-            tag_semicolon,
+            opt(tag_semicolon),
         ),
         Stmt::Return,
     )(input)
@@ -168,7 +168,7 @@ fn parse_call_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
             tag_lparen,
             parse_exprs,
             tag_rparen,
-            tag_semicolon,
+            opt(tag_semicolon),
         )),
         |(ident, _, args, _, _)| Stmt::Call(ident, args),
     )(input)
@@ -189,7 +189,7 @@ fn parse_func_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
             tag_rparen,
             tag_assign,
             parse_block_stmt,
-            tag_semicolon,
+            opt(tag_semicolon),
         )),
         |(_, ident, _, _, params, _, _, block, _)| Stmt::Func(ident, params, block),
     )(input)
@@ -204,7 +204,7 @@ fn parse_let_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
             parse_ident,
             tag_assign,
             parse_expr_lowest,
-            tag_semicolon,
+            opt(tag_semicolon),
         )),
         |(_, ident, _, typehint, _, expr, _)| Stmt::Let(ident, typehint, expr),
     )(input)
