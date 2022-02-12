@@ -18,7 +18,7 @@ pub enum Token {
     LBrace, RBrace,
     Semicolon, Colon, Comma,
 
-    If, Else, Let, Func,
+    If, Else, Let, Func, Return,
 }
 
 /// Token struct with position information.
@@ -103,6 +103,7 @@ pub enum Stmt {
     Let(Ident, Ident, Expr),
     Func(Ident, Vec<Ident>, Vec<Stmt>),
     Call(Ident, Vec<Expr>),
+    Return(Expr),
 }
 
 #[derive(Clone, Debug, PartialEq)]

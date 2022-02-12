@@ -94,6 +94,7 @@ fn lex_reserved_identifier(input: &Bytes) -> IResult<&Bytes, Token> {
                 "else" => Token::Else,
                 "let" => Token::Let,
                 "func" => Token::Func,
+                "return" => Token::Return,
                 "true" => Token::Bool(true),
                 "false" => Token::Bool(false),
                 _ => Token::Identifier(syntax.to_string()),

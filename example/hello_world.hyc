@@ -1,4 +1,5 @@
 func join :: (a, b) = {
     let result :: String = from(a, b);
+    return result;
 };
 let foo :: String = join("f", "oo");

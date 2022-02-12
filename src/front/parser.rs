@@ -21,6 +21,8 @@ macro_rules! tag_token (
 
 tag_token!(tag_let, Token::Let);
 tag_token!(tag_func, Token::Func);
+tag_token!(tag_return, Token::Return);
+
 tag_token!(tag_assign, Token::Assign);
 tag_token!(tag_typehint, Token::Typehint);
 tag_token!(tag_semicolon, Token::Semicolon);
@@ -148,6 +150,17 @@ fn parse_expr_lowest(input: Tokens) -> IResult<Tokens, Expr> {
     parse_expr_with(input, Precedence::Lowest)
 }
 
+fn parse_return_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
+    map(
+        delimited(
+            tag_return,
+            parse_expr_lowest,
+            tag_semicolon,
+        ),
+        Stmt::Return,
+    )(input)
+}
+
 fn parse_call_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
     map(
         tuple((
@@ -202,6 +215,7 @@ fn parse_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
         parse_let_stmt,
         parse_func_stmt,
         parse_call_stmt,
+        parse_return_stmt,
     ))(input)
 }
 
