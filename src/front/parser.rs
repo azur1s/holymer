@@ -6,7 +6,7 @@ use nom::{
     error::{Error, ErrorKind},
     IResult,
     multi::many0,
-    sequence::{terminated, tuple, pair, preceded, delimited},
+    sequence::{terminated, tuple, pair, preceded, delimited}, error_position,
 };
 
 use super::model::{Token, Tokens, Precedence, Infix, Program, Stmt, Expr, Ident, Literal};
@@ -112,6 +112,22 @@ fn parse_call_expr(input: Tokens, func_handle: Expr) -> IResult<Tokens, Expr> {
     )(input)
 }
 
+fn parse_infix_expr(input: Tokens, left: Expr) -> IResult<Tokens, Expr> {
+    let (i1, t1) = take(1usize)(input)?;
+    if t1.tokens.is_empty() { Err(Err::Error(error_position!(input, ErrorKind::Tag))) }
+    else {
+        let next = &t1.tokens[0];
+        let (prec, op) = infix_operator(next);
+        match op {
+            None => Err(Err::Error(error_position!(input, ErrorKind::Tag))),
+            Some(op) => {
+                let (i2, right) = parse_expr_with(i1, prec)?;
+                Ok((i2, Expr::Infix(op, Box::new(left), Box::new(right))))
+            } 
+        }
+    }
+}
+
 fn parse_expr(input: Tokens, precedence: Precedence, left: Expr) -> IResult<Tokens, Expr> {
     let (i1, t1) = take(1usize)(input)?;
 
@@ -124,9 +140,8 @@ fn parse_expr(input: Tokens, precedence: Precedence, left: Expr) -> IResult<Toke
                 parse_expr(i2, precedence, left2)
             },
             (ref peek, _) if precedence < *peek => {
-                // let (i2, left2) = parse_infix_expr(input, left)?;
-                // parse_expr(i2, precedence, left2)
-                todo!()
+                let (i2, left2) = parse_infix_expr(input, left)?;
+                parse_expr(i2, precedence, left2)
             },
             _ => Ok((input, left)),
         }
