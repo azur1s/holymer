@@ -3,7 +3,7 @@ use clap::{ Parser, Subcommand };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Vy language compiler.
+/// Hycron language compiler.
 #[derive(Parser, Debug)]
 #[clap(
     version = VERSION,

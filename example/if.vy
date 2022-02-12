@@ -1,1 +1,0 @@
-(if (equal 1 1) (print "a"))

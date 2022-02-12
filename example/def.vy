@@ -1,1 +1,0 @@
-(def number 1)
