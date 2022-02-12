@@ -34,8 +34,11 @@ syntax! { not_operator      , "!", Token::Not }
 syntax! { typehint_punctuation  , "::", Token::Typehint }
 syntax! { lparen_punctuation    , "(",  Token::LParen }
 syntax! { rparen_punctuation    , ")",  Token::RParen }
+syntax! { lbrace_punctuation    , "{",  Token::LBrace }
+syntax! { rbrace_punctuation    , "}",  Token::RBrace }
 syntax! { semicolon_punctuation , ";",  Token::Semicolon }
 syntax! { colon_punctuation     , ":",  Token::Colon }
+syntax! { comma_punctuation     , ",",  Token::Comma }
 
 // Operator & Punctuation
 fn lex_operator_punctuation(input: &Bytes) -> IResult<&Bytes, Token> {
@@ -50,7 +53,8 @@ fn lex_operator_punctuation(input: &Bytes) -> IResult<&Bytes, Token> {
 
         typehint_punctuation,
         lparen_punctuation, rparen_punctuation,
-        semicolon_punctuation, colon_punctuation,
+        lbrace_punctuation, rbrace_punctuation,
+        semicolon_punctuation, colon_punctuation, comma_punctuation,
     ))(input)
 }
 

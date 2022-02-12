@@ -2,7 +2,7 @@ use nom::{
     bytes::complete::take,
     combinator::{verify, map},
     Err,
-    IResult, sequence::{terminated, tuple}, multi::many0, branch::alt, error::{Error, ErrorKind},
+    IResult, sequence::{terminated, tuple, pair, preceded, delimited}, multi::many0, branch::alt, error::{Error, ErrorKind},
 };
 
 use super::model::{Token, Tokens, Precedence, Infix, Program, Stmt, Expr, Ident, Literal};
@@ -16,9 +16,15 @@ macro_rules! tag_token (
 );
 
 tag_token!(tag_let, Token::Let);
+tag_token!(tag_func, Token::Func);
 tag_token!(tag_assign, Token::Assign);
 tag_token!(tag_typehint, Token::Typehint);
 tag_token!(tag_semicolon, Token::Semicolon);
+tag_token!(tag_lparen, Token::LParen);
+tag_token!(tag_rparen, Token::RParen);
+tag_token!(tag_lbrace, Token::LBrace);
+tag_token!(tag_rbrace, Token::RBrace);
+tag_token!(tag_comma, Token::Comma);
 tag_token!(tag_end_of_file, Token::EndOfFile);
 
 fn infix_operator(token: &Token) -> (Precedence, Option<Infix>) {
@@ -77,7 +83,7 @@ fn parse_ident_expr(input: Tokens) -> IResult<Tokens, Expr> {
     map(parse_ident, Expr::Ident)(input)
 }
 
-fn parse_let(input: Tokens) -> IResult<Tokens, Stmt> {
+fn parse_let_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
     map(
         tuple((
             tag_let,
@@ -89,6 +95,32 @@ fn parse_let(input: Tokens) -> IResult<Tokens, Stmt> {
             tag_semicolon,
         )),
         |(_, ident, _, typehint, _, expr, _)| Stmt::Let(ident, typehint, expr),
+    )(input)
+}
+
+fn parse_params(input: Tokens) -> IResult<Tokens, Vec<Ident>> {
+    map(
+        pair(parse_ident, many0(preceded(tag_comma, parse_ident))),
+        |(p, ps)| [&vec![p][..], &ps[..]].concat(),
+    )(input)
+}
+
+fn empty_params(input: Tokens) -> IResult<Tokens, Vec<Ident>> { Ok((input, vec![])) }
+
+fn parse_func_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
+    map(
+        tuple((
+            tag_func,
+            parse_ident,
+            tag_typehint,
+            tag_lparen,
+            alt((parse_params, empty_params)),
+            tag_rparen,
+            tag_assign,
+            parse_block_stmt,
+            tag_semicolon,
+        )),
+        |(_, ident, _, _, params, _, _, block, _)| Stmt::Func(ident, params, block),
     )(input)
 }
 
@@ -123,9 +155,14 @@ fn parse_expr_lowest(input: Tokens) -> IResult<Tokens, Expr> {
     parse_expr_with(input, Precedence::Lowest)
 }
 
+fn parse_block_stmt(input: Tokens) -> IResult<Tokens, Program> {
+    delimited(tag_lbrace, many0(parse_stmt), tag_rbrace)(input)
+}
+
 fn parse_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
     alt((
-        parse_let,
+        parse_let_stmt,
+        parse_func_stmt,
     ))(input)
 }
 

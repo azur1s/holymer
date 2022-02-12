@@ -1,2 +1,5 @@
-let foo :: String = "Hello, ";
-let bar :: String = "World!";
+let foo :: String = "foo";
+let bar :: String = "bar";
+func join :: (a , b) = {
+    let baz :: String = "yay";
+};

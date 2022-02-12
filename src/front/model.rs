@@ -14,7 +14,9 @@ pub enum Token {
     Plus, Minus, Mul, Div, Not,
     Eq, NEq, Lt, Gt, Lte, Gte,
 
-    LParen, RParen, Semicolon, Colon,
+    LParen, RParen,
+    LBrace, RBrace,
+    Semicolon, Colon, Comma,
 
     If, Else, Let, Func,
 }

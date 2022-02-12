@@ -16,8 +16,15 @@ fn main() {
             let bytes: Vec<u8> = fs::read(src).unwrap();
             let (_errs_, tokens) = Lexer::lex_tokens(&bytes).unwrap();
             let tokens = Tokens::new(&tokens);
-            let (_errs_, ast) = Parser::parse(tokens).unwrap();
-            println!("{:#?}", ast);
+            let ast = Parser::parse(tokens);
+            match ast {
+                Ok(ast) => {
+                    println!("{:#?}", ast);
+                }
+                Err(err) => {
+                    println!("{:#?}", err);
+                }
+            }
         },
     }
 }
