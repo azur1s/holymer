@@ -1,5 +1,4 @@
-let foo :: String = "foo";
-let bar :: String = "bar";
-func join :: (a , b) = {
-    let baz :: String = "yay";
+func join :: (a, b) = {
+    let result :: String = from(a, b);
 };
+let foo :: String = join("f", "oo");

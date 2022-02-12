@@ -6,6 +6,8 @@ use clap::Parser as ArgParser;
 pub mod args;
 use args::{Args, Options};
 
+/// Front-end of the language.
+/// Contains lexer, parser and token types.
 pub mod front;
 use front::{lex::Lexer, parser::Parser, model::Tokens};
 

@@ -102,6 +102,7 @@ pub type Program = Vec<Stmt>;
 pub enum Stmt {
     Let(Ident, Ident, Expr),
     Func(Ident, Vec<Ident>, Vec<Stmt>),
+    Call(Ident, Vec<Expr>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
