@@ -22,6 +22,8 @@ macro_rules! tag_token (
 tag_token!(tag_let, Token::Let);
 tag_token!(tag_func, Token::Func);
 tag_token!(tag_return, Token::Return);
+tag_token!(tag_if, Token::If);
+tag_token!(tag_else, Token::Else);
 
 tag_token!(tag_assign, Token::Assign);
 tag_token!(tag_typehint, Token::Typehint);
@@ -71,6 +73,7 @@ fn parse_atom_expr(input: Tokens) -> IResult<Tokens, Expr> {
     alt((
         parse_literal_expr,
         parse_ident_expr,
+        parse_if_expr,
     ))(input)
 }
  
@@ -128,6 +131,22 @@ fn parse_expr(input: Tokens, precedence: Precedence, left: Expr) -> IResult<Toke
             _ => Ok((input, left)),
         }
     }
+}
+
+fn parse_if_expr(input: Tokens) -> IResult<Tokens, Expr> {
+    map(
+        tuple((
+            tag_if,
+            parse_expr_lowest,
+            parse_block_stmt,
+            parse_else_expr,
+        )),
+        |(_, cond, then, else_)| Expr::If { cond: Box::new(cond), then, else_ },
+    )(input)
+}
+
+fn parse_else_expr(input: Tokens) -> IResult<Tokens, Option<Program>> {
+    opt(preceded(tag_else, parse_block_stmt))(input)
 }
 
 fn parse_comma_exprs(input: Tokens) -> IResult<Tokens, Expr> {

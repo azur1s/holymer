@@ -1,6 +1,6 @@
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take},
+    bytes::complete::{tag, take, take_until},
     character::complete::{multispace0, alphanumeric1, alpha1, digit1},
     combinator::{map, map_res, recognize},
     IResult,
@@ -119,15 +119,27 @@ fn lex_illegal(input: &Bytes) -> IResult<&Bytes, Token> {
     map(take(1usize), |_| Token::Illegal)(input)
 }
 
+fn lex_comment(input: &Bytes) -> IResult<&Bytes, ()> {
+    let (i1, c1) = take(2usize)(input)?;
+    if c1.as_bytes() == b"//" {
+        let (i2, _) = take_until("\n")(i1)?;
+        let (i3, _) = take(1usize)(i2)?;
+        let (i4, _) = multispace0(i3)?;
+        let (i5, _) = lex_comment(i4)?;
+        Ok((i5, ()))
+    } else { Ok((input, ())) }
+}
+
 // Tokens
 fn lex_token(input: &Bytes) -> IResult<&Bytes, Token> {
+    let (i1, _) = lex_comment(input)?;
     alt((
         lex_operator_punctuation,
-        lex_string,
         lex_reserved_identifier,
+        lex_string,
         lex_integer,
         lex_illegal,
-    ))(input)
+    ))(i1)
 }
 
 fn lex_tokens(input: &Bytes) -> IResult<&Bytes, Vec<Token>> {

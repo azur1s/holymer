@@ -1,10 +1,10 @@
-func join :: (a, b) = {
-    let result :: String = from(a, b);
-    return result
+// user defined function
+func foo :: (a, b) = {
+    return a;
 };
 
+// entry point
 func main :: () = {
-    let foo :: String = join("f", "oo");
-    print(foo);
-    return 0
+    // if else in variable definition
+    let cond_str :: String = if true { return "t" } else { return "f" };
 };
