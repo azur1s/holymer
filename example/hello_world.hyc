@@ -1,10 +1,10 @@
 // user defined function
-func foo :: (a, b) = {
-    return a;
+func foo :: (a, b) -> Bool = {
+    return a == b;
 };
 
 // entry point
-func main :: () = {
+func main :: () -> Int = {
     // if else in variable definition
     let cond_str :: String = if true { return "t" } else { return "f" };
 

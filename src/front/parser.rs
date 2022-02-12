@@ -31,6 +31,7 @@ tag_token!(tag_not, Token::Not);
 
 tag_token!(tag_assign, Token::Assign);
 tag_token!(tag_typehint, Token::Typehint);
+tag_token!(tag_returnhint, Token::Return);
 tag_token!(tag_semicolon, Token::Semicolon);
 tag_token!(tag_lparen, Token::LParen);
 tag_token!(tag_rparen, Token::RParen);
@@ -245,11 +246,13 @@ fn parse_func_stmt(input: Tokens) -> IResult<Tokens, Stmt> {
             tag_lparen,
             alt((parse_params, empty_params)),
             tag_rparen,
+            tag_returnhint,
+            parse_ident,
             tag_assign,
             parse_block_stmt,
             opt(tag_semicolon),
         )),
-        |(_, ident, _, _, params, _, _, block, _)| Stmt::Func(ident, params, block),
+        |(_, ident, _, _, params, _, _, returntype, _, block, _)| Stmt::Func(ident, params, returntype, block),
     )(input)
 }
 

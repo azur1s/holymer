@@ -31,18 +31,24 @@ syntax! { divide_operator   , "/", Token::Div }
 syntax! { not_operator      , "!", Token::Not }
 
 // Punctuations
-syntax! { typehint_punctuation  , "::", Token::Typehint }
-syntax! { lparen_punctuation    , "(",  Token::LParen }
-syntax! { rparen_punctuation    , ")",  Token::RParen }
-syntax! { lbrace_punctuation    , "{",  Token::LBrace }
-syntax! { rbrace_punctuation    , "}",  Token::RBrace }
-syntax! { semicolon_punctuation , ";",  Token::Semicolon }
-syntax! { colon_punctuation     , ":",  Token::Colon }
-syntax! { comma_punctuation     , ",",  Token::Comma }
+syntax! { typehint_punctuation   , "::", Token::Typehint }
+syntax! { returnhint_punctuation , "->", Token::Return }
+syntax! { lparen_punctuation     , "(",  Token::LParen }
+syntax! { rparen_punctuation     , ")",  Token::RParen }
+syntax! { lbrace_punctuation     , "{",  Token::LBrace }
+syntax! { rbrace_punctuation     , "}",  Token::RBrace }
+syntax! { semicolon_punctuation  , ";",  Token::Semicolon }
+syntax! { colon_punctuation      , ":",  Token::Colon }
+syntax! { comma_punctuation      , ",",  Token::Comma }
 
 // Operator & Punctuation
 fn lex_operator_punctuation(input: &Bytes) -> IResult<&Bytes, Token> {
     alt((
+        typehint_punctuation, returnhint_punctuation,
+        lparen_punctuation, rparen_punctuation,
+        lbrace_punctuation, rbrace_punctuation,
+        semicolon_punctuation, colon_punctuation, comma_punctuation,
+        
         equal_operator, not_equal_operator,
         less_than_operator, greater_than_operator,
         less_than_equal_operator, greater_than_equal_operator,
@@ -51,10 +57,6 @@ fn lex_operator_punctuation(input: &Bytes) -> IResult<&Bytes, Token> {
         add_operator, subtract_operator, multiply_operator, divide_operator,
         not_operator,
 
-        typehint_punctuation,
-        lparen_punctuation, rparen_punctuation,
-        lbrace_punctuation, rbrace_punctuation,
-        semicolon_punctuation, colon_punctuation, comma_punctuation,
     ))(input)
 }
 

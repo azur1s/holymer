@@ -9,7 +9,7 @@ pub enum Token {
     Identifier(String), String(String),
     Int(i64), Bool(bool),
 
-    Assign, Typehint,
+    Assign, Typehint, Returnhint,
 
     Plus, Minus, Mul, Div, Not,
     Eq, NEq, Lt, Gt, Lte, Gte,
@@ -101,7 +101,7 @@ pub type Program = Vec<Stmt>;
 #[derive(Clone, Debug, PartialEq)]
 pub enum Stmt {
     Let(Ident, Ident, Expr),
-    Func(Ident, Vec<Ident>, Vec<Stmt>),
+    Func(Ident, Vec<Ident>, Ident, Vec<Stmt>),
     Call(Ident, Vec<Expr>),
     Return(Expr),
 }
