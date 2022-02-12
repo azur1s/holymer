@@ -10,4 +10,6 @@ func main :: () = {
 
     // Infix operator
     let n :: Bool = 2 == 2;
+    // Prefix operator
+    let m :: Bool = !n;
 };

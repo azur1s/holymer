@@ -9,7 +9,7 @@ use nom::{
     sequence::{terminated, tuple, pair, preceded, delimited}, error_position,
 };
 
-use super::model::{Token, Tokens, Precedence, Infix, Program, Stmt, Expr, Ident, Literal};
+use super::model::{Token, Tokens, Precedence, Infix, Program, Stmt, Expr, Ident, Literal, Prefix};
 
 macro_rules! tag_token (
     ($func_name:ident, $tag: expr) => (
@@ -24,6 +24,10 @@ tag_token!(tag_func, Token::Func);
 tag_token!(tag_return, Token::Return);
 tag_token!(tag_if, Token::If);
 tag_token!(tag_else, Token::Else);
+
+tag_token!(tag_plus, Token::Plus);
+tag_token!(tag_minus, Token::Minus);
+tag_token!(tag_not, Token::Not);
 
 tag_token!(tag_assign, Token::Assign);
 tag_token!(tag_typehint, Token::Typehint);
@@ -73,10 +77,16 @@ fn parse_atom_expr(input: Tokens) -> IResult<Tokens, Expr> {
     alt((
         parse_literal_expr,
         parse_ident_expr,
+        parse_prefix_expr,
+        parse_paren_expr,
         parse_if_expr,
     ))(input)
 }
  
+fn parse_paren_expr(input: Tokens) -> IResult<Tokens, Expr> {
+    delimited(tag_lparen, parse_expr_lowest, tag_rparen)(input)
+}
+
 fn parse_ident(input: Tokens) -> IResult<Tokens, Ident> {
     let (i1, t1) = take(1usize)(input)?;
     if t1.tokens.is_empty() { Err(Err::Error(Error::new(input, ErrorKind::Tag))) }
@@ -124,6 +134,20 @@ fn parse_infix_expr(input: Tokens, left: Expr) -> IResult<Tokens, Expr> {
                 let (i2, right) = parse_expr_with(i1, prec)?;
                 Ok((i2, Expr::Infix(op, Box::new(left), Box::new(right))))
             } 
+        }
+    }
+}
+
+fn parse_prefix_expr(input: Tokens) -> IResult<Tokens, Expr> {
+    let (i1, t1) = alt((tag_plus, tag_minus, tag_not))(input)?;
+    if t1.tokens.is_empty() { Err(Err::Error(error_position!(input, ErrorKind::Tag))) }
+    else {
+        let (i2, e) = parse_atom_expr(i1)?;
+        match t1.tokens[0].clone() {
+            Token::Plus => Ok((i2, Expr::Prefix(Prefix::Plus, Box::new(e)))),
+            Token::Minus => Ok((i2, Expr::Prefix(Prefix::Minus, Box::new(e)))),
+            Token::Not => Ok((i2, Expr::Prefix(Prefix::Not, Box::new(e)))),
+            _ => Err(Err::Error(error_position!(input, ErrorKind::Tag))),
         }
     }
 }
