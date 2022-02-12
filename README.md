@@ -1,6 +1,14 @@
 # Hycron
 Programming language
 
+```
+func main :: () -> Int = {
+    let msg :: String = "Hello, World";
+    puts(msg);
+    return 1;
+};
+```
+
 # TODO
 - Compliation
 - Optimization

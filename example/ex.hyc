@@ -14,4 +14,5 @@ func main :: () -> Int = {
     let n :: Bool = 2 == 2;
     // Prefix operator
     let m :: Bool = !n;
+    puts(m);
 };
