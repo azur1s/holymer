@@ -1,18 +1,2 @@
-import "path/to/library.hyc";
-
-// user defined function
-func foo :: (a, b) -> Bool = {
-    return a == b;
-};
-
-// entry point
-func main :: () -> Int = {
-    // if else in variable definition
-    let cond_str :: String = if foo(1, 1) { return "t" } else { return "f" };
-
-    // Infix operator
-    let n :: Bool = 2 == 2;
-    // Prefix operator
-    let m :: Bool = !n;
-    puts(m);
-};
+fun add a b = a + b;
+let foo = add (1, 2);
