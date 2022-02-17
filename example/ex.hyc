@@ -1,5 +1,11 @@
-fun foo a b = a == b;
-fun bar a b = { a == b };
-let res = foo(34, 35);
-let res = { foo(34, 35) };
-/* comment */
+fun foo a b = a * b;
+let bar = foo(3, 3);
+
+if bar == 9 then
+    do
+        print(bar);
+        print(":)");
+    end
+else
+    print(":(");
+end;

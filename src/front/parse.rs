@@ -15,7 +15,10 @@ pub enum Token {
     Comma,
 
     // Keywords
+    Import,
     Let, Fun,
+    If, Then, Else, End,
+    Do,
 }
 
 pub type Span = std::ops::Range<usize>;
@@ -69,8 +72,14 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         "true" => Token::Boolean(true),
         "false" => Token::Boolean(false),
 
+        "import" => Token::Import,
         "let" => Token::Let,
         "fun" => Token::Fun,
+        "if" => Token::If,
+        "then" => Token::Then,
+        "else" => Token::Else,
+        "end" => Token::End,
+        "do" => Token::Do,
         _ => Token::Ident(s),
     });
 
@@ -102,6 +111,7 @@ pub enum Expr {
 
     Unary { op: String, expr: Box<Self> },
     Binary { op: String, left: Box<Self>, right: Box<Self> },
+    Call { name: Box<Self>, args: Vec<Self> },
 
     Let {
         name: String,
@@ -112,10 +122,15 @@ pub enum Expr {
         args: Vec<String>,
         body: Vec<Self>,
     },
-    Call {
-        name: Box<Self>,
-        args: Vec<Self>,
+
+    If {
+        cond: Box<Self>,
+        then: Vec<Self>,
+        else_: Vec<Self>,
     },
+    Do { body: Vec<Self> },
+
+    Import(String),
 }
 
 fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
@@ -216,49 +231,83 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
     }).labelled("expression");
 
     let declare = recursive(|decl| {
-        let decl_block = decl.clone()
-            .or(expr.clone())
-            .repeated()
-            .delimited_by(just(Token::Delimiter('{')), just(Token::Delimiter('}')));
+        let do_block = just(Token::Do)
+            .ignore_then(
+                expr.clone()
+                    .then_ignore(just(Token::Semicolon))
+                    .repeated())
+            .then_ignore(just(Token::End));
 
         let declare_var = just(Token::Let)
             .ignore_then(ident)
             .then_ignore(just(Token::Assign))
             .then(
-                decl_block.clone()
+                do_block.clone()
                     .or(decl.clone().repeated().at_most(1))
             )
-            .then_ignore(just(Token::Semicolon))
             .map(|(name, value)| Expr::Let {
                 name,
                 value,
-            });
+            }).labelled("variable");
 
         let declare_fun = just(Token::Fun)
             .ignore_then(ident)
             .then(ident.repeated())
             .then_ignore(just(Token::Assign))
             .then(
-                decl_block.clone()
+                do_block.clone()
                     .or(decl.clone().repeated().at_most(1))
             )
-            .then_ignore(just(Token::Semicolon))
             .map(|((name, args), body)| Expr::Fun {
                 name,
                 args,
                 body,
-            });
+            }).labelled("function");
+
+        let declare_import = just(Token::Import)
+            .ignore_then(ident.clone())
+            .map(Expr::Import);
+
+        let if_cond = just(Token::If)
+            .ignore_then(expr.clone())
+            .then_ignore(just(Token::Then))
+            .then(
+                do_block.clone()
+                    .or(decl.clone()
+                        .repeated()
+                        .at_most(1)
+                        .then_ignore(just(Token::Semicolon)))
+            )
+            .then_ignore(just(Token::Else))
+            .then(
+                do_block.clone()
+                    .or(decl.clone()
+                        .repeated()
+                        .at_most(1)
+                        .then_ignore(just(Token::Semicolon)))
+            )
+            .then_ignore(just(Token::End))
+            .map(|((cond, then), else_)| Expr::If {
+                cond: Box::new(cond),
+                then,
+                else_,
+            }).labelled("if");
 
         declare_var
             .or(declare_fun)
+            .or(declare_import)
+            .or(if_cond)
+            .or(do_block.map(|body| Expr::Do { body }))
             .or(expr)
-    });
+            
+    }).labelled("declare");
 
     declare
 }
 
 pub fn parser() -> impl Parser<Token, Vec<Expr>, Error = Simple<Token>> + Clone {
     expr_parser()
+        .then_ignore(just(Token::Semicolon))
         .repeated()
         .then_ignore(end())
 }
