@@ -1,5 +1,6 @@
 fun foo a b = a * b;
 let bar = foo( 3 3 );
+let baz = bar in print(baz);
 
 if bar == 9 then
     do

@@ -16,7 +16,7 @@ pub enum Token {
 
     // Keywords
     Import,
-    Let, Fun,
+    Let, In, Fun,
     If, Then, Else, End,
     Do,
 }
@@ -74,6 +74,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
 
         "import" => Token::Import,
         "let" => Token::Let,
+        "in" => Token::In,
         "fun" => Token::Fun,
         "if" => Token::If,
         "then" => Token::Then,
@@ -116,6 +117,7 @@ pub enum Expr {
     Let {
         name: String,
         value: Box<Self>,
+        then: Box<Option<Self>>,
     },
     Fun {
         name: String,
@@ -244,9 +246,15 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
                 do_block.clone()
                     .or(decl.clone())
             )
-            .map(|(name, value)| Expr::Let {
+            .then(just(Token::In)
+                .ignore_then(do_block.clone()
+                    .or(decl.clone()))
+                .or_not()
+            )
+            .map(|((name, value), then)| Expr::Let {
                 name,
                 value: Box::new(value),
+                then: Box::new(then),
             }).labelled("variable");
 
         let declare_fun = just(Token::Fun)
