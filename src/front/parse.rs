@@ -149,9 +149,7 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
         }).labelled("literal");
 
         let args = expr.clone()
-            .chain(just(Token::Comma)
-                .ignore_then(expr.clone()).repeated())
-            .then_ignore(just(Token::Comma).or_not())
+            .repeated()
             .or_not()
             .map(|item| item.unwrap_or_else(Vec::new));
 
