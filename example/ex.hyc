@@ -1,4 +1,4 @@
-fun foo a b = a + b;
-fun bar a b = { a + b };
+fun foo a b = a == b;
+fun bar a b = { a == b };
 let res = foo(34, 35);
 let res = { foo(34, 35) };

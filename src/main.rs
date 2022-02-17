@@ -24,10 +24,10 @@ fn main() {
                 if parse_error.is_empty() {
                     println!("{:#?}", ast);
                 } else {
-                    eprintln!("{:#?}", parse_error);
+                    eprintln!("{:#?}\n(Parser error)", parse_error);
                 }
             } else {
-                eprintln!("{:#?}", lex_error);
+                eprintln!("{:#?}\n(Lexer error)", lex_error);
             }
         },
     }

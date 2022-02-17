@@ -83,7 +83,9 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .or(keyword)
         .recover_with(skip_then_retry_until([]));
 
-    let comment = just("//").then(take_until(just('\n'))).padded();
+    let comment = just("//").then(take_until(just('\n')))
+        .padded()
+        .ignored();
 
     token
         .padded_by(comment.repeated())
@@ -192,8 +194,25 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
                 left: Box::new(lhs),
                 right: Box::new(rhs)
             }).labelled("term");
+
+        let compare = term.clone()
+            .then(
+                choice((
+                    just(Token::Operator("==".to_string())).to("=="),
+                    just(Token::Operator("!=".to_string())).to("!="),
+                    just(Token::Operator("<".to_string())).to("<"),
+                    just(Token::Operator(">".to_string())).to(">"),
+                    just(Token::Operator("<=".to_string())).to("<="),
+                    just(Token::Operator(">=".to_string())).to(">=")))
+                .then(term)
+                .repeated())
+            .foldl(|lhs, (op, rhs)| Expr::Binary {
+                op: op.to_string(),
+                left: Box::new(lhs),
+                right: Box::new(rhs)
+            }).labelled("compare");
         
-        term
+        compare
     }).labelled("expression");
 
     let declare = recursive(|decl| {
