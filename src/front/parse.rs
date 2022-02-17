@@ -54,6 +54,8 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     let delimiter = choice((
         just('('),
         just(')'),
+        just('{'),
+        just('}'),
     )).map(|c| Token::Delimiter(c));
 
     let symbol = choice((
@@ -101,12 +103,12 @@ pub enum Expr {
 
     Let {
         name: String,
-        value: Box<Self>,
+        value: Vec<Self>,
     },
     Fun {
         name: String,
         args: Vec<String>,
-        body: Box<Self>,
+        body: Vec<Self>,
     },
     Call {
         name: Box<Self>,
@@ -129,7 +131,7 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
             _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
         }).labelled("literal");
 
-        let items = expr.clone()
+        let args = expr.clone()
             .chain(just(Token::Comma)
                 .ignore_then(expr.clone()).repeated())
             .then_ignore(just(Token::Comma).or_not())
@@ -145,7 +147,7 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
 
         let call = atom
             .then(
-                items
+                args
                     .delimited_by(
                         just(Token::Delimiter('(')),
                         just(Token::Delimiter(')')))
@@ -195,26 +197,37 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
     }).labelled("expression");
 
     let declare = recursive(|decl| {
+        let decl_block = decl.clone()
+            .or(expr.clone())
+            .repeated()
+            .delimited_by(just(Token::Delimiter('{')), just(Token::Delimiter('}')));
+
         let declare_var = just(Token::Let)
             .ignore_then(ident)
             .then_ignore(just(Token::Assign))
-            .then(expr.clone())
+            .then(
+                decl_block.clone()
+                    .or(decl.clone().repeated().at_most(1))
+            )
             .then_ignore(just(Token::Semicolon))
-            .map(|(name, rhs)| Expr::Let {
+            .map(|(name, value)| Expr::Let {
                 name,
-                value: Box::new(rhs),
+                value,
             });
 
         let declare_fun = just(Token::Fun)
             .ignore_then(ident)
             .then(ident.repeated())
             .then_ignore(just(Token::Assign))
-            .then(expr.clone())
+            .then(
+                decl_block.clone()
+                    .or(decl.clone().repeated().at_most(1))
+            )
             .then_ignore(just(Token::Semicolon))
             .map(|((name, args), body)| Expr::Fun {
                 name,
                 args,
-                body: Box::new(body),
+                body,
             });
 
         declare_var

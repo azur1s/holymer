@@ -20,10 +20,14 @@ fn main() {
             let (tokens, lex_error) = lexer().parse_recovery(src.as_str());
             let len = src.chars().count();
             let (ast, parse_error) = parser().parse_recovery(Stream::from_iter(len..len + 1, tokens.clone().unwrap().into_iter()));
-            if parse_error.is_empty() {
-                println!("{:#?}", ast);
+            if lex_error.is_empty() {
+                if parse_error.is_empty() {
+                    println!("{:#?}", ast);
+                } else {
+                    eprintln!("{:#?}", parse_error);
+                }
             } else {
-                println!("{:?}", parse_error);
+                eprintln!("{:#?}", lex_error);
             }
         },
     }
