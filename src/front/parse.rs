@@ -115,18 +115,18 @@ pub enum Expr {
 
     Let {
         name: String,
-        value: Vec<Self>,
+        value: Box<Self>,
     },
     Fun {
         name: String,
         args: Vec<String>,
-        body: Vec<Self>,
+        body: Box<Self>,
     },
 
     If {
         cond: Box<Self>,
-        then: Vec<Self>,
-        else_: Vec<Self>,
+        then: Box<Self>,
+        else_: Box<Self>,
     },
     Do { body: Vec<Self> },
 
@@ -236,18 +236,19 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
                 expr.clone()
                     .then_ignore(just(Token::Semicolon))
                     .repeated())
-            .then_ignore(just(Token::End));
+            .then_ignore(just(Token::End))
+            .map(|body| Expr::Do { body });
 
         let declare_var = just(Token::Let)
             .ignore_then(ident)
             .then_ignore(just(Token::Assign))
             .then(
                 do_block.clone()
-                    .or(decl.clone().repeated().at_most(1))
+                    .or(decl.clone())
             )
             .map(|(name, value)| Expr::Let {
                 name,
-                value,
+                value: Box::new(value),
             }).labelled("variable");
 
         let declare_fun = just(Token::Fun)
@@ -256,12 +257,12 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
             .then_ignore(just(Token::Assign))
             .then(
                 do_block.clone()
-                    .or(decl.clone().repeated().at_most(1))
+                    .or(decl.clone())
             )
             .map(|((name, args), body)| Expr::Fun {
                 name,
                 args,
-                body,
+                body: Box::new(body),
             }).labelled("function");
 
         let declare_import = just(Token::Import)
@@ -273,31 +274,25 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
             .then_ignore(just(Token::Then))
             .then(
                 do_block.clone()
-                    .or(decl.clone()
-                        .repeated()
-                        .at_most(1)
-                        .then_ignore(just(Token::Semicolon)))
+                    .or(decl.clone().then_ignore(just(Token::Semicolon).or_not()))
             )
             .then_ignore(just(Token::Else))
             .then(
                 do_block.clone()
-                    .or(decl.clone()
-                        .repeated()
-                        .at_most(1)
-                        .then_ignore(just(Token::Semicolon)))
+                .or(decl.clone().then_ignore(just(Token::Semicolon).or_not()))
             )
             .then_ignore(just(Token::End))
             .map(|((cond, then), else_)| Expr::If {
                 cond: Box::new(cond),
-                then,
-                else_,
+                then: Box::new(then),
+                else_: Box::new(else_),
             }).labelled("if");
 
         declare_var
             .or(declare_fun)
             .or(declare_import)
             .or(if_cond)
-            .or(do_block.map(|body| Expr::Do { body }))
+            .or(do_block)
             .or(expr)
             
     }).labelled("declare");
