@@ -312,3 +312,33 @@ pub fn parser() -> impl Parser<Token, Vec<Expr>, Error = Simple<Token>> + Clone 
         .repeated()
         .then_ignore(end())
 }
+
+impl Expr {
+    pub fn to_sexpr(&self) -> String {
+        let mut out = String::new();
+        match self {
+            Self::Int(x)     => out.push_str(&x.to_string()),
+            Self::Float(x)   => out.push_str(&x.to_string()),
+            Self::Boolean(x) => out.push_str(&x.to_string()),
+            Self::String(x)  => out.push_str(&format!("\"{}\"", x)),
+            Self::Ident(x)   => out.push_str(&x),
+
+            Self::Unary{ op, expr }         => out.push_str(&format!("({} {})", op, expr.to_sexpr())),
+            Self::Binary{ op, left, right } => out.push_str(
+                &format!("({} {} {})", op, left.to_sexpr(), right.to_sexpr())
+            ),
+
+            Self::Let{ name, value, then } => {
+                let then = match *then.clone() {
+                    Some(v) => format!("\n  (do {})", v.to_sexpr()),
+                    None => "".to_string(),
+                };
+                out.push_str(&format!("(let\n  {}\n  {}{})", name, value.clone().to_sexpr(), then))
+            },
+
+            // TODO: finish the rest of the Expr, I'm going to sleep, goodnight.
+            _ => todo!(), 
+        }
+        out
+    }
+}

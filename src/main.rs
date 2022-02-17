@@ -22,7 +22,12 @@ fn main() {
             let (ast, parse_error) = parser().parse_recovery(Stream::from_iter(len..len + 1, tokens.clone().unwrap().into_iter()));
             if lex_error.is_empty() {
                 if parse_error.is_empty() {
-                    println!("{:#?}", ast);
+                    match ast {
+                        Some(ast) => {
+                            println!("{}", ast.iter().map(|e| e.to_sexpr()).collect::<String>())
+                        },
+                        None => println!("no ast :("),
+                    };
                 } else {
                     eprintln!("{:#?}\n(Parser error)", parse_error);
                 }
