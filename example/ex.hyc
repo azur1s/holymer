@@ -1,2 +1,2 @@
-fun add a b = a + b;
-let foo = add (1, 2);
+fun foo a b = a + b;
+let res = foo(34, 35);
