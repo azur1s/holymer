@@ -327,6 +327,8 @@ impl Expr {
             Self::Binary{ op, left, right } => out.push_str(
                 &format!("({} {} {})", op, left.to_sexpr(), right.to_sexpr())
             ),
+            Self::Call{ name, args } => out.push_str(
+                &format!("({} {})", name.to_sexpr(), args.iter().map(|x| x.to_sexpr()).collect::<Vec<_>>().join(" "))),
 
             Self::Let{ name, value, then } => {
                 let then = match *then.clone() {
@@ -335,8 +337,14 @@ impl Expr {
                 };
                 out.push_str(&format!("(let\n  {}\n  {}{})", name, value.clone().to_sexpr(), then))
             },
+            Self::Fun{ name, args, body } => out.push_str(
+                &format!("(fun\n  ({})\n  {}\n {})", name, args.join(" "), body.to_sexpr())),
 
-            // TODO: finish the rest of the Expr, I'm going to sleep, goodnight.
+            Self::If { cond, then, else_ } => out.push_str(
+                &format!("(if {}\n  {}\n  {})", cond.to_sexpr(), then.to_sexpr(), else_.to_sexpr())),
+            
+            Self::Do { body } => out.push_str(
+                &format!("(do {})", body.iter().map(|x| x.to_sexpr()).collect::<Vec<_>>().join(" "))),
             _ => todo!(), 
         }
         out

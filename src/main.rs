@@ -24,7 +24,7 @@ fn main() {
                 if parse_error.is_empty() {
                     match ast {
                         Some(ast) => {
-                            println!("{}", ast.iter().map(|e| e.to_sexpr()).collect::<String>())
+                            println!("{}", ast.iter().map(|e| e.to_sexpr()).collect::<Vec<String>>().join("\n"));
                         },
                         None => println!("no ast :("),
                     };
