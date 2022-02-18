@@ -323,9 +323,9 @@ impl Expr {
                 &format!("({} {})", name.to_sexpr(), args.iter().map(|x| x.to_sexpr()).collect::<Vec<_>>().join(" "))),
 
             Self::Let{ name, value } => out.push_str(
-                &format!("(let\n  {}\n  {})", name, value.clone().to_sexpr())),
+                &format!("(let {}\n  {})", name, value.clone().to_sexpr())),
             Self::Fun{ name, args, body } => out.push_str(
-                &format!("(fun\n  ({})\n  {}\n {})", name, args.join(" "), body.to_sexpr())),
+                &format!("(fun {} ({})\n  {})", name, args.join(" "), body.to_sexpr())),
 
             Self::If { cond, then, else_ } => out.push_str(
                 &format!("(if {}\n  {}\n  {})", cond.to_sexpr(), then.to_sexpr(), else_.to_sexpr())),
