@@ -16,7 +16,7 @@ pub enum Token {
 
     // Keywords
     Import,
-    Let, In, Fun,
+    Let, Fun,
     If, Then, Else, End,
     Do,
 }
@@ -74,7 +74,6 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
 
         "import" => Token::Import,
         "let" => Token::Let,
-        "in" => Token::In,
         "fun" => Token::Fun,
         "if" => Token::If,
         "then" => Token::Then,
@@ -117,7 +116,6 @@ pub enum Expr {
     Let {
         name: String,
         value: Box<Self>,
-        then: Box<Option<Self>>,
     },
     Fun {
         name: String,
@@ -141,15 +139,15 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
         _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
     }).labelled("identifier");
 
-    let expr = recursive(|expr| {
-        let literal = filter_map(|span, token| match token {
-            Token::Int(i) => Ok(Expr::Int(i)),
-            Token::Float(f) => Ok(Expr::Float(f.parse().unwrap())),
-            Token::Boolean(b) => Ok(Expr::Boolean(b)),
-            Token::String(s) => Ok(Expr::String(s)),
-            _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
-        }).labelled("literal");
+    let literal = filter_map(|span, token| match token {
+        Token::Int(i) => Ok(Expr::Int(i)),
+        Token::Float(f) => Ok(Expr::Float(f.parse().unwrap())),
+        Token::Boolean(b) => Ok(Expr::Boolean(b)),
+        Token::String(s) => Ok(Expr::String(s)),
+        _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
+    }).labelled("literal");
 
+    let expr = recursive(|expr| {
         let args = expr.clone()
             .repeated()
             .or_not()
@@ -246,15 +244,9 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
                 do_block.clone()
                     .or(decl.clone())
             )
-            .then(just(Token::In)
-                .ignore_then(do_block.clone()
-                    .or(decl.clone()))
-                .or_not()
-            )
-            .map(|((name, value), then)| Expr::Let {
+            .map(|(name, value)| Expr::Let {
                 name,
                 value: Box::new(value),
-                then: Box::new(then),
             }).labelled("variable");
 
         let declare_fun = just(Token::Fun)
@@ -330,13 +322,8 @@ impl Expr {
             Self::Call{ name, args } => out.push_str(
                 &format!("({} {})", name.to_sexpr(), args.iter().map(|x| x.to_sexpr()).collect::<Vec<_>>().join(" "))),
 
-            Self::Let{ name, value, then } => {
-                let then = match *then.clone() {
-                    Some(v) => format!("\n  (do {})", v.to_sexpr()),
-                    None => "".to_string(),
-                };
-                out.push_str(&format!("(let\n  {}\n  {}{})", name, value.clone().to_sexpr(), then))
-            },
+            Self::Let{ name, value } => out.push_str(
+                &format!("(let\n  {}\n  {})", name, value.clone().to_sexpr())),
             Self::Fun{ name, args, body } => out.push_str(
                 &format!("(fun\n  ({})\n  {}\n {})", name, args.join(" "), body.to_sexpr())),
 
@@ -345,6 +332,7 @@ impl Expr {
             
             Self::Do { body } => out.push_str(
                 &format!("(do {})", body.iter().map(|x| x.to_sexpr()).collect::<Vec<_>>().join(" "))),
+            
             _ => todo!(), 
         }
         out

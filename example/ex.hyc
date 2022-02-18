@@ -1,6 +1,6 @@
-let foo = 1 + 1 in 2 + foo;
+let foo = 1 + 1;
 
-if foo == 4 then
+if foo == 2 then
     do
         foo + 1;
     end
