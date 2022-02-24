@@ -4,6 +4,7 @@ let baz: bool = true;
 
 fun qux (lhs: int rhs: int) -> int = lhs + rhs;
 fun main () -> int = do
-    puts("Hello, World");
+    let msg: string = "Hello, World!";
+    write(msg);
     0;
 end;

@@ -61,6 +61,7 @@ fn main() {
                             log(0, "Running clang-format...");
                             let mut clang_format_status = Command::new("clang-format")
                                 .arg("-i")
+                                .arg("-style=Microsoft")
                                 .arg(&out_file_name)
                                 .spawn()
                                 .expect("Failed to run clang-format, make sure you have it installed");

@@ -237,6 +237,7 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
         let do_block = just(Token::Do)
             .ignore_then(
                 expr.clone()
+                .or(decl.clone())
                     .then_ignore(just(Token::Semicolon))
                     .repeated())
             .then_ignore(just(Token::End))
