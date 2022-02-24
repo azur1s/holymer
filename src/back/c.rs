@@ -1,8 +1,15 @@
+use std::fmt::Display;
+
 use crate::front::parse::Expr;
 
 pub struct Codegen {
     pub emitted: String,
 }
+
+const HEADER_INCLUDES: [&str; 2] = [
+    "#include <stdio.h>",
+    "#include <hycron/stdbool.h>",
+];
 
 impl Codegen {
     pub fn new() -> Self {
@@ -11,33 +18,30 @@ impl Codegen {
         }
     }
 
-    fn emit(&mut self, s: String) {
-        self.emitted.push_str(s.as_str());
-    }
-
-    fn emit_str(&mut self, s: &str) {
-        self.emitted.push_str(s);
+    fn emit<T: Display>(&mut self, s: T) {
+        self.emitted.push_str(&s.to_string());
     }
 
     pub fn gen(&mut self, exprs: &[Expr]) {
-        self.emit_str("#include <stdio.h>\n");
-        self.emit_str("#include <hycron/bool.h>\n");
-        self.emit_str("int main() {\n");
+        for header in HEADER_INCLUDES.iter() {
+            self.emit(header);
+        }
+        self.emit("int main() {");
         for expr in exprs {
             self.gen_expr(expr);
         }
-        self.emit_str("return 0;\n");
-        self.emit_str("}\n");
+        self.emit("return 0;");
+        self.emit("}");
     }
     
     fn gen_expr(&mut self, expr: &Expr) {
         match expr {
             Expr::Let { name, value } => {
                 match &**value {
-                    Expr::Int(i)     => self.emit(format!("int {} = {};\n", name, i)),
-                    Expr::Float(f)   => self.emit(format!("double {} = {};\n", name, f)),
-                    Expr::Boolean(b) => self.emit(format!("bool {} = {};\n", name, b)),
-                    Expr::String(s)  => self.emit(format!("char *{} = \"{}\";\n", name, s)),
+                    Expr::Int(i)     => self.emit(format!("int {} = {};", name, i)),
+                    Expr::Float(f)   => self.emit(format!("double {} = {};", name, f)),
+                    Expr::Boolean(b) => self.emit(format!("bool {} = {};", name, b)),
+                    Expr::String(s)  => self.emit(format!("char *{} = \"{}\";", name, s)),
                     _ => todo!(),
                 }
             },
@@ -46,7 +50,7 @@ impl Codegen {
                     Expr::Ident(func) => {
                         match func.as_str() {
                             "print" => {
-                                self.emit(format!("printf({});\n", match &args[0] {
+                                self.emit(format!("printf({});", match &args[0] {
                                     Expr::String(s) => format!("\"{}\"", s),
                                     Expr::Ident(s) => format!("\"%s\", {}", s),
                                     _ => todo!(),
@@ -59,20 +63,18 @@ impl Codegen {
                 }
             },
             Expr::If { cond, then, else_ } => {
-                self.emit("if ".to_string());
+                self.emit("if (".to_string());
                 self.gen_expr(&cond);
-                self.emit(" {\n".to_string());
+                self.emit(") {".to_string());
                 self.gen_expr(&then);
-                self.emit("} else {\n".to_string());
+                self.emit("} else {".to_string());
                 self.gen_expr(&else_);
-                self.emit("}\n".to_string());
+                self.emit("}".to_string());
             },
             Expr::Binary { left, op, right } => {
-                self.emit("(".to_string());
                 self.gen_expr(&left);
                 self.emit(format!(" {} ", op.to_string()));
                 self.gen_expr(&right);
-                self.emit(")".to_string());
             },
             Expr::Ident(s) => self.emit(s.to_string()),
             Expr::Boolean(b) => self.emit(format!("{}", b)),
