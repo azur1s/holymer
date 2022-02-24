@@ -26,6 +26,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     let int = text::int(10)
         .map(|s: String| Token::Int(s.parse().unwrap()));
 
+    // TODO: this is not working somehow
     let float = text::int(10)
         .then_ignore(just('.'))
         .chain::<char, _, _>(text::digits(10))
@@ -315,7 +316,7 @@ impl Expr {
             Self::String(x)  => out.push_str(&format!("\"{}\"", x)),
             Self::Ident(x)   => out.push_str(&x),
 
-            Self::Unary{ op, expr }         => out.push_str(&format!("({} {})", op, expr.to_sexpr())),
+            Self::Unary{ op, expr } => out.push_str(&format!("({} {})", op, expr.to_sexpr())),
             Self::Binary{ op, left, right } => out.push_str(
                 &format!("({} {} {})", op, left.to_sexpr(), right.to_sexpr())
             ),
@@ -328,7 +329,7 @@ impl Expr {
                 &format!("(fun {} ({})\n  {})", name, args.join(" "), body.to_sexpr())),
 
             Self::If { cond, then, else_ } => out.push_str(
-                &format!("(if {}\n  {}\n  {})", cond.to_sexpr(), then.to_sexpr(), else_.to_sexpr())),
+                &format!("(if {} {} {})", cond.to_sexpr(), then.to_sexpr(), else_.to_sexpr())),
             
             Self::Do { body } => out.push_str(
                 &format!("(do {})", body.iter().map(|x| x.to_sexpr()).collect::<Vec<_>>().join(" "))),

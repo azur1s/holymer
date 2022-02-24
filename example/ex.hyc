@@ -1,12 +1,9 @@
-let foo = if 1 == 1 then
-        5
-    else
-        10
-    end;
+let foo = 1;
+let bar = true;
+let baz = "qux";
 
-do
-    print(1);
+if (bar == true) then
+    print(baz);
+else
+    print("quux");
 end;
-
-fun bar a b = a + b;
-let baz = bar(34 35);

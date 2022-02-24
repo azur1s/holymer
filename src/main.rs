@@ -12,6 +12,10 @@ use args::{Args, Options};
 pub mod front;
 use front::parse::{lexer, parser};
 
+/// Back-end of the language.
+/// Contains code generator.
+pub mod back;
+
 fn main() {
     let args = Args::parse();
     match args.options {
@@ -24,7 +28,10 @@ fn main() {
                 if parse_error.is_empty() {
                     match ast {
                         Some(ast) => {
-                            println!("{}", ast.iter().map(|e| e.to_sexpr()).collect::<Vec<String>>().join("\n\n"));
+                            // println!("{}", ast.iter().map(|e| e.to_sexpr()).collect::<Vec<String>>().join("\n\n"));
+                            let mut codegen = back::c::Codegen::new();
+                            codegen.gen(&ast);
+                            print!("{}", codegen.emitted);
                         },
                         None => println!("no ast :("),
                     };
