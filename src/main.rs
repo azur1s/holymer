@@ -12,6 +12,11 @@ use args::{Args, Options};
 pub mod front;
 use front::parse::{lexer, parser};
 
+/// Middle-end of the language.
+/// Contains the intermediate representation.
+pub mod middle;
+use middle::ir;
+
 /// Back-end of the language.
 /// Contains code generator.
 pub mod back;
@@ -42,12 +47,13 @@ fn main() {
                         Some(ast) => {
                             let start = time::Instant::now();
 
-                            let mut compiler = back::c::Codegen::new();
-                            compiler.gen(&ast);
+                            let ir = ir::ast_to_ir(&ast);
+                            let mut codegen = back::c::Codegen::new();
+                            codegen.gen(&ir);
                         
                             let out_file_name = file_name.file_stem().unwrap().to_str().unwrap().to_string() + ".c";
                             let mut out_file = fs::File::create(&out_file_name).expect("Failed to create file");
-                            write!(out_file, "{}", compiler.emitted).expect("Failed to write to file");
+                            write!(out_file, "{}", codegen.emitted).expect("Failed to write to file");
                         
                             let compile_elapsed = start.elapsed();
 

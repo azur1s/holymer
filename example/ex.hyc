@@ -1,9 +1,9 @@
-let foo = 1;
-let bar = true;
-let baz = "qux";
+let foo: int = 1;
+let bar: string = "str";
+let baz: bool = true;
 
-if (bar == true) then
-    print(baz);
-else
-    print("quux");
+fun qux (lhs: int rhs: int) -> int = lhs + rhs;
+fun main () -> int = do
+    puts("Hello, World");
+    0;
 end;

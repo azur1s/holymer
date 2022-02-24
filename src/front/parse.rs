@@ -4,7 +4,7 @@ use chumsky::prelude::*;
 pub enum Token {
     // Types
     Int(i64), Float(String),
-    Boolean(bool), String(String),
+    Bool(bool), String(String),
     Ident(String),
 
     // Symbols
@@ -13,6 +13,7 @@ pub enum Token {
     Semicolon,
     Assign, Colon,
     Comma,
+    ReturnHint,
 
     // Keywords
     Import,
@@ -38,6 +39,14 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .then_ignore(just('"'))
         .collect::<String>()
         .map(|s: String| Token::String(s));
+    
+    let symbol = choice((
+        just(';').to(Token::Semicolon),
+        just('=').to(Token::Assign),
+        just(':').to(Token::Colon),
+        just(',').to(Token::Comma),
+        just("->").to(Token::ReturnHint), 
+    ));
 
     let operator = choice((
         just("+"),
@@ -62,16 +71,9 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         just('}'),
     )).map(|c| Token::Delimiter(c));
 
-    let symbol = choice((
-        just(';').to(Token::Semicolon),
-        just('=').to(Token::Assign),
-        just(':').to(Token::Colon),
-        just(',').to(Token::Comma),
-    ));
-
     let keyword = text::ident().map(|s: String| match s.as_str() {
-        "true" => Token::Boolean(true),
-        "false" => Token::Boolean(false),
+        "true" => Token::Bool(true),
+        "false" => Token::Bool(false),
 
         "import" => Token::Import,
         "let" => Token::Let,
@@ -87,9 +89,9 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     let token = int
         .or(float)
         .or(string)
+        .or(symbol)
         .or(operator)
         .or(delimiter)
-        .or(symbol)
         .or(keyword)
         .recover_with(skip_then_retry_until([]));
 
@@ -107,7 +109,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
 #[derive(Clone, Debug)]
 pub enum Expr {
     Int(i64), Float(f64),
-    Boolean(bool), String(String),
+    Bool(bool), String(String),
     Ident(String),
 
     Unary { op: String, expr: Box<Self> },
@@ -116,11 +118,13 @@ pub enum Expr {
 
     Let {
         name: String,
+        type_hint: String,
         value: Box<Self>,
     },
     Fun {
         name: String,
-        args: Vec<String>,
+        type_hint: String,
+        args: Vec<(String, String)>,
         body: Box<Self>,
     },
 
@@ -143,7 +147,7 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
     let literal = filter_map(|span, token| match token {
         Token::Int(i) => Ok(Expr::Int(i)),
         Token::Float(f) => Ok(Expr::Float(f.parse().unwrap())),
-        Token::Boolean(b) => Ok(Expr::Boolean(b)),
+        Token::Bool(b) => Ok(Expr::Bool(b)),
         Token::String(s) => Ok(Expr::String(s)),
         _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
     }).labelled("literal");
@@ -240,26 +244,39 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
 
         let declare_var = just(Token::Let)
             .ignore_then(ident)
+            .then_ignore(just(Token::Colon))
+            .then(ident)
             .then_ignore(just(Token::Assign))
             .then(
                 do_block.clone()
                     .or(decl.clone())
             )
-            .map(|(name, value)| Expr::Let {
+            .map(|((name, type_hint), value)| Expr::Let {
                 name,
+                type_hint,
                 value: Box::new(value),
             }).labelled("variable");
 
         let declare_fun = just(Token::Fun)
             .ignore_then(ident)
-            .then(ident.repeated())
+            .then_ignore(just(Token::Delimiter('(')))
+            .then(
+                (ident
+                    .then_ignore(just(Token::Colon))
+                    .then(ident))
+                .repeated()
+            )
+            .then_ignore(just(Token::Delimiter(')')))
+            .then_ignore(just(Token::ReturnHint))
+            .then(ident)
             .then_ignore(just(Token::Assign))
             .then(
                 do_block.clone()
                     .or(decl.clone())
             )
-            .map(|((name, args), body)| Expr::Fun {
+            .map(|(((name, args), type_hint), body)| Expr::Fun {
                 name,
+                type_hint,
                 args,
                 body: Box::new(body),
             }).labelled("function");
@@ -304,38 +321,4 @@ pub fn parser() -> impl Parser<Token, Vec<Expr>, Error = Simple<Token>> + Clone 
         .then_ignore(just(Token::Semicolon))
         .repeated()
         .then_ignore(end())
-}
-
-impl Expr {
-    pub fn to_sexpr(&self) -> String {
-        let mut out = String::new();
-        match self {
-            Self::Int(x)     => out.push_str(&x.to_string()),
-            Self::Float(x)   => out.push_str(&x.to_string()),
-            Self::Boolean(x) => out.push_str(&x.to_string()),
-            Self::String(x)  => out.push_str(&format!("\"{}\"", x)),
-            Self::Ident(x)   => out.push_str(&x),
-
-            Self::Unary{ op, expr } => out.push_str(&format!("({} {})", op, expr.to_sexpr())),
-            Self::Binary{ op, left, right } => out.push_str(
-                &format!("({} {} {})", op, left.to_sexpr(), right.to_sexpr())
-            ),
-            Self::Call{ name, args } => out.push_str(
-                &format!("({} {})", name.to_sexpr(), args.iter().map(|x| x.to_sexpr()).collect::<Vec<_>>().join(" "))),
-
-            Self::Let{ name, value } => out.push_str(
-                &format!("(let {}\n  {})", name, value.clone().to_sexpr())),
-            Self::Fun{ name, args, body } => out.push_str(
-                &format!("(fun {} ({})\n  {})", name, args.join(" "), body.to_sexpr())),
-
-            Self::If { cond, then, else_ } => out.push_str(
-                &format!("(if {} {} {})", cond.to_sexpr(), then.to_sexpr(), else_.to_sexpr())),
-            
-            Self::Do { body } => out.push_str(
-                &format!("(do {})", body.iter().map(|x| x.to_sexpr()).collect::<Vec<_>>().join(" "))),
-            
-            _ => todo!(), 
-        }
-        out
-    }
 }
