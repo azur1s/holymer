@@ -15,12 +15,19 @@ impl Codegen {
         self.emitted.push_str(s.as_str());
     }
 
+    fn emit_str(&mut self, s: &str) {
+        self.emitted.push_str(s);
+    }
+
     pub fn gen(&mut self, exprs: &[Expr]) {
-        self.emit("#include <stdio.h>\n#include <stdbool.h>\nint main() {\n".to_string());
+        self.emit_str("#include <stdio.h>\n");
+        self.emit_str("#include <hycron/bool.h>\n");
+        self.emit_str("int main() {\n");
         for expr in exprs {
             self.gen_expr(expr);
         }
-        self.emit("return 0;\n}\n".to_string());
+        self.emit_str("return 0;\n");
+        self.emit_str("}\n");
     }
     
     fn gen_expr(&mut self, expr: &Expr) {
@@ -41,7 +48,7 @@ impl Codegen {
                             "print" => {
                                 self.emit(format!("printf({});\n", match &args[0] {
                                     Expr::String(s) => format!("\"{}\"", s),
-                                    Expr::Ident(s) => s.to_string(),
+                                    Expr::Ident(s) => format!("\"%s\", {}", s),
                                     _ => todo!(),
                                 }));
                             },
