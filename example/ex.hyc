@@ -3,8 +3,10 @@ let bar: string = "str";
 let baz: bool = true;
 
 fun qux (lhs: int rhs: int) -> int = lhs + rhs;
+fun quux () -> string = "Hi, World!\n";
 fun main () -> int = do
-    let msg: string = "Hello, World!";
+    let msg: string = "Hello, World!\n";
     write(msg);
+    write(quux());
     0;
 end;

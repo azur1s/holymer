@@ -1,5 +1,6 @@
 # Hycron
 Programming language that compiles to C
+
 Note: The syntax can still be changed, if you have an idea, feel free to make an issues about it.
 
 # Prerequistie

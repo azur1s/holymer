@@ -35,7 +35,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .map(|s: String| Token::Float(s));
 
     let string = just('"')
-        .ignore_then(filter(|c| *c != '\\' && *c != '"').repeated())
+        .ignore_then(filter(|c| *c != '"').repeated())
         .then_ignore(just('"'))
         .collect::<String>()
         .map(|s: String| Token::String(s));
@@ -134,8 +134,6 @@ pub enum Expr {
         else_: Box<Self>,
     },
     Do { body: Vec<Self> },
-
-    Import(String),
 }
 
 fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
@@ -282,10 +280,6 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
                 body: Box::new(body),
             }).labelled("function");
 
-        let declare_import = just(Token::Import)
-            .ignore_then(ident.clone())
-            .map(Expr::Import);
-
         let if_cond = just(Token::If)
             .ignore_then(expr.clone())
             .then_ignore(just(Token::Then))
@@ -307,7 +301,6 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
 
         declare_var
             .or(declare_fun)
-            .or(declare_import)
             .or(if_cond)
             .or(do_block)
             .or(expr)
