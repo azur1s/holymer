@@ -7,6 +7,6 @@ fun quux () -> string = "Hi, World!\n";
 fun main () -> int = do
     let msg: string = "Hello, World!\n";
     write(msg);
-    write(quux());
+    let qux_result: int = qux(34 35);
     0;
 end;
