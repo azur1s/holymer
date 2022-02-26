@@ -1,12 +1,9 @@
 let foo: int = 1;
-let bar: string = "str";
-let baz: bool = true;
 
-fun qux (lhs: int rhs: int) -> int = lhs + rhs;
-fun quux () -> string = "Hi, World!\n";
-fun main () -> int = do
-    let msg: string = "Hello, World!\n";
-    write(msg);
-    let qux_result: int = qux(34 35);
-    0;
+fun bar (baz: int) -> int = baz + 1;
+fun qux (quux: int) -> int = do
+    let corge: int = quux + quux;
+    bar(corge);
 end;
+
+print(qux(5));

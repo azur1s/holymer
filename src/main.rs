@@ -1,4 +1,4 @@
-use std::{fs, io::Write, time, process::Command};
+use std::{fs, io::Write, time};
 
 use chumsky::{Parser, Stream};
 use clap::Parser as ArgParser;
@@ -47,49 +47,11 @@ fn main() {
                         Some(ast) => {
                             let start = time::Instant::now();
 
-                            let ir = ir::ast_to_ir(&ast);
-                            let mut codegen = back::c::Codegen::new();
-                            codegen.gen(&ir);
-                        
-                            let out_file_name = file_name.file_stem().unwrap().to_str().unwrap().to_string() + ".c";
-                            let mut out_file = fs::File::create(&out_file_name).expect("Failed to create file");
-                            write!(out_file, "{}", codegen.emitted).expect("Failed to write to file");
-                        
-                            let compile_elapsed = start.elapsed();
+                            let ir = ir::ast_to_ir(ast);
 
-                            log(0, format!("Compiled successfully to {} in {}s", &out_file_name, compile_elapsed.as_secs_f64()));
-                            log(0, "Running clang-format...");
-                            let mut clang_format_status = Command::new("clang-format")
-                                .arg("-i")
-                                .arg("-style=Microsoft")
-                                .arg(&out_file_name)
-                                .spawn()
-                                .expect("Failed to run clang-format, make sure you have it installed");
-                            match clang_format_status.wait() {
-                                Ok(status) => {
-                                    match status.success() {
-                                        true => log(0, "Successfully run clang-format"),
-                                        false => log(2, "Failed to run clang-format"),
-                                    }
-                                },
-                                Err(e) => log(2, format!("Failed to wait on clang-format: {}", e)),
-                            }
-                            
-                            log(0, "Running clang...");
-                            let mut clang_status = Command::new("clang")
-                                .arg(&out_file_name)
-                                .spawn()
-                                .expect("Failed to run clang, make sure you have it installed");
-                            match clang_status.wait() {
-                                Ok(status) => {
-                                    match status.success() {
-                                        true => log(0, "Successfully run clang"),
-                                        false => log(2, "Failed to run clang"),
-                                    }
-                                },
-                                Err(e) => log(2, format!("Failed to wait on clang: {}", e)),
-                            }
-                            
+                            let out = back::js::gen(ir);
+                            println!("{}", out);
+
                             let all_elapsed = start.elapsed();
                             log(0, format!("Done in {}s", all_elapsed.as_secs_f64()));
                         },

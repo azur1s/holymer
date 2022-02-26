@@ -25,8 +25,7 @@ impl fmt::Display for TypeHint {
 #[derive(Debug, Clone)]
 pub enum Value {
     Int(i64),
-    Float(f32),
-    Double(f64),
+    Float(f64),
     Bool(bool),
     String(String),
     Ident(String),
@@ -43,10 +42,10 @@ pub enum IR {
     Binary { op: String, left: Box<Self>, right: Box<Self> },
 }
 
-pub fn ast_to_ir(ast: &[Expr]) -> Vec<IR> {
+pub fn ast_to_ir(ast: Vec<Expr>) -> Vec<IR> {
     let mut ir = Vec::new();
     for expr in ast {
-        ir.push(expr_to_ir(expr));
+        ir.push(expr_to_ir(&expr));
     }
     ir
 }
@@ -86,8 +85,7 @@ pub fn expr_to_ir(expr: &Expr) -> IR {
             right: Box::new(expr_to_ir(right)),
         },
         Expr::Int(value)    => IR::Value { value: Value::Int(*value) },
-        Expr::Float(value)  => IR::Value { value: Value::Double(*value) }, // TODO: Actually use float
-        // Expr::Double(value) => IR::Value { value: Value::Double(*value) },
+        Expr::Float(value)  => IR::Value { value: Value::Float(*value) },
         Expr::Bool(value)   => IR::Value { value: Value::Bool(*value) },
         Expr::String(value) => IR::Value { value: Value::String(value.clone()) },
         Expr::Ident(name)   => IR::Value { value: Value::Ident(name.clone()) },
@@ -99,7 +97,6 @@ fn get_typehint(from: &String) -> TypeHint {
     match from.as_str() {
         "int" => TypeHint::Int,
         "float" => TypeHint::Float,
-        "double" => TypeHint::Double,
         "bool" => TypeHint::Bool,
         "string" => TypeHint::String,
         _ => panic!("Unsupported type hint: {}", from)

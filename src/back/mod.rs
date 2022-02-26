@@ -1,2 +1,2 @@
-/// C compiler backend
-pub mod c;
+/// Javascript compiler backend
+pub mod js;
