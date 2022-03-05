@@ -1,25 +1,11 @@
-use core::fmt;
-
 use crate::front::parse::Expr;
 
 #[derive(Debug, Clone)]
 pub enum TypeHint {
     Int,
-    Float, Double,
+    Float,
     Bool,
     String,
-}
-
-impl fmt::Display for TypeHint {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            TypeHint::Int => write!(f, "int"),
-            TypeHint::Float => write!(f, "float"),
-            TypeHint::Double => write!(f, "double"),
-            TypeHint::Bool => write!(f, "bool"),
-            TypeHint::String => write!(f, "char*"),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]

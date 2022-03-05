@@ -46,7 +46,7 @@ fn gen_ir(ir: &IR) -> String {
             };
 
             format!(
-                "function {}({}) {{ {} }}",
+                "const {} = ({}) => {{ {} }};",
                 name,
                 args,
                 body

@@ -12,7 +12,7 @@ pub enum Token {
     Delimiter(char),
     Semicolon,
     Assign, Colon,
-    Comma,
+    Comma, Dot,
     ReturnHint,
 
     // Keywords
@@ -46,6 +46,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         just(':').to(Token::Colon),
         just(',').to(Token::Comma),
         just("->").to(Token::ReturnHint), 
+        just(".").to(Token::Dot),
     ));
 
     let operator = choice((
@@ -152,9 +153,8 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
 
     let expr = recursive(|expr| {
         let args = expr.clone()
-            .repeated()
-            .or_not()
-            .map(|item| item.unwrap_or_else(Vec::new));
+            .separated_by(just(Token::Comma))
+            .allow_trailing();
 
         let atom = literal
             .or(ident.map(Expr::Ident))
@@ -177,7 +177,7 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
                     args,
                 }
             });
-        
+
         let unary =  choice((
                 just(Token::Operator("-".to_string())).to("-"),
                 just(Token::Operator("!".to_string())).to("!")))
@@ -263,7 +263,8 @@ fn expr_parser() -> impl Parser<Token, Expr, Error = Simple<Token>> + Clone {
                 (ident
                     .then_ignore(just(Token::Colon))
                     .then(ident))
-                .repeated()
+                .separated_by(just(Token::Comma))
+                .allow_trailing()
             )
             .then_ignore(just(Token::Delimiter(')')))
             .then_ignore(just(Token::ReturnHint))

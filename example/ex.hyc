@@ -1,9 +1,12 @@
-let foo: int = 1;
+let foo: string = 1;
 
 fun bar (baz: int) -> int = baz + 1;
 fun qux (quux: int) -> int = do
     let corge: int = quux + quux;
     bar(corge);
 end;
+
+fun add (lhs: int, rhs: int) -> int = lhs + rhs;
+print(add(34, 35));
 
 print(qux(5));

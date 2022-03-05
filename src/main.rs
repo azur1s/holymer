@@ -25,6 +25,7 @@ use middle::ir;
 /// Contains code generator.
 pub mod back;
 
+/// Utility functions.
 pub mod util;
 use crate::util::log;
 
