@@ -1,10 +1,10 @@
 # Hycron
-Programming language that compiles to C
+Programming language that compiles to JavaScript
 
-Note: The syntax can still be changed, if you have an idea, feel free to make an issues about it.
+Note: The syntax can still be changed and also the compile target (I'm still finding out what target will suit this the best) if you have an idea, feel free to create an issues about it.
 
 # Prerequistie
-- `clang` and `clang-format`
+- `node` or any JavaScript runner
 - Rust (if you're going to build from source)
 
 # TODO
