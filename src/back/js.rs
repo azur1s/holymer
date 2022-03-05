@@ -56,7 +56,7 @@ fn gen_ir(ir: &IR) -> String {
             match name.as_str() {
                 "print" => {
                     let args = gen_ir(&args[0]);
-                    format!("process.stdout.write({});", args.trim_end_matches(";"))
+                    format!("console.log({});", args.trim_end_matches(";"))
                 },
                 _ => {
                     let args = args

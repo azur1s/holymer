@@ -1,4 +1,8 @@
-use std::{fs, io::Write, time};
+use std::{
+    fs,
+    io::{self, Write},
+    time,
+};
 
 use chumsky::{Parser, Stream};
 use clap::Parser as ArgParser;
@@ -27,21 +31,25 @@ use crate::util::log;
 fn main() {
     let args = Args::parse();
     match args.options {
-        Options::Compile { input: file_name, ast: _print_ast } => {
+        Options::Compile {
+            input: file_name,
+            ast: _print_ast,
+        } => {
             // Get file contents.
             let src = fs::read_to_string(&file_name).expect("Failed to read file");
-            
+
             // Lex the file.
             let (tokens, lex_error) = lexer().parse_recovery(src.as_str());
             let len = src.chars().count();
-            
+
             // Parse the file.
-            let (ast, parse_error) = parser().parse_recovery(Stream::from_iter(len..len + 1, tokens.clone().unwrap().into_iter()));
-            
+            let (ast, parse_error) = parser().parse_recovery(Stream::from_iter(
+                len..len + 1,
+                tokens.clone().unwrap().into_iter(),
+            ));
+
             if lex_error.is_empty() {
-
                 if parse_error.is_empty() {
-
                     match ast {
                         // If there is some AST then generate code.
                         Some(ast) => {
@@ -50,22 +58,24 @@ fn main() {
                             let ir = ir::ast_to_ir(ast);
 
                             let out = back::js::gen(ir);
-                            println!("{}", out);
+
+                            let file = fs::File::create("out.js").expect("Failed to create file");
+                            let mut file = io::BufWriter::new(file);
+                            file.write_all(out.as_bytes())
+                                .expect("Failed to write file");
 
                             let all_elapsed = start.elapsed();
                             log(0, format!("Done in {}s", all_elapsed.as_secs_f64()));
-                        },
+                        }
                         // If there is no AST, then notify the user.
                         None => println!("no ast :("),
                     };
-
                 } else {
                     eprintln!("{:#?}\n(Parser error)", parse_error);
                 }
-
             } else {
                 eprintln!("{:#?}\n(Lexer error)", lex_error);
             }
-        },
+        }
     }
 }
