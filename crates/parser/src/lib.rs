@@ -11,7 +11,7 @@ pub enum Expr {
     Unary { op: String, rhs: Box<Spanned<Self>> },
     Binary { lhs: Box<Spanned<Self>>, op: String, rhs: Box<Spanned<Self>> },
     Call { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
-
+    
     Let {
         name: String,
         type_hint: String,
@@ -23,7 +23,8 @@ pub enum Expr {
         args: Spanned<Vec<(Spanned<String>, Spanned<String>)>>,
         body: Box<Spanned<Self>>
     },
-
+    Return { expr: Box<Spanned<Self>> },
+    
     If {
         cond: Box<Spanned<Self>>,
         then: Box<Spanned<Self>>,
@@ -193,6 +194,17 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
+        let return_ = just(Token::KwReturn)
+            .ignore_then(expr.clone())
+            .map(|(expr, span)| {
+                (
+                    Expr::Return {
+                        expr: Box::new((expr, span.clone())),
+                    },
+                    span.start..span.end,
+                )
+            });
+
         let do_block = just(Token::KwDo)
             .ignore_then(
                 expr.clone()
@@ -211,6 +223,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
 
         let_
             .or(fun)
+            .or(return_)
             .or(do_block)
             .or(compare)
     }).labelled("expression");

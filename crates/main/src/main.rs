@@ -60,7 +60,7 @@ fn main() {
                             .with_message(format!(
                                 "{}, expected {}",
 
-                                if e.found().is_some() {"Unexpected token in input" }
+                                if e.found().is_some() { "Unexpected token in input" }
                                 else { "Unexpected end of input" },
 
                                 if e.expected().len() == 0 { "something else".to_string().fg(Color::Green) }
@@ -84,6 +84,9 @@ fn main() {
                                             .fg(Color::Red)
                                     ))
                                     .with_color(Color::Red)
+                            )
+                            .with_help(
+                                "You might have forgotten to end a previous line with semicolon"
                             ),
                         _ => {
                             println!("{:?}", e);

@@ -7,4 +7,11 @@ fun add (lhs: Int) (rhs: Int): Int = lhs + rhs;
 fun add_2 (lhs: Int) (rhs: Int): Int = do
     let a: Int = lhs + rhs;
     let b: Int = a + lhs;
+    return b;
+end;
+
+-- Entry point (maybe)
+fun main: Void = do
+    print(add(34, 35));
+    return 0;
 end;

@@ -6,6 +6,7 @@ pub enum Token {
     KwLet, KwFun,
     KwDo, KwEnd,
     KwIf, KwThen, KwElse,
+    KwReturn,
 
     // Literals
     Int(i64), Float(String), Boolean(bool),
@@ -32,6 +33,7 @@ impl std::fmt::Display for Token {
             Token::KwIf => write!(f, "if"),
             Token::KwThen => write!(f, "then"),
             Token::KwElse => write!(f, "else"),
+            Token::KwReturn => write!(f, "return"),
 
             Token::Int(i) => write!(f, "{}", i),
             Token::Float(s) => write!(f, "{}", s),
@@ -105,6 +107,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         "if" => Token::KwIf,
         "then" => Token::KwThen,
         "else" => Token::KwElse,
+        "return" => Token::KwReturn,
         _ => Token::Identifier(s),
     });
 
