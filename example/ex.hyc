@@ -1,6 +1,8 @@
-let fard: Int = 1;
-let balls: String = "balls";
+-- Variables
+let foo: Int = 1;
+let bar: String = "bar";
 
+-- Functions
 fun add (lhs: Int) (rhs: Int): Int = lhs + rhs;
 fun add_2 (lhs: Int) (rhs: Int): Int = do
     let a: Int = lhs + rhs;
