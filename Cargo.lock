@@ -152,6 +152,8 @@ dependencies = [
 name = "hycron"
 version = "0.1.0"
 dependencies = [
+ "ariadne",
+ "chumsky",
  "clap",
  "lexer",
  "parser",
@@ -205,7 +207,6 @@ dependencies = [
 name = "parser"
 version = "0.1.0"
 dependencies = [
- "ariadne",
  "chumsky",
  "lexer",
 ]
