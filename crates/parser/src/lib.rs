@@ -229,3 +229,23 @@ pub fn parse(tokens: Vec<(Token, std::ops::Range<usize>)>, len: usize) -> (Optio
 
     return (ast, parse_error)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_simple() {
+        let (_, err) = parse(vec![
+            (Token::KwLet, 0..3),
+            (Token::Identifier("x".to_string()), 4..5),
+            (Token::Colon, 5..6),
+            (Token::Identifier("Int".to_string()), 7..10),
+            (Token::Assign, 11..12),
+            (Token::Int(1), 13..14),
+            (Token::SemiColon, 14..15),
+        ], 15);
+
+        assert_eq!(err, vec![]);
+    }
+}
