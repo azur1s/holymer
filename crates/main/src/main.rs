@@ -4,6 +4,7 @@ use clap::Parser as ArgParser;
 use ariadne::{Report, ReportKind, Label, Source, Color, Fmt};
 use lexer::lex;
 use parser::parse;
+use hir::ast_to_ir;
 
 pub mod args;
 use args::{Args, Options};
@@ -25,6 +26,7 @@ fn main() {
             let (tokens, lex_error) = lex(src.clone());
             let (ast, parse_error) = parse(tokens.unwrap(), src.chars().count());
 
+            // Report errors.
             lex_error.into_iter()
                 .map(|e| e.map(|e| e.to_string()))
                 .chain(parse_error.into_iter().map(|e| e.map(|tok| tok.to_string())))
@@ -84,9 +86,6 @@ fn main() {
                                             .fg(Color::Red)
                                     ))
                                     .with_color(Color::Red)
-                            )
-                            .with_help(
-                                "You might have forgotten to end a previous line with semicolon"
                             ),
                         _ => {
                             println!("{:?}", e);
@@ -99,7 +98,11 @@ fn main() {
 
             match ast {
                 Some(ast) => {
-                    println!("{:#?}", ast);
+                    // Convert the AST to HIR.
+                    let ir = ast_to_ir(ast);
+
+                    // Print the HIR.
+                    println!("{:#?}", ir);
                 },
                 None => {
                     log(2, "Failed to parse.");
