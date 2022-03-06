@@ -1,12 +1,8 @@
-let foo: string = 1;
+let fard: Int = 1;
+let balls: String = "balls";
 
-fun bar (baz: int) -> int = baz + 1;
-fun qux (quux: int) -> int = do
-    let corge: int = quux + quux;
-    bar(corge);
+fun add (lhs: Int) (rhs: Int): Int = lhs + rhs;
+fun add_2 (lhs: Int) (rhs: Int): Int = do
+    let a: Int = lhs + rhs;
+    let b: Int = a + lhs;
 end;
-
-fun add (lhs: int, rhs: int) -> int = lhs + rhs;
-print(add(34, 35));
-
-print(qux(5));

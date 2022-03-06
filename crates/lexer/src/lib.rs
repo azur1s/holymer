@@ -1,0 +1,132 @@
+use chumsky::prelude::*;
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Token {
+    // Keywords
+    KwLet, KwFun,
+    KwDo, KwEnd,
+    KwIf, KwThen, KwElse,
+
+    // Literals
+    Int(i64), Float(String), Boolean(bool),
+    String(String), Identifier(String),
+
+    // Operators
+    Plus, Minus, Multiply, Divide,
+    Not, Equal, NotEqual, Less, Greater,
+    
+    // Symbols & Delimiters
+    Assign,
+    Dot, Comma,
+    Colon, SemiColon,
+    OpenParen, CloseParen,
+}
+
+impl std::fmt::Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Token::KwLet => write!(f, "let"),
+            Token::KwFun => write!(f, "fun"),
+            Token::KwDo => write!(f, "do"),
+            Token::KwEnd => write!(f, "end"),
+            Token::KwIf => write!(f, "if"),
+            Token::KwThen => write!(f, "then"),
+            Token::KwElse => write!(f, "else"),
+
+            Token::Int(i) => write!(f, "{}", i),
+            Token::Float(s) => write!(f, "{}", s),
+            Token::Boolean(b) => write!(f, "{}", b),
+            Token::String(s) => write!(f, "{}", s),
+            Token::Identifier(s) => write!(f, "{}", s),
+
+            Token::Plus => write!(f, "+"),
+            Token::Minus => write!(f, "-"),
+            Token::Multiply => write!(f, "*"),
+            Token::Divide => write!(f, "/"),
+            Token::Not => write!(f, "!"),
+            Token::Equal => write!(f, "=="),
+            Token::NotEqual => write!(f, "!="),
+            Token::Less => write!(f, "<"),
+            Token::Greater => write!(f, ">"),
+            
+            Token::Assign => write!(f, "="),
+            Token::Dot => write!(f, "."),
+            Token::Comma => write!(f, ","),
+            Token::Colon => write!(f, ":"),
+            Token::SemiColon => write!(f, ";"),
+            Token::OpenParen => write!(f, "("),
+            Token::CloseParen => write!(f, ")"),
+        }
+    }
+}
+
+pub type Span = std::ops::Range<usize>;
+pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
+    let int = text::int(10)
+        .map(|s: String| Token::Int(s.parse().unwrap()));
+    let float = text::int(10)
+        .chain(just('.'))
+        .chain::<char, _, _>(text::digits(10))
+        .collect::<String>()
+        .map(Token::Float);
+
+    let string = just('"')
+        .ignore_then(filter(|c| *c != '"').repeated())
+        .then_ignore(just('"'))
+        .collect::<String>()
+        .map(Token::String);
+    
+    let symbol = choice((
+        just('+').to(Token::Plus),
+        just('-').to(Token::Minus),
+        just('*').to(Token::Multiply),
+        just('/').to(Token::Divide),
+        just('!').to(Token::Not),
+        just("==").to(Token::Equal),
+        just('<').to(Token::Less),
+        just('>').to(Token::Greater),
+        just('=').to(Token::Assign),
+        just('.').to(Token::Dot),
+        just(',').to(Token::Comma),
+        just(':').to(Token::Colon),
+        just(';').to(Token::SemiColon),
+        just('(').to(Token::OpenParen),
+        just(')').to(Token::CloseParen),
+    ));
+
+    let keyword = text::ident().map(|s: String| match s.as_str() {
+        "true" => Token::Boolean(true),
+        "false" => Token::Boolean(false),
+
+        "let" => Token::KwLet,
+        "fun" => Token::KwFun,
+        "do" => Token::KwDo,
+        "end" => Token::KwEnd,
+        "if" => Token::KwIf,
+        "then" => Token::KwThen,
+        "else" => Token::KwElse,
+        _ => Token::Identifier(s),
+    });
+
+    let token = int
+        .or(float)
+        .or(string)
+        .or(symbol)
+        .or(keyword)
+        .recover_with(skip_then_retry_until([]));
+
+    let comment = just("--")
+        .ignore_then(filter(|c| *c != '\n').repeated())
+        .then_ignore(just('\n'));
+
+    token
+        .padded_by(comment.repeated())
+        .map_with_span(|token, span| (token, span))
+        .padded()
+        .repeated()
+}
+
+pub fn lex(src: String) -> (Option<Vec<(Token, std::ops::Range<usize>)>>, Vec<Simple<char>>) {
+    let (tokens, lex_error) = lexer().parse_recovery(src.as_str());
+    return (tokens, lex_error);
+}
