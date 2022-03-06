@@ -134,6 +134,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 
 [[package]]
+name = "hc"
+version = "0.1.0"
+dependencies = [
+ "ariadne",
+ "chumsky",
+ "clap",
+ "lexer",
+ "parser",
+]
+
+[[package]]
 name = "heck"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -146,17 +157,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "hycron"
-version = "0.1.0"
-dependencies = [
- "ariadne",
- "chumsky",
- "clap",
- "lexer",
- "parser",
 ]
 
 [[package]]
