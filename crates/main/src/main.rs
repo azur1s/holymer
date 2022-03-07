@@ -20,11 +20,19 @@ fn main() {
         Options::Compile {
             input: file_name,
             ast: _print_ast,
+            log: should_log,
+            output,
         } => {
+            // Macro to only log if `should_log` is true
+            macro_rules! logif {
+                ($level:expr, $msg:expr) => { if should_log { log($level, $msg); } };
+            }
+
             // Start timer
             let start = std::time::Instant::now();
 
             // Get file contents
+            logif!(0, format!("Reading {}", &file_name.display()));
             let src = fs::read_to_string(&file_name).expect("Failed to read file");
 
             // Lex the file
@@ -101,31 +109,35 @@ fn main() {
                     report.finish().print(Source::from(&src)).unwrap();
                 }
             ); // End errors reporting
-            log(0, format!("Parsing took {}ms", start.elapsed().as_millis()));
+            logif!(0, format!("Parsing took {}ms", start.elapsed().as_millis()));
 
             match ast {
                 Some(ast) => {
                     // Convert the AST to HIR
                     let ir = ast_to_ir(ast);
-                    log(0, "Generated HIR.");
+                    logif!(0, "Generated HIR.");
                     
                     // Generate code
                     let mut codegen = cpp::Codegen::new();
                     codegen.gen(ir);
-                    log(0, "Successfully generated code.");
+                    logif!(0, "Successfully generated code.");
 
                     // Write code to file
-                    let mut file = fs::File::create("out.cpp").expect("Failed to create file");
+                    let output_path = match output {
+                        Some(output) => output,
+                        None => file_name.with_extension("cpp").file_name().unwrap().to_os_string().into(),
+                    };
+                    let mut file = fs::File::create(&output_path).expect("Failed to create file");
                     file.write_all(codegen.emitted.as_bytes()).expect("Failed to write to file");
 
                     // End timer
                     let duration = start.elapsed().as_millis();
 
-                    log(0, format!("Compilation took {}ms", duration));
-                    log(0, format!("Wrote output to `out.cpp`. All done."));
+                    logif!(0, format!("Compilation took {}ms", duration));
+                    logif!(0, format!("Wrote output to `{}`. All done.", output_path.display()));
                 },
                 None => {
-                    log(2, "Failed to parse.");
+                    logif!(2, "Failed to parse.");
                 }
             }
         }

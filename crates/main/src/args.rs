@@ -23,5 +23,11 @@ pub enum Options {
         /// Print parsed AST and exit (for debugging).
         #[clap(short, long)]
         ast: bool,
+        /// Log process.
+        #[clap(short, long)]
+        log: bool,
+        /// Output file path.
+        #[clap(short, long, parse(from_os_str))]
+        output: Option<PathBuf>,
     },
 }
