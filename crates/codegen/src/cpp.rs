@@ -17,6 +17,7 @@ impl Codegen {
 
     pub fn gen(&mut self, irs: Vec<IR>) {
         self.emit("#include <stdbool.h>\n");
+        self.emit("#include <iostream>\n");
         self.emit("#include <string>\n");
         self.emit("int main() {\n");
         for ir in irs {
@@ -29,6 +30,13 @@ impl Codegen {
         match ir {
             IRKind::Define { name, type_hint, value } => {
                 format!("{} {} = {};\n", type_hint, name, self.gen_ir(value))
+            },
+            IRKind::Call { name, args } => {
+                match name.as_str() {
+                    "write" => { format!("std::cout << {};\n", self.gen_ir(&args[0])) },
+                    "read" => { format!("std::cin >> {};\n", self.gen_ir(&args[0])) },
+                    _ => format!("{}({});\n", name, args.iter().map(|arg| self.gen_ir(arg)).collect::<Vec<_>>().join(", ")),
+                }
             },
             IRKind::Value { value } => {
                 match value {

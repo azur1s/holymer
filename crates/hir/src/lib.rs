@@ -43,10 +43,19 @@ pub fn expr_to_ir(expr: &Expr) -> IRKind {
             let value = expr_to_ir(&value.0);
             IRKind::Define { name: name.clone(), type_hint: gen_type_hint(type_hint), value: Box::new(value) }
         },
+        Expr::Call { name, args } => {
+            let name = match &name.0 {
+                Expr::Identifier(s) => s.clone(),
+                _ => panic!("Expected identifier") // TODO: Remove panic and use error handling
+            };
+            let args = args.0.iter().map(|arg| expr_to_ir(&arg.0)).collect::<Vec<_>>();
+            IRKind::Call { name, args }
+        },
 
-        Expr::Int(value)     => IRKind::Value { value: Value::Int(*value) },
-        Expr::Boolean(value) => IRKind::Value { value: Value::Boolean(*value) },
-        Expr::String(value)  => IRKind::Value { value: Value::String(value.clone()) },
+        Expr::Int(value)        => IRKind::Value { value: Value::Int(*value) },
+        Expr::Boolean(value)    => IRKind::Value { value: Value::Boolean(*value) },
+        Expr::String(value)     => IRKind::Value { value: Value::String(value.clone()) },
+        Expr::Identifier(value) => IRKind::Value { value: Value::Ident(value.clone()) },
         _ => { dbg!(expr); todo!() }
     }
 }
