@@ -9,7 +9,7 @@ pub enum Token {
     KwReturn,
 
     // Literals
-    Int(i64), Float(String), Boolean(bool),
+    Int(i64), Boolean(bool),
     String(String), Identifier(String),
 
     // Operators
@@ -36,7 +36,6 @@ impl std::fmt::Display for Token {
             Token::KwReturn => write!(f, "return"),
 
             Token::Int(i) => write!(f, "{}", i),
-            Token::Float(s) => write!(f, "{}", s),
             Token::Boolean(b) => write!(f, "{}", b),
             Token::String(s) => write!(f, "{}", s),
             Token::Identifier(s) => write!(f, "{}", s),
@@ -66,11 +65,6 @@ pub type Span = std::ops::Range<usize>;
 pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     let int = text::int(10)
         .map(|s: String| Token::Int(s.parse().unwrap()));
-    let float = text::int(10)
-        .chain(just('.'))
-        .chain::<char, _, _>(text::digits(10))
-        .collect::<String>()
-        .map(Token::Float);
 
     let string = just('"')
         .ignore_then(filter(|c| *c != '"').repeated())
@@ -112,7 +106,6 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     });
 
     let token = int
-        .or(float)
         .or(string)
         .or(symbol)
         .or(keyword)

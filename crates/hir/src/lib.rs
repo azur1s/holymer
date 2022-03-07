@@ -2,7 +2,7 @@ use std::ops::Range;
 use parser::Expr;
 
 #[derive(Debug)]
-pub enum Value { Int(i64), Float(f64), Bool(bool), String(String), Ident(String) }
+pub enum Value { Int(i64), Boolean(bool), String(String), Ident(String) }
 
 #[derive(Debug)]
 pub enum IRKind {
@@ -41,9 +41,21 @@ pub fn expr_to_ir(expr: &Expr) -> IRKind {
     match expr {
         Expr::Let { name, type_hint, value } => {
             let value = expr_to_ir(&value.0);
-            IRKind::Define { name: name.clone(), type_hint: type_hint.clone(), value: Box::new(value) }
+            IRKind::Define { name: name.clone(), type_hint: gen_type_hint(type_hint), value: Box::new(value) }
         },
-        Expr::Int(value) => IRKind::Value { value: Value::Int(*value) },
+
+        Expr::Int(value)     => IRKind::Value { value: Value::Int(*value) },
+        Expr::Boolean(value) => IRKind::Value { value: Value::Boolean(*value) },
+        Expr::String(value)  => IRKind::Value { value: Value::String(value.clone()) },
         _ => { dbg!(expr); todo!() }
+    }
+}
+
+fn gen_type_hint(type_hint: &str) -> String {
+    match type_hint {
+        "int"    => "int".to_string(),
+        "bool"   => "bool".to_string(),
+        "string" => "std::string".to_string(),
+        _ => { dbg!(type_hint); todo!() }
     }
 }

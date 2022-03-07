@@ -43,7 +43,6 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
 
     let literal = filter_map(|span, token| match token {
         Token::Int(i) => Ok((Expr::Int(i), span)),
-        Token::Float(f) => Ok((Expr::Float(f.parse().unwrap()), span)),
         Token::Boolean(b) => Ok((Expr::Boolean(b), span)),
         Token::String(s) => Ok((Expr::String(s), span)),
         _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),

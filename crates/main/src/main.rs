@@ -1,10 +1,12 @@
-use std::fs;
+use std::{fs, io::Write};
 
 use clap::Parser as ArgParser;
 use ariadne::{Report, ReportKind, Label, Source, Color, Fmt};
+
 use lexer::lex;
 use parser::parse;
 use hir::ast_to_ir;
+use codegen::cpp;
 
 pub mod args;
 use args::{Args, Options};
@@ -19,14 +21,17 @@ fn main() {
             input: file_name,
             ast: _print_ast,
         } => {
-            // Get file contents.
+            // Start timer
+            let start = std::time::Instant::now();
+
+            // Get file contents
             let src = fs::read_to_string(&file_name).expect("Failed to read file");
 
-            // Lex the file.
+            // Lex the file
             let (tokens, lex_error) = lex(src.clone());
             let (ast, parse_error) = parse(tokens.unwrap(), src.chars().count());
 
-            // Report errors.
+            // Report errors
             lex_error.into_iter()
                 .map(|e| e.map(|e| e.to_string()))
                 .chain(parse_error.into_iter().map(|e| e.map(|tok| tok.to_string())))
@@ -57,7 +62,7 @@ fn main() {
                                     ))
                                     .with_color(Color::Red)
                             ),
-                        
+
                         chumsky::error::SimpleReason::Unexpected => report
                             .with_message(format!(
                                 "{}, expected {}",
@@ -94,15 +99,30 @@ fn main() {
                     };
 
                     report.finish().print(Source::from(&src)).unwrap();
-                });
+                }
+            ); // End errors reporting
+            log(0, format!("Parsing took {}ms", start.elapsed().as_millis()));
 
             match ast {
                 Some(ast) => {
-                    // Convert the AST to HIR.
+                    // Convert the AST to HIR
                     let ir = ast_to_ir(ast);
+                    log(0, "Generated HIR.");
+                    
+                    // Generate code
+                    let mut codegen = cpp::Codegen::new();
+                    codegen.gen(ir);
+                    log(0, "Successfully generated code.");
 
-                    // Print the HIR.
-                    println!("{:#?}", ir);
+                    // Write code to file
+                    let mut file = fs::File::create("out.cpp").expect("Failed to create file");
+                    file.write_all(codegen.emitted.as_bytes()).expect("Failed to write to file");
+
+                    // End timer
+                    let duration = start.elapsed().as_millis();
+
+                    log(0, format!("Compilation took {}ms", duration));
+                    log(0, format!("Wrote output to `out.cpp`. All done."));
                 },
                 None => {
                     log(2, "Failed to parse.");

@@ -1,1 +1,3 @@
 let foo: int = 1;
+let baz: bool = true;
+let qux: string = "Hello, World";
