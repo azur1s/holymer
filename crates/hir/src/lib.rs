@@ -9,10 +9,11 @@ pub enum IRKind {
     Define { name: String, type_hint: String, value: Box<Self> },
     Fun { name: String, return_type_hint: String, args: Vec<(String, String)>, body: Box<Self> },
     Call { name: String, args: Vec<Self> },
-    Do { body: Box<Self> },
+    Do { body: Vec<Self> },
     If { cond: Box<Self>, body: Box<Self>, else_body: Box<Self> },
     Value { value: Value },
     Binary { op: String, left: Box<Self>, right: Box<Self> },
+    Return { value: Box<Self> },
 }
 
 #[derive(Debug)]
@@ -50,6 +51,19 @@ pub fn expr_to_ir(expr: &Expr) -> IRKind {
             };
             let args = args.0.iter().map(|arg| expr_to_ir(&arg.0)).collect::<Vec<_>>();
             IRKind::Call { name, args }
+        },
+        Expr::Fun { name, type_hint, args, body } => {
+            let args = args.0.iter().map(|arg| (arg.0.0.clone(), gen_type_hint(&arg.1.0))).collect::<Vec<_>>();
+            let body = expr_to_ir(&body.0);
+            IRKind::Fun { name: name.to_string(), return_type_hint: gen_type_hint(type_hint), args, body: Box::new(body) }
+        },
+        Expr::Return { expr } => {
+            let expr = expr_to_ir(&expr.0);
+            IRKind::Return { value: Box::new(expr) }
+        },
+        Expr::Do { body } => {
+            let body = body.iter().map(|expr| expr_to_ir(&expr.0)).collect::<Vec<_>>();
+            IRKind::Do { body }
         },
 
         Expr::Int(value)        => IRKind::Value { value: Value::Int(*value) },

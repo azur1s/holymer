@@ -1,4 +1,4 @@
-let foo: int = 1;
-let baz: bool = true;
-let qux: string = "Hello, World";
-write(qux);
+fun main: int = do
+    write("Hello, World!\n");
+    return 0;
+end;
