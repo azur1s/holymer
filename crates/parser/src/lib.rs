@@ -6,12 +6,12 @@ pub type Spanned<T> = (T, std::ops::Range<usize>);
 #[derive(Clone, Debug)]
 pub enum Expr {
     Int(i64), Float(f64), Boolean(bool),
-    String(String), Identifier(String), 
+    String(String), Identifier(String),
 
     Unary { op: String, rhs: Box<Spanned<Self>> },
     Binary { lhs: Box<Spanned<Self>>, op: String, rhs: Box<Spanned<Self>> },
     Call { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
-    
+
     Let {
         name: String,
         type_hint: String,
@@ -24,7 +24,7 @@ pub enum Expr {
         body: Box<Spanned<Self>>
     },
     Return { expr: Box<Spanned<Self>> },
-    
+
     If {
         cond: Box<Spanned<Self>>,
         then: Box<Spanned<Self>>,
@@ -69,13 +69,15 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                     )
                     .repeated()
             )
-            .foldl(|name, args| {(
+            .foldl(|name, args| {
+                (
                     Expr::Call {
                         name: Box::new(name.clone()),
                         args: (args, name.1.clone()),
                     },
                     name.1,
-            )});
+                )
+            });
 
         let unary =  choice((
                 just(Token::Plus),
