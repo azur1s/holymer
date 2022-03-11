@@ -1,10 +1,10 @@
 use std::{fs, io::Write};
 
 use clap::Parser as ArgParser;
-use ariadne::{Report, ReportKind, Label, Source, Color, Fmt};
 
 use lexer::lex;
 use parser::parse;
+use diagnostic::Diagnostics;
 use hir::ast_to_ir;
 use codegen::cpp;
 
@@ -39,84 +39,31 @@ fn main() {
             let (tokens, lex_error) = lex(src.clone());
             let (ast, parse_error) = parse(tokens.unwrap(), src.chars().count());
 
-            // Report errors
-            lex_error.into_iter()
-                .map(|e| e.map(|e| e.to_string()))
-                .chain(parse_error.into_iter().map(|e| e.map(|tok| tok.to_string())))
-                .for_each(|e| {
-                    let report = Report::build(ReportKind::Error, (), e.span().start);
+            let mut diagnostics = Diagnostics::new();
+            for err in lex_error   { diagnostics.add_lex_error(err);   }
+            for err in parse_error { diagnostics.add_parse_error(err); }
 
-                    let report = match e.reason() {
-                        chumsky::error::SimpleReason::Unclosed { span, delimiter } => report
-                            .with_message(format!(
-                                "Unclosed delimiter {}",
-                                delimiter.fg(Color::Yellow)
-                            ))
-                            .with_label(
-                                Label::new(span.clone())
-                                    .with_message(format!(
-                                        "Expected closing delimiter {}",
-                                        delimiter.fg(Color::Yellow)
-                                    ))
-                                    .with_color(Color::Yellow)
-                            )
-                            .with_label(
-                                Label::new(e.span())
-                                    .with_message(format!(
-                                        "Must be closed before this {}",
-                                        e.found()
-                                            .unwrap_or(&"end of file".to_string())
-                                            .fg(Color::Red)
-                                    ))
-                                    .with_color(Color::Red)
-                            ),
-
-                        chumsky::error::SimpleReason::Unexpected => report
-                            .with_message(format!(
-                                "{}, expected {}",
-
-                                if e.found().is_some() { "Unexpected token in input" }
-                                else { "Unexpected end of input" },
-
-                                if e.expected().len() == 0 { "something else".to_string().fg(Color::Green) }
-                                else {
-                                    e.expected()
-                                        .map(|expected| match expected {
-                                            Some(expected) => expected.to_string(),
-                                            None => "end of input".to_string()
-                                        })
-                                        .collect::<Vec<_>>()
-                                        .join(", ")
-                                        .fg(Color::Green)
-                                }
-                            ))
-                            .with_label(
-                                Label::new(e.span())
-                                    .with_message(format!(
-                                        "Unexpected token {}",
-                                        e.found()
-                                            .unwrap_or(&"EOF".to_string())
-                                            .fg(Color::Red)
-                                    ))
-                                    .with_color(Color::Red)
-                            ),
-                        _ => {
-                            println!("{:?}", e);
-                            todo!();
-                        }
-                    };
-
-                    report.finish().print(Source::from(&src)).unwrap();
-                }
-            ); // End errors reporting
-            logif!(0, format!("Parsing took {}ms", start.elapsed().as_millis()));
+            if diagnostics.has_error() {
+                diagnostics.display(src);
+                logif!(0, "Epic parsing fail");
+                std::process::exit(1);
+            } else {
+                logif!(0, format!("Parsing took {}ms", start.elapsed().as_millis()));
+            }
 
             match ast {
                 Some(ast) => {
                     // Convert the AST to HIR
-                    let ir = ast_to_ir(ast);
-                    logif!(0, "Generated HIR.");
-                    
+                    let (ir, lowering_error) = ast_to_ir(ast);
+                    for err in lowering_error { diagnostics.add_lowering_error(err); }
+                    if diagnostics.has_error() {
+                        diagnostics.display(src);
+                        logif!(0, "Epic Lowering(HIR) fail");
+                        std::process::exit(1);
+                    } else {
+                        logif!(0, format!("Lowering took {}ms", start.elapsed().as_millis()));
+                    }
+
                     // Generate code
                     let mut codegen = cpp::Codegen::new();
                     codegen.gen(ir);
@@ -137,7 +84,7 @@ fn main() {
                     logif!(0, format!("Wrote output to `{}`. All done.", output_path.display()));
                 },
                 None => {
-                    logif!(2, "Failed to parse.");
+                    unreachable!();
                 }
             }
         }

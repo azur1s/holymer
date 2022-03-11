@@ -22,54 +22,108 @@ pub struct IR {
     pub span: Range<usize>
 }
 
+#[derive(Debug)]
+pub struct LoweringError {
+    pub span: Range<usize>,
+    pub message: String
+}
+
 impl IR {
     pub fn new(kind: IRKind, span: Range<usize>) -> Self {
         Self { kind, span }
     }
 }
 
-pub fn ast_to_ir(ast: Vec<(Expr, Range<usize>)>) -> Vec<IR> {
+pub fn ast_to_ir(ast: Vec<(Expr, Range<usize>)>) -> (Vec<IR>, Vec<LoweringError>) {
     let mut irs = Vec::new();
+    let mut errors = Vec::new();
     for expr in ast {
         let ir_kind = expr_to_ir(&expr.0);
-        let ir = IR::new(ir_kind, expr.1);
-        irs.push(ir);
+        if let Some(err) = ir_kind.1 {
+            errors.push(err);
+        } else {
+            irs.push(IR::new(ir_kind.0.unwrap(), expr.1));
+        }
     }
-    irs
+    (irs, errors)
 }
 
-pub fn expr_to_ir(expr: &Expr) -> IRKind {
+pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
     match expr {
         Expr::Let { name, type_hint, value } => {
             let value = expr_to_ir(&value.0);
-            IRKind::Define { name: name.clone(), type_hint: gen_type_hint(type_hint), value: Box::new(value) }
+            if let Some(err) = value.1 {
+                // Return error
+                return (None, Some(err));
+            } else {
+                let value = value.0.unwrap(); // Unwrapping because it should always be Some
+                let ir_kind = IRKind::Define { name: name.clone(), type_hint: type_hint.clone(), value: Box::new(value) };
+                return (Some(ir_kind), None);
+            }
         },
         Expr::Call { name, args } => {
             let name = match &name.0 {
                 Expr::Identifier(s) => s.clone(),
-                _ => panic!("Expected identifier") // TODO: Remove panic and use error handling
+                // Should never happen because the parser should have caught this
+                _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string() }))
             };
-            let args = args.0.iter().map(|arg| expr_to_ir(&arg.0)).collect::<Vec<_>>();
-            IRKind::Call { name, args }
+            let mut largs = Vec::new(); // `largs` stand for lowered args
+            // Iterate over args
+            for arg in &args.0 {
+                // Lower each argument, if there is an error then return early
+                let arg = expr_to_ir(&arg.0);
+                if let Some(err) = arg.1 {
+                    return (None, Some(err));
+                } else {
+                    // Else push the lowered argument
+                    largs.push(arg.0.unwrap());
+                }
+            }
+            let ir_kind = IRKind::Call { name, args: largs };
+            return (Some(ir_kind), None);
         },
         Expr::Fun { name, type_hint, args, body } => {
+            // Iterate each argument and give it a type hint
             let args = args.0.iter().map(|arg| (arg.0.0.clone(), gen_type_hint(&arg.1.0))).collect::<Vec<_>>();
             let body = expr_to_ir(&body.0);
-            IRKind::Fun { name: name.to_string(), return_type_hint: gen_type_hint(type_hint), args, body: Box::new(body) }
+            if let Some(err) = body.1 {
+                return (None, Some(err));
+            } else {
+                let body = body.0.unwrap();
+                let ir_kind = IRKind::Fun { name: name.clone(), return_type_hint: gen_type_hint(type_hint), args, body: Box::new(body) };
+                return (Some(ir_kind), None);
+            }
         },
         Expr::Return { expr } => {
             let expr = expr_to_ir(&expr.0);
-            IRKind::Return { value: Box::new(expr) }
+            if let Some(err) = expr.1 {
+                return (None, Some(err));
+            } else {
+                let expr = expr.0.unwrap();
+                let ir_kind = IRKind::Return { value: Box::new(expr) };
+                return (Some(ir_kind), None);
+            }
         },
         Expr::Do { body } => {
-            let body = body.iter().map(|expr| expr_to_ir(&expr.0)).collect::<Vec<_>>();
-            IRKind::Do { body }
+            let mut lbody = Vec::new();
+            for expr in body {
+                let expr = expr_to_ir(&expr.0);
+                if let Some(err) = expr.1 {
+                    return (None, Some(err));
+                } else {
+                    lbody.push(expr.0.unwrap());
+                }
+            }
+            let ir_kind = IRKind::Do { body: lbody };
+            return (Some(ir_kind), None);
         },
 
-        Expr::Int(value)        => IRKind::Value { value: Value::Int(*value) },
-        Expr::Boolean(value)    => IRKind::Value { value: Value::Boolean(*value) },
-        Expr::String(value)     => IRKind::Value { value: Value::String(value.clone()) },
-        Expr::Identifier(value) => IRKind::Value { value: Value::Ident(value.clone()) },
+        // TODO: Handle primitive types error (e.g. overflow)
+        // For now it just leaves the value as is and let the target compiler handle it
+        Expr::Int(value)        => (Some(IRKind::Value { value: Value::Int(*value) }), None),
+        Expr::Boolean(value)    => (Some(IRKind::Value { value: Value::Boolean(*value) }), None),
+        Expr::String(value)     => (Some(IRKind::Value { value: Value::String(value.clone()) }), None),
+        Expr::Identifier(value) => (Some(IRKind::Value { value: Value::Ident(value.clone()) }), None),
         _ => { dbg!(expr); todo!() }
     }
 }

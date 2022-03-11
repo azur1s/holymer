@@ -8,6 +8,7 @@ edition = "2021"
 clap = { version = "3.0.14", features = ["derive"] }
 lexer = { path = "../lexer" }
 parser = { path = "../parser" }
+diagnostic = { path = "../diagnostic" }
 hir = { path = "../hir" }
 codegen = { path = "../codegen" }
 chumsky = "0.8.0"

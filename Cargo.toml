@@ -3,6 +3,7 @@ members = [
     "crates/main",
     "crates/lexer",
     "crates/parser",
+    "crates/diagnostic",
     "crates/hir",
     "crates/codegen",
 ]
