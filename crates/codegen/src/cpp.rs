@@ -29,7 +29,7 @@ impl Codegen {
             self.emit(&self.gen_ir(&ir.kind));
         }
     }
-    
+
     fn gen_ir(&self, ir: &IRKind) -> String {
         match ir {
             IRKind::Define { name, type_hint, value } => {
