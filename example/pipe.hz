@@ -5,4 +5,9 @@ fun main: int = do
     let res: int = foo(69)
                  |> bar(1);
     @write(res);
+
+    @write("\n");
+
+    let y: int = 68 |> foo();
+    @write(y);
 end;
