@@ -1,0 +1,9 @@
+fun main: int = do
+    @write("Enter your name: ");
+    let name: string = "";
+    @read(name);
+
+    @write("Hello ");
+    @write(name);
+    @write("!");
+end;

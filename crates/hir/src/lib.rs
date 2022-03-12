@@ -29,7 +29,8 @@ pub struct IR {
 #[derive(Debug)]
 pub struct LoweringError {
     pub span: Range<usize>,
-    pub message: String
+    pub message: String,
+    pub note: Option<String>,
 }
 
 impl IR {
@@ -82,7 +83,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             let name = match &name.0 {
                 Expr::Identifier(s) => s.clone(),
                 // Should never happen because the parser should have caught this
-                _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string() }))
+                _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string(), note: None }))
             };
             let mut largs = Vec::new(); // `largs` stand for lowered args
             // Iterate over args
@@ -101,7 +102,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             if_err_return!(value.1);
 
             let value = value.0.unwrap();
-            let ir_kind = IRKind::Define { name: name.clone(), type_hint: type_hint.clone(), value: Box::new(value) };
+            let ir_kind = IRKind::Define { name: name.clone(), type_hint: gen_type_hint(type_hint), value: Box::new(value) };
             return (Some(ir_kind), None);
         },
 
@@ -110,10 +111,14 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                 Expr::Identifier(s) => {
                     if INTRINSICS.contains(&s.as_str()) { s.clone() }
                     else {
-                        return (None, Some(LoweringError { span: name.1.clone(), message: format!("Unknown intrinsic: {}", s) }));
+                        return (None, Some(LoweringError {
+                            span: name.1.clone(),
+                            message: format!("Unknown intrinsic: `{}`", s),
+                            note: Some(format!("Did you mean: {}?", closet_intrinsic(s.to_string())))
+                        }));
                     }
                 }
-                _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string() }))
+                _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string(), note: None }))
             };
             let mut largs = Vec::new();
             for arg in &args.0 {
@@ -193,4 +198,18 @@ fn gen_type_hint(type_hint: &str) -> String {
         "string" => "std::string".to_string(),
         _ => { dbg!(type_hint); todo!() }
     }
+}
+
+// Get the closet intrinsic name to the given name
+fn closet_intrinsic(got: String) -> String {
+    let mut closest = String::new();
+    let mut closest_dist = std::usize::MAX;
+    for intrinsic in INTRINSICS.iter() {
+        let dist = levenshtein::levenshtein(got.as_str(), intrinsic);
+        if dist < closest_dist {
+            closest = intrinsic.to_string();
+            closest_dist = dist;
+        }
+    }
+    closest
 }

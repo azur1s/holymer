@@ -116,5 +116,36 @@ impl Diagnostics {
 
             report.finish().print(Source::from(&src)).unwrap();
         }); // End errors reporting
+
+        let lower_error = self.errors.iter().filter_map(|kind| match kind {
+            Kind::LoweringError(error) => Some(error.clone()),
+            _ => None,
+        });
+
+        lower_error.into_iter()
+        .for_each(|e| {
+            let span = &e.span;
+            let message = &e.message;
+
+            let report = Report::build(ReportKind::Error, (), span.start)
+                .with_message(
+                    format!("{}", message)
+                )
+                .with_label(
+                    Label::new(span.clone())
+                    .with_message(
+                        format!("{}", message)
+                    )
+                    .with_color(Color::Red)
+                );
+
+            if let Some(note) = &e.note {
+                report
+                .with_note(note)
+                .finish().print(Source::from(&src)).unwrap();
+            } else {
+                report.finish().print(Source::from(&src)).unwrap();
+            }
+        });
     }
 }

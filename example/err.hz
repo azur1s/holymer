@@ -1,2 +1,3 @@
--- Can't use Int as identifier
-let 123 = 123;
+fun main: int = do
+    @writse(); -- Unknown intrinsic
+end;
