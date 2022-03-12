@@ -1,13 +1,20 @@
 # Hazure
 Programming language that compiles to C++!
 
-```sml
+```kotlin
 fun main: int = do
     @write("Hello, World!\n");
     return 69;
 end;
 ```
-
+or with the pipe operator:
+```kotlin
+fun main: int = do
+    "Hello, World!\n"
+    |> @write();
+    return 69;
+end;
+```
 Note: Everything in this project can be changed at anytime! (I'm still finding out what work best for lots of thing) if you have an idea, feel free to create an issues about it, or even create a PR! (I'd be very happy)
 
 # Prerequistie
