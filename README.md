@@ -7,7 +7,7 @@ Note: Everything in this project can be changed at anytime! (I'm still finding o
 - `clang++`(preferred, default) or any C++ compiler
 - Rust (if you're going to build from source)
 
-# (Compiler) Configuration
+# Configuration
 You can also configurate Hades compiler (currently you can only change the C++ compiler). Make a new file called `hades.toml` in the current working directory and the compiler will look for it! if there isn't one then it will use the default configuration:
 ```toml
 [compiler]
