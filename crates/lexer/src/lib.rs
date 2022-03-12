@@ -111,9 +111,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .or(keyword)
         .recover_with(skip_then_retry_until([]));
 
-    let comment = just("--")
-        .ignore_then(filter(|c| *c != '\n').repeated())
-        .then_ignore(just('\n'));
+    let comment = just("--").then(take_until(just('\n'))).padded();
 
     token
         .padded_by(comment.repeated())

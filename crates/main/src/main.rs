@@ -64,6 +64,7 @@ fn main() {
             for err in lex_error   { diagnostics.add_lex_error(err);   }
             for err in parse_error { diagnostics.add_parse_error(err); }
 
+            // Report syntax errors if any
             if diagnostics.has_error() {
                 diagnostics.display(src);
                 logif!(0, "Epic parsing fail");
@@ -77,6 +78,8 @@ fn main() {
                     // Convert the AST to HIR
                     let (ir, lowering_error) = ast_to_ir(ast);
                     for err in lowering_error { diagnostics.add_lowering_error(err); }
+
+                    // Report lowering errors if any
                     if diagnostics.has_error() {
                         diagnostics.display(src);
                         logif!(0, "Epic Lowering(HIR) fail");
@@ -98,17 +101,18 @@ fn main() {
                     let mut file = fs::File::create(&output_path).expect("Failed to create file");
                     file.write_all(codegen.emitted.as_bytes()).expect("Failed to write to file");
 
-                    // End timer
-                    let duration = start.elapsed().as_millis();
-
-                    logif!(0, format!("Compilation took {}ms", duration));
-                    logif!(0, format!("Wrote output to `{}`", output_path.display()));
-
+                    // Compile the generate code
                     let compiler = &config.compiler.compiler;
                     Command::new(compiler)
                         .arg(&output_path)
                         .spawn()
                         .expect("Failed to run compiler");
+
+                    // End timer
+                    let duration = start.elapsed().as_millis();
+
+                    logif!(0, format!("Compilation took {}ms", duration));
+                    logif!(0, format!("Wrote output to `{}`", output_path.display()));
                 },
                 None => { unreachable!(); }
             }
