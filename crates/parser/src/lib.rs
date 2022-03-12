@@ -28,8 +28,8 @@ pub enum Expr {
 
     If {
         cond: Box<Spanned<Self>>,
-        then: Box<Spanned<Self>>,
-        else_: Box<Spanned<Self>>
+        body: Box<Spanned<Self>>,
+        else_body: Box<Spanned<Self>>
     },
     Do {
         body: Vec<Spanned<Self>>
@@ -243,10 +243,35 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
+        let if_block = just(Token::KwIf)
+            .ignore_then(expr.clone())
+            .then_ignore(just(Token::KwThen))
+            .then(
+                do_block.clone()
+                    .or(expr.clone())
+            )
+            .then_ignore(just(Token::KwElse))
+            .then(
+                do_block.clone()
+                    .or(expr.clone())
+            )
+            .then_ignore(just(Token::KwEnd))
+            .map(|((cond, then), else_)| {
+                (
+                    Expr::If {
+                        cond: Box::new(cond.clone()),
+                        body: Box::new(then),
+                        else_body: Box::new(else_.clone()),
+                    },
+                    cond.1.start..else_.1.end,
+                )
+            });
+
         let_
             .or(fun)
             .or(return_)
             .or(do_block)
+            .or(if_block)
             .or(compare)
     }).labelled("expression");
 

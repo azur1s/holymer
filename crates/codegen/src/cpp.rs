@@ -58,7 +58,10 @@ impl Codegen {
                     out.push_str(&self.gen_ir(&expr));
                 }
                 out
-            }
+            },
+            IRKind::If { cond, body, else_body } => {
+                format!("if ({}) {{\n{}}} else {{\n{}}}\n", self.gen_ir(cond), self.gen_ir(body), self.gen_ir(else_body))
+            },
 
             IRKind::Value { value } => {
                 match value {

@@ -1,0 +1,7 @@
+fun main: int = do
+    if true then
+        @write("True")
+    else
+        @write("False")
+    end;
+end;

@@ -51,19 +51,24 @@ pub fn ast_to_ir(ast: Vec<(Expr, Range<usize>)>) -> (Vec<IR>, Vec<LoweringError>
     (irs, errors)
 }
 
+#[macro_export]
+macro_rules! if_err_return {
+    ($value:expr) => {
+        if let Some(err) = $value { return (None, Some(err)); };
+    };
+}
+
 pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
     match expr {
         Expr::Let { name, type_hint, value } => {
             let value = expr_to_ir(&value.0);
-            if let Some(err) = value.1 {
-                // Return error
-                return (None, Some(err));
-            } else {
-                let value = value.0.unwrap(); // Unwrapping because it should always be Some
-                let ir_kind = IRKind::Define { name: name.clone(), type_hint: type_hint.clone(), value: Box::new(value) };
-                return (Some(ir_kind), None);
-            }
+            if_err_return!(value.1);
+
+            let value = value.0.unwrap();
+            let ir_kind = IRKind::Define { name: name.clone(), type_hint: type_hint.clone(), value: Box::new(value) };
+            return (Some(ir_kind), None);
         },
+
         Expr::Call { name, args } => {
             let name = match &name.0 {
                 Expr::Identifier(s) => {
@@ -80,16 +85,13 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             for arg in &args.0 {
                 // Lower each argument, if there is an error then return early
                 let arg = expr_to_ir(&arg.0);
-                if let Some(err) = arg.1 {
-                    return (None, Some(err));
-                } else {
-                    // Else push the lowered argument
-                    largs.push(arg.0.unwrap());
-                }
+                if_err_return!(arg.1);
+                largs.push(arg.0.unwrap());
             }
             let ir_kind = IRKind::Call { name, args: largs };
             return (Some(ir_kind), None);
         },
+
         Expr::Intrinsic { name, args } => {
             let name = match &name.0 {
                 Expr::Identifier(s) => s.clone(),
@@ -98,45 +100,61 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             let mut largs = Vec::new();
             for arg in &args.0 {
                 let arg = expr_to_ir(&arg.0);
-                if let Some(err) = arg.1 { return (None, Some(err)); }
-                else { largs.push(arg.0.unwrap()); }
+                if_err_return!(arg.1);
+
+                largs.push(arg.0.unwrap());
             }
             let ir_kind = IRKind::Intrinsic { name, args: largs };
             return (Some(ir_kind), None);
         },
+
         Expr::Fun { name, type_hint, args, body } => {
             // Iterate each argument and give it a type hint
             let args = args.0.iter().map(|arg| (arg.0.0.clone(), gen_type_hint(&arg.1.0))).collect::<Vec<_>>();
+
             let body = expr_to_ir(&body.0);
-            if let Some(err) = body.1 {
-                return (None, Some(err));
-            } else {
-                let body = body.0.unwrap();
-                let ir_kind = IRKind::Fun { name: name.clone(), return_type_hint: gen_type_hint(type_hint), args, body: Box::new(body) };
-                return (Some(ir_kind), None);
-            }
+            if_err_return!(body.1);
+
+            let body = body.0.unwrap();
+            let ir_kind = IRKind::Fun { name: name.clone(), return_type_hint: gen_type_hint(type_hint), args, body: Box::new(body) };
+            return (Some(ir_kind), None);
         },
+
         Expr::Return { expr } => {
             let expr = expr_to_ir(&expr.0);
-            if let Some(err) = expr.1 {
-                return (None, Some(err));
-            } else {
-                let expr = expr.0.unwrap();
-                let ir_kind = IRKind::Return { value: Box::new(expr) };
-                return (Some(ir_kind), None);
-            }
+            if_err_return!(expr.1);
+
+            let expr = expr.0.unwrap();
+            let ir_kind = IRKind::Return { value: Box::new(expr) };
+            return (Some(ir_kind), None);
         },
+
         Expr::Do { body } => {
             let mut lbody = Vec::new();
             for expr in body {
                 let expr = expr_to_ir(&expr.0);
-                if let Some(err) = expr.1 {
-                    return (None, Some(err));
-                } else {
-                    lbody.push(expr.0.unwrap());
-                }
+                if_err_return!(expr.1);
+                lbody.push(expr.0.unwrap());
             }
             let ir_kind = IRKind::Do { body: lbody };
+            return (Some(ir_kind), None);
+        },
+
+        Expr::If { cond, body, else_body } => {
+            let cond = expr_to_ir(&cond.0);
+            if_err_return!(cond.1);
+
+            let body = expr_to_ir(&body.0);
+            if_err_return!(body.1);
+
+            let else_body = expr_to_ir(&else_body.0);
+            if_err_return!(else_body.1);
+
+            let ir_kind = IRKind::If {
+                cond: Box::new(cond.0.unwrap()),
+                body: Box::new(body.0.unwrap()),
+                else_body: Box::new(else_body.0.unwrap())
+            };
             return (Some(ir_kind), None);
         },
 
