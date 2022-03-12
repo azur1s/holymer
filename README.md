@@ -1,4 +1,4 @@
-# Hades
+# Hazure
 Programming language that compiles to C++!
 
 ```sml

@@ -17,7 +17,7 @@ pub mod util;
 use crate::util::log;
 
 fn main() {
-    let config_file = fs::read_to_string("./hades.toml");
+    let config_file = fs::read_to_string("./hazure.toml");
     let config: config::Config;
     match config_file {
         Ok(content) => {
