@@ -3,11 +3,12 @@ fun bar (xs: int) (x: int): int = return xs - x;
 
 fun main: int = do
     let res: int = foo(69)
-                 |> bar(1);
+                   |> bar(1);
     @write(res);
 
     @write("\n");
 
-    let y: int = 68 |> foo();
+    let y: int = 68
+                 |> foo();
     @write(y);
 end;
