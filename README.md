@@ -4,7 +4,7 @@ Programming language that compiles to C++!
 ```sml
 fun main: int = do
     @write("Hello, World!\n");
-    return 0;
+    return 69;
 end;
 ```
 

@@ -14,8 +14,9 @@ pub enum IRKind {
     Intrinsic { name: String, args: Vec<Self> },
     Do { body: Vec<Self> },
     If { cond: Box<Self>, body: Box<Self>, else_body: Box<Self> },
-    Value { value: Value },
+    Unary { op: String, right: Box<Self> },
     Binary { op: String, left: Box<Self>, right: Box<Self> },
+    Value { value: Value },
     Return { value: Box<Self> },
 }
 
@@ -60,23 +61,26 @@ macro_rules! if_err_return {
 
 pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
     match expr {
-        Expr::Let { name, type_hint, value } => {
-            let value = expr_to_ir(&value.0);
-            if_err_return!(value.1);
+        Expr::Unary { op, rhs } => {
+            let rhs_ir = expr_to_ir(&rhs.0);
+            if_err_return!(rhs_ir.1);
 
-            let value = value.0.unwrap();
-            let ir_kind = IRKind::Define { name: name.clone(), type_hint: type_hint.clone(), value: Box::new(value) };
-            return (Some(ir_kind), None);
+            return (Some(IRKind::Unary { op: op.to_string(), right: Box::new(rhs_ir.0.unwrap()) }), None);
+        }
+
+        Expr::Binary { lhs, op, rhs } => {
+            let lhs_ir = expr_to_ir(&lhs.0);
+            if_err_return!(lhs_ir.1);
+
+            let rhs_ir = expr_to_ir(&rhs.0);
+            if_err_return!(rhs_ir.1);
+
+            return (Some(IRKind::Binary { op: op.to_string(), left: Box::new(lhs_ir.0.unwrap()), right: Box::new(rhs_ir.0.unwrap()) }), None)
         },
 
         Expr::Call { name, args } => {
             let name = match &name.0 {
-                Expr::Identifier(s) => {
-                    if INTRINSICS.contains(&s.as_str()) { s.clone() }
-                    else {
-                        return (None, Some(LoweringError { span: name.1.clone(), message: format!("Unknown intrinsic: {}", s) }));
-                    }
-                }
+                Expr::Identifier(s) => s.clone(),
                 // Should never happen because the parser should have caught this
                 _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string() }))
             };
@@ -92,9 +96,23 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             return (Some(ir_kind), None);
         },
 
+        Expr::Let { name, type_hint, value } => {
+            let value = expr_to_ir(&value.0);
+            if_err_return!(value.1);
+
+            let value = value.0.unwrap();
+            let ir_kind = IRKind::Define { name: name.clone(), type_hint: type_hint.clone(), value: Box::new(value) };
+            return (Some(ir_kind), None);
+        },
+
         Expr::Intrinsic { name, args } => {
             let name = match &name.0 {
-                Expr::Identifier(s) => s.clone(),
+                Expr::Identifier(s) => {
+                    if INTRINSICS.contains(&s.as_str()) { s.clone() }
+                    else {
+                        return (None, Some(LoweringError { span: name.1.clone(), message: format!("Unknown intrinsic: {}", s) }));
+                    }
+                }
                 _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string() }))
             };
             let mut largs = Vec::new();

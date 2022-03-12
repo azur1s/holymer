@@ -47,7 +47,7 @@ impl Codegen {
             }
             IRKind::Fun { name, return_type_hint, args, body } => {
                 let args = args.iter().map(|arg| format!("{} {}", arg.1, arg.0)).collect::<Vec<_>>().join(", ");
-                format!("{} {}({}) {{\n{}}}\n", return_type_hint, name, args, self.gen_ir(body))
+                format!("{} {}({}) {{\n{};\n}}\n", return_type_hint, name, args, self.gen_ir(body))
             },
             IRKind::Return { value } => {
                 format!("return {};\n", self.gen_ir(value))
@@ -62,6 +62,12 @@ impl Codegen {
             IRKind::If { cond, body, else_body } => {
                 format!("if ({}) {{\n{}}} else {{\n{}}}\n", self.gen_ir(cond), self.gen_ir(body), self.gen_ir(else_body))
             },
+            IRKind::Unary { op, right } => {
+                format!("{}{}", op, self.gen_ir(right))
+            },
+            IRKind::Binary { left, op, right } => {
+                format!("{} {} {}", self.gen_ir(left), op, self.gen_ir(right))
+            },
 
             IRKind::Value { value } => {
                 match value {
@@ -71,6 +77,8 @@ impl Codegen {
                     Value::Ident(value)   => format!("{}", value),
                 }
             },
+
+            #[allow(unreachable_patterns)]
             _ => { dbg!(ir); todo!() },
         }
     }

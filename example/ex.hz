@@ -1,4 +1,0 @@
-fun main: int = do
-    @write("Hello, World!\n");
-    return 0;
-end;
