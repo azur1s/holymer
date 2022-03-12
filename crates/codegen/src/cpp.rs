@@ -3,9 +3,9 @@ use std::fmt::Display;
 use hir::{IR, IRKind, Value};
 
 const MODULE_INCLUDES: [&str; 3] = [
-    "<stdbool.h>",
-    "<iostream>",
-    "<string>",
+    "<iostream>", // stdin `@read()` and stdout `@write()`
+    "<stdbool.h>", // bool type
+    "<string>", // string type
 ];
 
 pub struct Codegen {
@@ -28,47 +28,91 @@ impl Codegen {
             self.emit(format!("#include {}\n", module));
         }
         for ir in irs {
-            self.emit(&self.gen_ir(&ir.kind));
+            self.emit(&self.gen_ir(&ir.kind, true));
         }
     }
 
-    fn gen_ir(&self, ir: &IRKind) -> String {
+    fn gen_ir(&self, ir: &IRKind, should_gen_semicolon: bool) -> String {
+        #[macro_export]
+        macro_rules! semicolon { () => { if should_gen_semicolon { ";" } else { "" } }; }
         match ir {
             IRKind::Define { name, type_hint, value } => {
-                format!("{} {} = {};\n", type_hint, name, self.gen_ir(value))
+                format!(
+                    "{} {} = {}{}\n",
+                    type_hint,
+                    name, 
+                    self.gen_ir(value, false),
+                    semicolon!()
+                )
             },
+
             IRKind::Call { name, args } => {
-                format!("{}({});\n", name, args.iter().map(|arg| self.gen_ir(arg)).collect::<Vec<_>>().join(", "))
+                format!(
+                    "{}({}){}",
+                    name,
+                    args
+                        .iter()
+                        .map(|arg| self.gen_ir(arg, false))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                        .trim_end_matches(";\n"),
+                    semicolon!(),
+                )
             },
+
             IRKind::Intrinsic { name, args } => {
                 match name.as_str() {
-                    "write" => { format!("std::cout << {};\n", self.gen_ir(&args[0])) },
-                    "read" => { format!("std::cin >> {};\n", self.gen_ir(&args[0])) },
+                    "write" => { format!("std::cout << {};\n", self.gen_ir(&args[0], false)) },
+                    "read" => { format!("std::cin >> {};\n", self.gen_ir(&args[0], false)) },
                     _ => unreachable!(format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
                 }
-            }
+            },
+
             IRKind::Fun { name, return_type_hint, args, body } => {
-                let args = args.iter().map(|arg| format!("{} {}", arg.1, arg.0)).collect::<Vec<_>>().join(", ");
-                format!("{} {}({}) {{\n{};\n}}\n", return_type_hint, name, args, self.gen_ir(body))
+                let args = args
+                    .iter()
+                    .map(|arg| format!("{} {}", arg.1, arg.0))
+                    .collect::<Vec<_>>().
+                    join(", ");
+                format!(
+                    "{} {}({}) {{\n{}\n}}\n",
+                    return_type_hint,
+                    name,
+                    args,
+                    self.gen_ir(body, false)
+                )
             },
+
             IRKind::Return { value } => {
-                format!("return {};\n", self.gen_ir(value))
+                format!(
+                    "return {};\n",
+                    self.gen_ir(value, false)
+                )
             },
+
             IRKind::Do { body } => {
                 let mut out = String::new();
                 for expr in body {
-                    out.push_str(&self.gen_ir(&expr));
+                    out.push_str(&self.gen_ir(&expr, true));
                 }
                 out
             },
+
             IRKind::If { cond, body, else_body } => {
-                format!("if ({}) {{\n{}}} else {{\n{}}}\n", self.gen_ir(cond), self.gen_ir(body), self.gen_ir(else_body))
+                format!(
+                    "if ({}) {{\n{}}} else {{\n{}}}\n",
+                    self.gen_ir(cond, true),
+                    self.gen_ir(body, true),
+                    self.gen_ir(else_body, true),
+                )
             },
+
             IRKind::Unary { op, right } => {
-                format!("{}{}", op, self.gen_ir(right))
+                format!("{}{}", op, self.gen_ir(right, false))
             },
+
             IRKind::Binary { left, op, right } => {
-                format!("{} {} {}", self.gen_ir(left), op, self.gen_ir(right))
+                format!("{} {} {}", self.gen_ir(left, false), op, self.gen_ir(right, false))
             },
 
             IRKind::Value { value } => {

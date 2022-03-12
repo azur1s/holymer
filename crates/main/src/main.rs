@@ -40,7 +40,7 @@ fn main() {
     match args.options {
         Options::Compile {
             input: file_name,
-            ast: _print_ast,
+            ast: print_ast,
             log: should_log,
             output,
         } => {
@@ -73,11 +73,15 @@ fn main() {
                 logif!(0, format!("Parsing took {}ms", start.elapsed().as_millis()));
             }
 
+            if print_ast { log(0, format!("{:#?}", ast)); }
+
             match ast {
                 Some(ast) => {
                     // Convert the AST to HIR
                     let (ir, lowering_error) = ast_to_ir(ast);
                     for err in lowering_error { diagnostics.add_lowering_error(err); }
+
+                    if print_ast { log(0, format!("{:#?}", ir)); }
 
                     // Report lowering errors if any
                     if diagnostics.has_error() {

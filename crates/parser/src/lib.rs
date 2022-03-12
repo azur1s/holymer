@@ -11,6 +11,7 @@ pub enum Expr {
     Unary { op: String, rhs: Box<Spanned<Self>> },
     Binary { lhs: Box<Spanned<Self>>, op: String, rhs: Box<Spanned<Self>> },
     Call { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
+    Pipe { lhs: Box<Spanned<Self>>, rhs: Box<Spanned<Self>> },
     Intrinsic { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
 
     Let {
@@ -171,6 +172,21 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
+        let pipe = compare.clone()
+            .then(
+                just(Token::Pipe)
+                .then(compare)
+                .repeated())
+            .foldl(|lhs, (_, rhs)| {
+                (
+                    Expr::Pipe {
+                        lhs: Box::new(lhs),
+                        rhs: Box::new(rhs.clone()),
+                    },
+                    rhs.1,
+                )
+            });
+
         let let_ = just(Token::KwLet)
             .ignore_then(identifier)
             .then_ignore(just(Token::Colon))
@@ -272,7 +288,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .or(return_)
             .or(do_block)
             .or(if_block)
-            .or(compare)
+            .or(pipe)
     }).labelled("expression");
 
     expr

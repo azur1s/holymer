@@ -1,4 +1,4 @@
 fun main: int = do
-    @writesss("Hello, World!\n");
+    @write("Hello, World!\n");
     return 69;
 end;

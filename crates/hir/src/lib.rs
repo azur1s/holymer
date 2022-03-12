@@ -1,7 +1,10 @@
 use std::ops::Range;
 use parser::Expr;
 
-const INTRINSICS: [&str; 2] = ["write", "read"];
+const INTRINSICS: [&str; 2] = [
+    "write",
+    "read",
+];
 
 #[derive(Debug)]
 pub enum Value { Int(i64), Boolean(bool), String(String), Ident(String) }
@@ -95,6 +98,41 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             }
             let ir_kind = IRKind::Call { name, args: largs };
             return (Some(ir_kind), None);
+        },
+
+        Expr::Pipe { lhs, rhs } => {
+            let lhs_ir = expr_to_ir(&lhs.0);
+            if_err_return!(lhs_ir.1);
+
+            match &rhs.0 {
+                call @ Expr::Call { name, args } => {
+                    let name = match &name.0 {
+                        Expr::Identifier(s) => s.clone(),
+                        // Should never happen because the parser should have caught this
+                        _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string(), note: None }))
+                    };
+
+                    let call = expr_to_ir(&call);
+                    if_err_return!(call.1);
+
+                    let mut largs = Vec::new();
+                    for arg in &args.0 {
+                        let arg = expr_to_ir(&arg.0);
+                        if_err_return!(arg.1);
+                        largs.push(arg.0.unwrap());
+                    }
+
+                    let mut args = vec![lhs_ir.0.unwrap()];
+                    args.append(&mut largs);
+
+                    return (Some(IRKind::Call { name, args }), None);
+                },
+                _ => return (None, Some(LoweringError {
+                    span: rhs.1.clone(),
+                    message: "Expected call".to_string(),
+                    note: None
+                })),
+            };
         },
 
         Expr::Let { name, type_hint, value } => {

@@ -15,6 +15,7 @@ pub enum Token {
     // Operators
     Plus, Minus, Multiply, Divide,
     Not, Equal, NotEqual, Less, Greater,
+    Pipe,
 
     // Symbols & Delimiters
     Assign,
@@ -50,6 +51,7 @@ impl std::fmt::Display for Token {
             Token::NotEqual => write!(f, "!="),
             Token::Less => write!(f, "<"),
             Token::Greater => write!(f, ">"),
+            Token::Pipe => write!(f, "|>"),
 
             Token::Assign => write!(f, "="),
             Token::Dot => write!(f, "."),
@@ -79,10 +81,15 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         just('-').to(Token::Minus),
         just('*').to(Token::Multiply),
         just('/').to(Token::Divide),
+
         just('!').to(Token::Not),
         just("==").to(Token::Equal),
+
+        just("|>").to(Token::Pipe),
+
         just('<').to(Token::Less),
         just('>').to(Token::Greater),
+        
         just('=').to(Token::Assign),
         just('.').to(Token::Dot),
         just(',').to(Token::Comma),
