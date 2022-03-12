@@ -11,6 +11,7 @@ pub enum Expr {
     Unary { op: String, rhs: Box<Spanned<Self>> },
     Binary { lhs: Box<Spanned<Self>>, op: String, rhs: Box<Spanned<Self>> },
     Call { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
+    Intrinsic { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
 
     Let {
         name: String,
@@ -60,7 +61,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             //     .delimited_by(just(Token::OpenParen), just(Token::CloseParen)))
             .labelled("atom");
 
-        let call = atom
+        let call = atom.clone()
             .then(
                 args.clone()
                     .delimited_by(
@@ -79,11 +80,31 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
+        let intrinsic = just(Token::At) 
+            .ignore_then(atom)
+            .then(
+                args.clone()
+                    .delimited_by(
+                        just(Token::OpenParen),
+                        just(Token::CloseParen),
+                    )
+                    .repeated()
+            )
+            .foldl(|name, args| {
+                (
+                    Expr::Intrinsic {
+                        name: Box::new(name.clone()),
+                        args: (args, name.1.clone()),
+                    },
+                    name.1,
+                )
+            });
+
         let unary =  choice((
                 just(Token::Plus),
                 just(Token::Minus)))
             .repeated()
-            .then(call)
+            .then(call.or(intrinsic))
             .foldr(|op, rhs| {
                 (
                     Expr::Unary {

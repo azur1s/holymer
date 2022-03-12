@@ -15,12 +15,13 @@ pub enum Token {
     // Operators
     Plus, Minus, Multiply, Divide,
     Not, Equal, NotEqual, Less, Greater,
-    
+
     // Symbols & Delimiters
     Assign,
     Dot, Comma,
     Colon, SemiColon,
     OpenParen, CloseParen,
+    At,
 }
 
 impl std::fmt::Display for Token {
@@ -49,7 +50,7 @@ impl std::fmt::Display for Token {
             Token::NotEqual => write!(f, "!="),
             Token::Less => write!(f, "<"),
             Token::Greater => write!(f, ">"),
-            
+
             Token::Assign => write!(f, "="),
             Token::Dot => write!(f, "."),
             Token::Comma => write!(f, ","),
@@ -57,6 +58,7 @@ impl std::fmt::Display for Token {
             Token::SemiColon => write!(f, ";"),
             Token::OpenParen => write!(f, "("),
             Token::CloseParen => write!(f, ")"),
+            Token::At => write!(f, "@"),
         }
     }
 }
@@ -88,6 +90,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         just(';').to(Token::SemiColon),
         just('(').to(Token::OpenParen),
         just(')').to(Token::CloseParen),
+        just('@').to(Token::At),
     ));
 
     let keyword = text::ident().map(|s: String| match s.as_str() {

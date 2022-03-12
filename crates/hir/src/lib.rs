@@ -1,6 +1,8 @@
 use std::ops::Range;
 use parser::Expr;
 
+const INTRINSICS: [&str; 2] = ["write", "read"];
+
 #[derive(Debug)]
 pub enum Value { Int(i64), Boolean(bool), String(String), Ident(String) }
 
@@ -9,6 +11,7 @@ pub enum IRKind {
     Define { name: String, type_hint: String, value: Box<Self> },
     Fun { name: String, return_type_hint: String, args: Vec<(String, String)>, body: Box<Self> },
     Call { name: String, args: Vec<Self> },
+    Intrinsic { name: String, args: Vec<Self> },
     Do { body: Vec<Self> },
     If { cond: Box<Self>, body: Box<Self>, else_body: Box<Self> },
     Value { value: Value },
@@ -63,7 +66,12 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
         },
         Expr::Call { name, args } => {
             let name = match &name.0 {
-                Expr::Identifier(s) => s.clone(),
+                Expr::Identifier(s) => {
+                    if INTRINSICS.contains(&s.as_str()) { s.clone() }
+                    else {
+                        return (None, Some(LoweringError { span: name.1.clone(), message: format!("Unknown intrinsic: {}", s) }));
+                    }
+                }
                 // Should never happen because the parser should have caught this
                 _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string() }))
             };
@@ -80,6 +88,20 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                 }
             }
             let ir_kind = IRKind::Call { name, args: largs };
+            return (Some(ir_kind), None);
+        },
+        Expr::Intrinsic { name, args } => {
+            let name = match &name.0 {
+                Expr::Identifier(s) => s.clone(),
+                _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string() }))
+            };
+            let mut largs = Vec::new();
+            for arg in &args.0 {
+                let arg = expr_to_ir(&arg.0);
+                if let Some(err) = arg.1 { return (None, Some(err)); }
+                else { largs.push(arg.0.unwrap()); }
+            }
+            let ir_kind = IRKind::Intrinsic { name, args: largs };
             return (Some(ir_kind), None);
         },
         Expr::Fun { name, type_hint, args, body } => {

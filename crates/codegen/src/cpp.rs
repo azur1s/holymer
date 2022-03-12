@@ -36,12 +36,15 @@ impl Codegen {
                 format!("{} {} = {};\n", type_hint, name, self.gen_ir(value))
             },
             IRKind::Call { name, args } => {
+                format!("{}({});\n", name, args.iter().map(|arg| self.gen_ir(arg)).collect::<Vec<_>>().join(", "))
+            },
+            IRKind::Intrinsic { name, args } => {
                 match name.as_str() {
                     "write" => { format!("std::cout << {};\n", self.gen_ir(&args[0])) },
                     "read" => { format!("std::cin >> {};\n", self.gen_ir(&args[0])) },
-                    _ => format!("{}({});\n", name, args.iter().map(|arg| self.gen_ir(arg)).collect::<Vec<_>>().join(", ")),
+                    _ => unreachable!(format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
                 }
-            },
+            }
             IRKind::Fun { name, return_type_hint, args, body } => {
                 let args = args.iter().map(|arg| format!("{} {}", arg.1, arg.0)).collect::<Vec<_>>().join(", ");
                 format!("{} {}({}) {{\n{}}}\n", return_type_hint, name, args, self.gen_ir(body))
