@@ -1,4 +1,4 @@
-use std::{fs, io::Write, process::Command};
+use std::{fs, io::Write, process::Command, path::PathBuf};
 
 use clap::Parser as ArgParser;
 
@@ -94,10 +94,7 @@ fn main() {
                     logif!(0, "Successfully generated code.");
 
                     // Write code to file
-                    let output_path = match output {
-                        Some(output) => output,
-                        None => file_name.with_extension("cpp").file_name().unwrap().to_os_string().into(),
-                    };
+                    let output_path: PathBuf = file_name.with_extension("cpp").file_name().unwrap().to_os_string().into();
                     let mut file = fs::File::create(&output_path).expect("Failed to create file");
                     file.write_all(codegen.emitted.as_bytes()).expect("Failed to write to file");
 
@@ -105,6 +102,16 @@ fn main() {
                     let compiler = &config.compiler.compiler;
                     Command::new(compiler)
                         .arg(&output_path)
+                        .arg(format!("-o{}", match output {
+                            Some(o) => o.display().to_string(),
+                            None => file_name
+                                    .with_extension("out")
+                                    .file_name()
+                                    .unwrap()
+                                    .to_str()
+                                    .unwrap()
+                                    .to_string(),
+                        }))
                         .spawn()
                         .expect("Failed to run compiler");
 
