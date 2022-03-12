@@ -5,11 +5,21 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# Argument handling
 clap = { version = "3.0.14", features = ["derive"] }
+
+# Configuration
+toml = "0.5"
+serde = "1.0.136"
+serde_derive = "1.0.136"
+
+# Parsing
 lexer = { path = "../lexer" }
 parser = { path = "../parser" }
+
+# Diagnostics
 diagnostic = { path = "../diagnostic" }
+
+# Codegen
 hir = { path = "../hir" }
 codegen = { path = "../codegen" }
-chumsky = "0.8.0"
-ariadne = "0.1.5"

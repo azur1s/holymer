@@ -1,4 +1,4 @@
-use std::{fs, io::Write};
+use std::{fs, io::Write, process::Command};
 
 use clap::Parser as ArgParser;
 
@@ -11,10 +11,31 @@ use codegen::cpp;
 pub mod args;
 use args::{Args, Options};
 
+pub mod config;
+
 pub mod util;
 use crate::util::log;
 
 fn main() {
+    let config_file = fs::read_to_string("./hades.toml");
+    let config: config::Config;
+    match config_file {
+        Ok(content) => {
+            let parsed = config::parse_config(&content);
+            match parsed {
+                Ok(c) => config = c,
+                Err(e) => {
+                    log(2, format!("{}", e));
+                    config = config::default_config();
+                }
+            }
+        }
+        Err(e) => {
+            log(1, format!("Error reading config file: {}, using default config", e));
+            config = config::default_config();
+        }
+    }
+
     let args = Args::parse();
     match args.options {
         Options::Compile {
@@ -81,11 +102,15 @@ fn main() {
                     let duration = start.elapsed().as_millis();
 
                     logif!(0, format!("Compilation took {}ms", duration));
-                    logif!(0, format!("Wrote output to `{}`. All done.", output_path.display()));
+                    logif!(0, format!("Wrote output to `{}`", output_path.display()));
+
+                    let compiler = &config.compiler.compiler;
+                    Command::new(compiler)
+                        .arg(&output_path)
+                        .spawn()
+                        .expect("Failed to run compiler");
                 },
-                None => {
-                    unreachable!();
-                }
+                None => { unreachable!(); }
             }
         }
     }
