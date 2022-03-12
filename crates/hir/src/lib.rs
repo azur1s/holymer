@@ -105,7 +105,8 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             if_err_return!(lhs_ir.1);
 
             match &rhs.0 {
-                call @ Expr::Call { name, args } => {
+                call @ Expr::Call { name, args }
+                | call @ Expr::Intrinsic { name, args } => {
                     let name = match &name.0 {
                         Expr::Identifier(s) => s.clone(),
                         // Should never happen because the parser should have caught this
@@ -125,7 +126,13 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                     let mut args = vec![lhs_ir.0.unwrap()];
                     args.append(&mut largs);
 
-                    return (Some(IRKind::Call { name, args }), None);
+                    let ir_kind = match call.0.unwrap() {
+                        IRKind::Call { .. } => IRKind::Call { name, args },
+                        IRKind::Intrinsic { .. } => IRKind::Intrinsic { name, args },
+                        _ => unreachable!()
+                    };
+
+                    return (Some(ir_kind), None);
                 },
                 _ => return (None, Some(LoweringError {
                     span: rhs.1.clone(),

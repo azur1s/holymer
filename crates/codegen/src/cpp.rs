@@ -3,7 +3,7 @@ use std::fmt::Display;
 use hir::{IR, IRKind, Value};
 
 const MODULE_INCLUDES: [&str; 3] = [
-    "<iostream>", // stdin `@read()` and stdout `@write()`
+    "\"hazure/io.hpp\"", // `read()` and `write()`
     "<stdbool.h>", // bool type
     "<string>", // string type
 ];
@@ -62,8 +62,8 @@ impl Codegen {
 
             IRKind::Intrinsic { name, args } => {
                 match name.as_str() {
-                    "write" => { format!("std::cout << {};\n", self.gen_ir(&args[0], false)) },
-                    "read" => { format!("std::cin >> {};\n", self.gen_ir(&args[0], false)) },
+                    "write" => { format!("hazure_write({}){}\n", self.gen_ir(&args[0], false), semicolon!()) },
+                    "read" => { format!("hazure_read({}){}\n", self.gen_ir(&args[0], false), semicolon!()) },
                     _ => unreachable!(format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
                 }
             },

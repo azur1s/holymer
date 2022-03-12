@@ -12,6 +12,7 @@ Note: Everything in this project can be changed at anytime! (I'm still finding o
 
 # Prerequistie
 - `clang++`(preferred, default) or any C++ compiler
+- `make` for Makefile
 - Rust (if you're going to build from source)
 
 # Configuration
@@ -21,13 +22,5 @@ You can also configurate Hades compiler (currently you can only change the C++ c
 compiler = "clang++"
 ```
 
-# TODO
-> This is only contains important TODOs, smaller TODOs isn't listed here and instead scattered around among sources code.
-- More compiler configuration (e.x. complier options)
-- Optimization (IR)
-- Standard library & Runtime stuff
-
 # License
 Hades is licensed under both [MIT license](https://github.com/azur1s/hades/blob/master/LICENSE-MIT) and [Apache License](https://github.com/azur1s/hades/blob/master/LICENSE-APACHE)
-
-Anything helps! :D

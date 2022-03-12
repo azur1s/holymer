@@ -2,13 +2,13 @@ fun foo (xs: int): int = return xs + 1;
 fun bar (xs: int) (x: int): int = return xs - x;
 
 fun main: int = do
-    let res: int = foo(69)
-                   |> bar(1);
-    @write(res);
+    foo(69)
+    |> bar(1)
+    |> @write();
 
     @write("\n");
 
-    let y: int = 68
-                 |> foo();
-    @write(y);
+    68
+    |> foo()
+    |> @write();
 end;
