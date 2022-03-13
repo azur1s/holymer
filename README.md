@@ -11,7 +11,7 @@ or with the pipe operator:
 ```sml
 fun main: int = do
     "Hello, World!\n"
-    |> @write();
+    |> @write(_);
     return 69;
 end;
 ```
