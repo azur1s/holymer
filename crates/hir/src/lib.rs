@@ -116,12 +116,13 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                         _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string(), note: None }))
                     };
 
-                    // Remove all `Hole`(s) from the args
+                    // Get the index where the `Hole` is at
                     let index = args.0.iter().position(|arg| match arg.0 {
                         Expr::Hole(..) => true,
                         _ => false
                     });
 
+                    // If there is no `Hole` in the args then return early
                     if let None = index {
                         return (None, Some(LoweringError {
                             span: rhs.1.clone(),
@@ -130,6 +131,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                         }));
                     }
 
+                    // Remove the `Hole` from the args
                     let mut new_args = args.0.clone();
                     new_args.remove(index.unwrap());
 
@@ -152,6 +154,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                     let mut largs = Vec::new();
                     for arg in &args.0 {
                         match arg.0 {
+                            // If the arg is a `Hole` then replace it with the lowered IR
                             Expr::Hole(..) => {
                                 largs.push(lhs_ir.0.clone().unwrap());
                             },
