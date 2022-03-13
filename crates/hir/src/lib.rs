@@ -9,10 +9,10 @@ const INTRINSICS: [&str; 5] = [
     "time",
 ];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value { Int(i64), Boolean(bool), String(String), Ident(String) }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum IRKind {
     Define { name: String, type_hint: String, value: Box<Self> },
     Fun { name: String, return_type_hint: String, args: Vec<(String, String)>, body: Box<Self> },
@@ -110,28 +110,63 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             match &rhs.0 {
                 call @ Expr::Call { name, args }
                 | call @ Expr::Intrinsic { name, args } => {
-                    let name = match &name.0 {
+                    let cname = match &name.0 {
                         Expr::Identifier(s) => s.clone(),
                         // Should never happen because the parser should have caught this
                         _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string(), note: None }))
                     };
 
-                    let call = expr_to_ir(&call);
-                    if_err_return!(call.1);
+                    // Remove all `Hole`(s) from the args
+                    let index = args.0.iter().position(|arg| match arg.0 {
+                        Expr::Hole => true,
+                        _ => false
+                    });
 
-                    let mut largs = Vec::new();
-                    for arg in &args.0 {
-                        let arg = expr_to_ir(&arg.0);
-                        if_err_return!(arg.1);
-                        largs.push(arg.0.unwrap());
+                    if let None = index {
+                        return (None, Some(LoweringError {
+                            span: rhs.1.clone(),
+                            message: "Expected hole in piping".to_string(),
+                            note: None
+                        }));
                     }
 
-                    let mut args = vec![lhs_ir.0.unwrap()];
-                    args.append(&mut largs);
+                    let mut new_args = args.0.clone();
+                    new_args.remove(index.unwrap());
 
-                    let ir_kind = match call.0.unwrap() {
-                        IRKind::Call { .. } => IRKind::Call { name, args },
-                        IRKind::Intrinsic { .. } => IRKind::Intrinsic { name, args },
+                    // Make a new call expression with the new args
+                    let new_call = match call {
+                        Expr::Call { name, args } => Expr::Call{
+                            name: name.clone(),
+                            args: (new_args, args.1.clone())
+                        },
+                        Expr::Intrinsic { name, args } => Expr::Intrinsic {
+                            name: name.clone(),
+                            args: (new_args, args.1.clone())
+                        },
+                        _ => unreachable!()
+                    };
+                    let new_call = expr_to_ir(&new_call);
+                    if_err_return!(new_call.1);
+
+                    // Lower all args
+                    let mut largs = Vec::new();
+                    for arg in &args.0 {
+                        match arg.0 {
+                            Expr::Hole => {
+                                largs.push(lhs_ir.0.clone().unwrap());
+                            },
+                            _ => {
+                                let arg = expr_to_ir(&arg.0);
+                                if_err_return!(arg.1);
+                                largs.push(arg.0.unwrap());
+                            }
+                        }
+                    }
+
+                    // Match the call to the right IRKind
+                    let ir_kind = match new_call.0.unwrap() {
+                        IRKind::Call { .. } => IRKind::Call { name: cname, args: largs },
+                        IRKind::Intrinsic { .. } => IRKind::Intrinsic { name: cname, args: largs },
                         _ => unreachable!()
                     };
 
@@ -235,6 +270,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
         Expr::Boolean(value)    => (Some(IRKind::Value { value: Value::Boolean(*value) }), None),
         Expr::String(value)     => (Some(IRKind::Value { value: Value::String(value.clone()) }), None),
         Expr::Identifier(value) => (Some(IRKind::Value { value: Value::Ident(value.clone()) }), None),
+        Expr::Hole => (None, None),
         _ => { dbg!(expr); todo!() }
     }
 }

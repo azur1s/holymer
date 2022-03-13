@@ -23,6 +23,7 @@ pub enum Token {
     Colon, SemiColon,
     OpenParen, CloseParen,
     At,
+    Hole,
 }
 
 impl std::fmt::Display for Token {
@@ -61,6 +62,7 @@ impl std::fmt::Display for Token {
             Token::OpenParen => write!(f, "("),
             Token::CloseParen => write!(f, ")"),
             Token::At => write!(f, "@"),
+            Token::Hole => write!(f, "_"),
         }
     }
 }
@@ -75,7 +77,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .then_ignore(just('"'))
         .collect::<String>()
         .map(Token::String);
-    
+
     let symbol = choice((
         just('+').to(Token::Plus),
         just('-').to(Token::Minus),
@@ -89,7 +91,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
 
         just('<').to(Token::Less),
         just('>').to(Token::Greater),
-        
+
         just('=').to(Token::Assign),
         just('.').to(Token::Dot),
         just(',').to(Token::Comma),
@@ -98,6 +100,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         just('(').to(Token::OpenParen),
         just(')').to(Token::CloseParen),
         just('@').to(Token::At),
+        just('_').to(Token::Hole),
     ));
 
     let keyword = text::ident().map(|s: String| match s.as_str() {

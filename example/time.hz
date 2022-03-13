@@ -1,4 +1,4 @@
 fun main: int = do
     @time()
-    |> @write();
+    |> @write(_);
 end;
