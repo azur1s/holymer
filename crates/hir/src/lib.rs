@@ -118,7 +118,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
 
                     // Remove all `Hole`(s) from the args
                     let index = args.0.iter().position(|arg| match arg.0 {
-                        Expr::Hole => true,
+                        Expr::Hole(..) => true,
                         _ => false
                     });
 
@@ -152,7 +152,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                     let mut largs = Vec::new();
                     for arg in &args.0 {
                         match arg.0 {
-                            Expr::Hole => {
+                            Expr::Hole(..) => {
                                 largs.push(lhs_ir.0.clone().unwrap());
                             },
                             _ => {
@@ -270,7 +270,12 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
         Expr::Boolean(value)    => (Some(IRKind::Value { value: Value::Boolean(*value) }), None),
         Expr::String(value)     => (Some(IRKind::Value { value: Value::String(value.clone()) }), None),
         Expr::Identifier(value) => (Some(IRKind::Value { value: Value::Ident(value.clone()) }), None),
-        Expr::Hole => (None, None),
+        // Probably will never happen because it is catched in parser
+        Expr::Hole(start, end) => (None, Some(LoweringError {
+            span: *start..*end,
+            message: "Hole can only be used in piping, it is not allowed here.".to_string(),
+            note: None
+        })),
         _ => { dbg!(expr); todo!() }
     }
 }

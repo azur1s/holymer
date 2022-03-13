@@ -36,7 +36,8 @@ pub enum Expr {
         body: Vec<Spanned<Self>>
     },
 
-    Hole,
+    // Hole for positional argument(s) in piping
+    Hole(usize, usize), // The usize is the span of the hole (prob should be single but whatever)
 }
 
 fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>> + Clone {
@@ -45,11 +46,11 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
         _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
     }).labelled("identifier");
 
-    let literal = filter_map(|span, token| match token {
+    let literal = filter_map(|span: std::ops::Range<usize>, token| match token {
         Token::Int(i)     => Ok((Expr::Int(i), span)),
         Token::Boolean(b) => Ok((Expr::Boolean(b), span)),
         Token::String(s)  => Ok((Expr::String(s), span)),
-        Token::Hole       => Ok((Expr::Hole, span)),
+        Token::Hole       => Ok((Expr::Hole(span.start, span.end), span)),
         _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
     }).labelled("literal");
 
