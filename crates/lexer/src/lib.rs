@@ -126,7 +126,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .then_ignore(just('{')
             .ignore_then(none_of('}').ignored().repeated())
             .then_ignore(just("}-"))
-            .or(none_of('\n').ignored().repeated())
+            .or(just('-').ignore_then(none_of('\n').ignored().repeated()))
         )
         .padded()
         .ignored()
