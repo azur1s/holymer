@@ -19,6 +19,40 @@ end;
 
 Note: Everything in this project can be changed at anytime! (I'm still finding out what work best for lots of thing) if you have an idea, feel free to create an issues about it, or even create a PR! (I'd be very happy)
 
+# How it works
+```sml
+           Source (.hz)
+              | crates/main
+              v
+            Lexer produce Token
+              | crates/lexer
+              v
+           Parser produce AST
+              | crates/parser
+              v
+         Diagnostic(Parsing)
+              |    \ crates/diagnostic
+              |     \
+             Pass  Fail -> Print error -> Exit
+              |
+              v
+          Lowerer(?) produce HIR
+              | crates/hir
+              v
+         Diagnostic(Lowering)
+              |     \ crates/diagnostic
+              v      \
+             Pass  Fail -> Print error -> Exit
+              |
+              v
+ Command   Codegen produce C++
+ (spawn)      | crates/codegen
+    |         |
+    v         v
+ clang++ -----*-----> Executable
+(Command)
+```
+
 # Prerequistie
 - `clang++`(preferred, default) or any C++ compiler
 - `make` for Makefile
