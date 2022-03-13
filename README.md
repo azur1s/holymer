@@ -20,36 +20,36 @@ end;
 Note: Everything in this project can be changed at anytime! (I'm still finding out what work best for lots of thing) if you have an idea, feel free to create an issues about it, or even create a PR! (I'd be very happy)
 
 # How it works
-```sml
+```js
            Source (.hz)
-              | crates/main
-              v
+              │ crates/main
+              │
             Lexer produce Token
-              | crates/lexer
-              v
+              │ crates/lexer
+              │
            Parser produce AST
-              | crates/parser
-              v
+              │ crates/parser
+              │
          Diagnostic(Parsing)
-              |    \ crates/diagnostic
-              |     \
-             Pass  Fail -> Print error -> Exit
-              |
-              v
+              │     │ crates/diagnostic
+              │     ╰ Fail -> Print error -> Exit
+             Pass
+              │
+              │
           Lowerer(?) produce HIR
-              | crates/hir
-              v
+              │ crates/hir
+              │
          Diagnostic(Lowering)
-              |     \ crates/diagnostic
-              v      \
-             Pass  Fail -> Print error -> Exit
-              |
-              v
+              │     │ crates/diagnostic
+              │     ╰ Fail -> Print error -> Exit
+             Pass
+              │
+              │
  Command   Codegen produce C++
- (spawn)      | crates/codegen
-    |         |
-    v         v
- clang++ -----*-----> Executable
+ (spawn)      │ crates/codegen
+    │         │
+    │         │
+ clang++ ─────┴───── Executable
 (Command)
 ```
 
