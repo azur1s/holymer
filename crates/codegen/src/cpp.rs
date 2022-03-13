@@ -65,8 +65,10 @@ impl Codegen {
                 match name.as_str() {
                     "write" => { format!("hazure_write({}){}\n", self.gen_ir(&args[0], false), semicolon!()) },
                     "read"  => { format!("hazure_read(){}\n", semicolon!()) },
+
                     "write_file" => { format!("hazure_write({}){}\n", self.gen_ir(&args[0], false), semicolon!()) },
                     "read_file"  => { format!("hazure_read_file({}){}\n", self.gen_ir(&args[0], false), semicolon!()) },
+
                     "time" => { format!("hazure_get_time(){}\n", semicolon!()) },
                     _ => unreachable!(format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
                 }

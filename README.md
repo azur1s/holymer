@@ -39,6 +39,12 @@ Note: Everything in this project can be changed at anytime! (I'm still finding o
           Lowerer(?) produce HIR
               │ crates/hir
               │
+          Type Checker (TODO)
+              │   │
+              │   ╰ Fail -> Print error -> Exit
+             Pass
+              │
+              │
          Diagnostic(Lowering)
               │     │ crates/diagnostic
               │     ╰ Fail -> Print error -> Exit
