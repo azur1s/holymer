@@ -1,4 +1,9 @@
 fun main: int = do
+    -- Normal way of hello world
     @write("Hello, World!\n");
     return 69;
+
+    -- Hello world piped to @write() function
+    "Hello, World!\n"
+    |> @write();
 end;
