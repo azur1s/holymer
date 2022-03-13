@@ -75,10 +75,6 @@ Steps to build:
 - `make` for Makefile
 - Rust (if you're going to build from source)
 
-# Problems
-This is the problem(s) of the language I found throughout while developing it
-- Diagnostics stuff only report one error, maybe because of the early return when errors make it only return after first error. Fix is maybe make an error type and continue doing it stuff even if found the error. (Fixable)
-
 # Configuration
 You can also configurate Hades compiler (currently you can only change the C++ compiler). Make a new file called `hades.toml` in the current working directory and the compiler will look for it! if there isn't one then it will use the default configuration:
 ```toml
