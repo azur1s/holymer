@@ -1,4 +1,0 @@
-fun main: int = do
-    @read_file("./example/quine.hz") -- Run this from root folder
-    |> @write(_);
-end;

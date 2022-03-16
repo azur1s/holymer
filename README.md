@@ -1,23 +1,24 @@
 # Hazure
-Programming language that compiles to C++!
+Programming language that compiles to Typescript!
 
 ```sml
-fun main: int = do
+fun main: void = do
     @write("Hello, World!\n");
-    return 69;
 end;
 ```
 or with the pipe operator:
 ```sml
-fun main: int = do
+fun main: void = do
     "Hello, World!\n"
     |> @write(_);
-    return 69;
 end;
 ```
-> The `return 69` is the exit code (like C++), try running `echo $?` to see it!
 
 Note: Everything in this project can be changed at anytime! (I'm still finding out what work best for lots of thing) if you have an idea, feel free to create an issues about it, or even create a PR! (I'd be very happy)
+
+# Prerequistie
+- `deno`
+- Rust (if you're going to build from source)
 
 # Contributing
 Found a bug? Found a better way to do something? Make a pull request or tell me in the issues tab! Anything contributions helps :D
@@ -26,9 +27,8 @@ Wanna see how it works under the hood? see the [How it works](https://github.com
 
 Steps to build:
 1) Clone this repo `https://github.com/azur1s/hazure.git`
-2) Run `sudo make build-lib` to build the library (for the transpiled output)
-3) Build executable `cargo build`
-4) Try running some examples! `path/to/executable compile path/to/file.hz`
+2) Build executable `cargo build`
+3) Try running some examples! `path/to/executable compile path/to/file.hz`
 
 # How it works
 ```
@@ -62,25 +62,12 @@ Steps to build:
              Pass
               │
               │
- Command   Codegen produce C++
- (spawn)      │ crates/codegen
-    │         │
-    │         │
- clang++ ─────┴───── Executable
-(Command)
-```
-
-# Prerequistie
-- `clang++`(preferred, default) or any C++ compiler
-- `make` for Makefile
-- Rust (if you're going to build from source)
-
-# Configuration
-You can also configurate Hades compiler (currently you can only change the C++ compiler). Make a new file called `hades.toml` in the current working directory and the compiler will look for it! if there isn't one then it will use the default configuration:
-```toml
-[compiler]
-compiler = "clang++"
+        Codegen produce Typescript
+              │ crates/codegen
+              │
+             Done
+         (filename.ts)
 ```
 
 # License
-Hades is licensed under both [MIT license](https://github.com/azur1s/hades/blob/master/LICENSE-MIT) and [Apache License](https://github.com/azur1s/hades/blob/master/LICENSE-APACHE)
+Hazure is licensed under both [MIT license](https://github.com/azur1s/hazure/blob/master/LICENSE-MIT) and [Apache License](https://github.com/azur1s/hazure/blob/master/LICENSE-APACHE)

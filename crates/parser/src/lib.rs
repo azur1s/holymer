@@ -124,7 +124,8 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .then(
                 choice((
                     just(Token::Multiply),
-                    just(Token::Divide)))
+                    just(Token::Divide),
+                    just(Token::Modulus)))
                 .then(unary)
                 .repeated())
             .foldl(|lhs, (op, rhs)| {

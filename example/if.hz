@@ -1,4 +1,4 @@
-fun main: int = do
+fun main: void = do
     if true then
         @write("True")
     else

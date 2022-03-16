@@ -1,12 +1,9 @@
 use std::ops::Range;
 use parser::Expr;
 
-const INTRINSICS: [&str; 5] = [
+const INTRINSICS: [&str; 2] = [
     "write",
     "read",
-    "write_file",
-    "read_file",
-    "time",
 ];
 
 #[derive(Debug, Clone)]
@@ -285,9 +282,10 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
 
 fn gen_type_hint(type_hint: &str) -> String {
     match type_hint {
-        "int"    => "int".to_string(),
-        "bool"   => "bool".to_string(),
-        "string" => "std::string".to_string(),
+        "int"    => "number".to_string(),
+        "bool"   => "boolean".to_string(),
+        "string" => "string".to_string(),
+        "void"   => "void".to_string(),
         _ => { dbg!(type_hint); todo!() }
     }
 }

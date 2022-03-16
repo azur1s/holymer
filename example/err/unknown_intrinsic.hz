@@ -1,3 +1,3 @@
-fun main: int = do
+fun main: void = do
     @writse(); -- Unknown intrinsic
 end;

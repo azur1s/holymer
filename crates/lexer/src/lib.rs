@@ -13,7 +13,7 @@ pub enum Token {
     String(String), Identifier(String),
 
     // Operators
-    Plus, Minus, Multiply, Divide,
+    Plus, Minus, Multiply, Divide, Modulus,
     Not, Equal, NotEqual, Less, Greater,
     Pipe,
 
@@ -47,6 +47,7 @@ impl std::fmt::Display for Token {
             Token::Minus => write!(f, "-"),
             Token::Multiply => write!(f, "*"),
             Token::Divide => write!(f, "/"),
+            Token::Modulus => write!(f, "%"),
             Token::Not => write!(f, "!"),
             Token::Equal => write!(f, "=="),
             Token::NotEqual => write!(f, "!="),

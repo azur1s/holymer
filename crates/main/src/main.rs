@@ -6,43 +6,22 @@ use lexer::lex;
 use parser::parse;
 use diagnostic::Diagnostics;
 use hir::ast_to_ir;
-use codegen::cpp;
+use codegen::ts;
 
 pub mod args;
 use args::{Args, Options};
-
-pub mod config;
 
 pub mod util;
 use crate::util::log;
 
 fn main() {
-    let config_file = fs::read_to_string("./hazure.toml");
-    let config: config::Config;
-    match config_file {
-        Ok(content) => {
-            let parsed = config::parse_config(&content);
-            match parsed {
-                Ok(c) => config = c,
-                Err(e) => {
-                    log(2, format!("{}", e));
-                    config = config::default_config();
-                }
-            }
-        }
-        Err(e) => {
-            log(1, format!("Error reading config file: {}, using default config", e));
-            config = config::default_config();
-        }
-    }
-
     let args = Args::parse();
     match args.options {
         Options::Compile {
             input: file_name,
             ast: print_ast,
             log: should_log,
-            output,
+            output: _output, // TODO: Custom output file
         } => {
             // Macro to only log if `should_log` is true
             macro_rules! logif {
@@ -93,37 +72,26 @@ fn main() {
                     }
 
                     // Generate code
-                    let mut codegen = cpp::Codegen::new();
+                    let mut codegen = ts::Codegen::new();
                     codegen.gen(ir);
                     logif!(0, "Successfully generated code.");
 
                     // Write code to file
-                    let output_path: PathBuf = file_name.with_extension("cpp").file_name().unwrap().to_os_string().into();
+                    let output_path: PathBuf = file_name.with_extension("ts").file_name().unwrap().to_os_string().into();
                     let mut file = fs::File::create(&output_path).expect("Failed to create file");
                     file.write_all(codegen.emitted.as_bytes()).expect("Failed to write to file");
-
-                    // Compile the generate code
-                    let compiler = &config.compiler.compiler;
-                    Command::new(compiler)
-                        .arg(&output_path)
-                        .arg(format!("-o{}", match output {
-                            Some(o) => o.display().to_string(),
-                            None => file_name
-                                    .with_extension("out")
-                                    .file_name()
-                                    .unwrap()
-                                    .to_str()
-                                    .unwrap()
-                                    .to_string(),
-                        }))
-                        .spawn()
-                        .expect("Failed to run compiler");
 
                     // End timer
                     let duration = start.elapsed().as_millis();
 
                     logif!(0, format!("Compilation took {}ms", duration));
                     logif!(0, format!("Wrote output to `{}`", output_path.display()));
+
+                    Command::new("chmod")
+                        .arg("+x")
+                        .arg(&output_path)
+                        .spawn()
+                        .expect("Failed to chmod file");
                 },
                 None => { unreachable!(); }
             }
