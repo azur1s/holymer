@@ -3,7 +3,7 @@ Programming language that compiles to Typescript!
 
 ```sml
 fun main: void = do
-    @write("Hello, World!\n");
+    @write("Hello, World!");
 end;
 ```
 or with the pipe operator:
