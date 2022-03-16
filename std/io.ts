@@ -14,7 +14,7 @@ export function write(text: any): void {
  * @param text The text to write. Can be any type.
  * @param path The path to the file.
  */
-export function write_file(text: any, path: string): void {
+export function writeFile(text: any, path: string): void {
     const bytes: Uint8Array = new TextEncoder().encode(text);
     Deno.writeFileSync(path, bytes);
 }

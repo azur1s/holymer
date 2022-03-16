@@ -1,9 +1,10 @@
 use std::ops::Range;
 use parser::Expr;
 
-const INTRINSICS: [&str; 2] = [
+const INTRINSICS: [&str; 3] = [
     "write",
     "read",
+    "write_file",
 ];
 
 #[derive(Debug, Clone)]
