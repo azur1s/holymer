@@ -180,9 +180,9 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
         let pipe = compare.clone()
             .then(
                 just(Token::Pipe)
-                .then(compare)
+                .ignore_then(compare)
                 .repeated())
-            .foldl(|lhs, (_, rhs)| {
+            .foldl(|lhs, rhs| {
                 (
                     Expr::Pipe {
                         lhs: Box::new(lhs),
@@ -267,15 +267,18 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
         let if_block = just(Token::KwIf)
             .ignore_then(expr.clone())
             .then_ignore(just(Token::KwThen))
+
             .then(
                 do_block.clone()
                     .or(expr.clone())
-            )
+            ).then_ignore(just(Token::SemiColon))
+
             .then_ignore(just(Token::KwElse))
             .then(
                 do_block.clone()
                     .or(expr.clone())
-            )
+            ).then_ignore(just(Token::SemiColon))
+
             .then_ignore(just(Token::KwEnd))
             .map(|((cond, then), else_)| {
                 (

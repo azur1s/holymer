@@ -1,0 +1,11 @@
+fun fib (n: int): int = do
+    if n < 2 then
+        return n;
+    else
+        return fib(n - 1) + fib(n - 2);
+    end;
+end;
+
+fun main: void = do
+    fib(5) |> @write(_);
+end;

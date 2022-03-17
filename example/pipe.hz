@@ -6,6 +6,8 @@ fun main: void = do
     |> bar(_, 1)  -- '70 - 1 => 69
     |> @write(_); -- '69 => stdout
 
+    @write("\n");
+
     foo(60)        -- 60 + 1 => 61
     |> bar(130, _) -- 130 - '61 => 69
     |> @write(_);  -- '69 => stdout
