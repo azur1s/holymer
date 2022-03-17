@@ -59,7 +59,8 @@ impl Codegen {
                 match name.as_str() {
                     "write" => { format!("write({}){}\n", self.gen_ir(&args[0], false), semicolon!()) },
                     "write_file" => { format!("writeFile({}, {}){}\n", self.gen_ir(&args[0], false), self.gen_ir(&args[1], false), semicolon!()) },
-                    "read"  => { todo!() },
+                    "read" => { todo!() },
+                    "emit" => { format!("{}", self.gen_ir(&args[0], false).trim_start_matches('"').trim_end_matches('"')) }, 
                     _ => unreachable!(format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
                 }
             },

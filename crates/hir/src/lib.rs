@@ -1,10 +1,11 @@
 use std::ops::Range;
 use parser::Expr;
 
-const INTRINSICS: [&str; 3] = [
+const INTRINSICS: [&str; 4] = [
     "write",
     "read",
     "write_file",
+    "emit",
 ];
 
 #[derive(Debug, Clone)]
@@ -204,13 +205,20 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                 }
                 _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string(), note: None }))
             };
+
             let mut largs = Vec::new();
             for arg in &args.0 {
-                let arg = expr_to_ir(&arg.0);
-                if_err_return!(arg.1);
+                let larg = expr_to_ir(&arg.0);
+                if_err_return!(larg.1);
 
-                largs.push(arg.0.unwrap());
+                // Check if the args is string
+                if let IRKind::Value{ .. } = larg.0.clone().unwrap() {
+                    largs.push(larg.0.clone().unwrap());
+                } else {
+                    return (None, Some(LoweringError { span: arg.1.clone(), message: "Expected string".to_string(), note: None }))
+                }
             }
+
             let ir_kind = IRKind::Intrinsic { name, args: largs };
             return (Some(ir_kind), None);
         },
