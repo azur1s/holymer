@@ -74,7 +74,7 @@ impl Codegen {
                     .collect::<Vec<_>>().
                     join(", ");
                 format!(
-                    "const f_{} = ({}): {} => {{\n{}\n}};\n",
+                    "const f_{} = ({}): {} => {};\n",
                     name,
                     args,
                     return_type_hint,
@@ -90,10 +90,11 @@ impl Codegen {
             },
 
             IRKind::Do { body } => {
-                let mut out = String::new();
+                let mut out = "{\n".to_string();
                 for expr in body {
                     out.push_str(&self.gen_ir(&expr, true));
                 }
+                out.push_str("}\n");
                 out
             },
 
