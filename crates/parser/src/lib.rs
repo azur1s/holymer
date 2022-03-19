@@ -251,13 +251,13 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
-        let do_block = just(Token::KwDo)
-            .ignore_then(
-                expr.clone()
-                    .then_ignore(just(Token::SemiColon))
-                    .repeated()
+        let do_block = expr.clone()
+            .then_ignore(just(Token::SemiColon))
+            .repeated()
+            .delimited_by(
+                just(Token::KwDo),
+                just(Token::KwEnd),
             )
-            .then_ignore(just(Token::KwEnd))
             .map_with_span(|body, span| {
                 (
                     Expr::Do {
