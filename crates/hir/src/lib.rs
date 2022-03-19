@@ -13,7 +13,7 @@ pub enum Value { Int(i64), Boolean(bool), String(String), Ident(String) }
 
 #[derive(Debug, Clone)]
 pub enum IRKind {
-    Define { name: String, type_hint: String, value: Box<Self> },
+    Define { name: String, type_hint: String, value: Box<Self>, mutable: bool },
     Fun { name: String, return_type_hint: String, args: Vec<(String, String)>, body: Box<Self> },
     Call { name: String, args: Vec<Self> },
     Intrinsic { name: String, args: Vec<Self> },
@@ -115,14 +115,16 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                         _ => return (None, Some(LoweringError { span: name.1.clone(), message: "Expected identifier".to_string(), note: None }))
                     };
 
-                    // Get the index where the `Hole` is at
-                    let index = args.0.iter().position(|arg| match arg.0 {
-                        Expr::Hole(..) => true,
-                        _ => false
-                    });
+                    // Get all the `Hole` indexes
+                    let mut indexes = Vec::new();
+                    for (i, arg) in args.0.iter().enumerate() {
+                        if let Expr::Hole(..) = &arg.0 {
+                            indexes.push(i);
+                        }
+                    }
 
                     // If there is no `Hole` in the args then return early
-                    if let None = index {
+                    if indexes.is_empty() {
                         return (None, Some(LoweringError {
                             span: rhs.1.clone(),
                             message: "Expected hole in piping".to_string(),
@@ -132,7 +134,9 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
 
                     // Remove the `Hole` from the args
                     let mut new_args = args.0.clone();
-                    new_args.remove(index.unwrap());
+                    for index in indexes.iter().rev() {
+                        new_args.remove(*index);
+                    }
 
                     // Make a new call expression with the new args
                     let new_call = match call {
@@ -182,12 +186,18 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             };
         },
 
-        Expr::Let { name, type_hint, value } => {
+        Expr::Let { name, type_hint, value, mutable } => {
             let value = expr_to_ir(&value.0);
             if_err_return!(value.1);
 
             let value = value.0.unwrap();
-            let ir_kind = IRKind::Define { name: name.clone(), type_hint: gen_type_hint(type_hint), value: Box::new(value) };
+            let ir_kind = IRKind::Define {
+                name: name.clone(),
+                type_hint: gen_type_hint(type_hint),
+                value: Box::new(value),
+                mutable: *mutable
+            };
+
             return (Some(ir_kind), None);
         },
 

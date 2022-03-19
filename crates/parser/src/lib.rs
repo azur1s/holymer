@@ -18,6 +18,7 @@ pub enum Expr {
         name: String,
         type_hint: String,
         value: Box<Spanned<Self>>,
+        mutable: bool,
     },
     Fun {
         name: String,
@@ -193,17 +194,19 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             });
 
         let let_ = just(Token::KwLet)
-            .ignore_then(identifier)
+            .ignore_then(just(Token::KwMut)).or_not()
+            .then(identifier)
             .then_ignore(just(Token::Colon))
             .then(identifier)
             .then_ignore(just(Token::Assign))
             .then(expr.clone())
-            .map(|((name, type_hint), value)| {
+            .map(|(((mutable, name), type_hint), value)| {
                 (
                     Expr::Let {
                         name: name.0.clone(),
                         type_hint: type_hint.0,
                         value: Box::new(value.clone()),
+                        mutable: mutable.is_some(),
                     },
                     name.1.start..value.1.end,
                 )

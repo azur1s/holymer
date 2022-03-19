@@ -31,9 +31,10 @@ impl Codegen {
         macro_rules! semicolon { () => { if should_gen_semicolon { ";" } else { "" } }; }
 
         match ir {
-            IRKind::Define { name, type_hint, value } => {
+            IRKind::Define { name, type_hint, value, mutable } => {
                 format!(
-                    "const {}: {} = {}{}\n",
+                    "{} {}: {} = {}{}\n",
+                    if *mutable { "let" } else { "const" },
                     name, 
                     type_hint,
                     self.gen_ir(value, false),

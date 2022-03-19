@@ -3,7 +3,7 @@ use chumsky::prelude::*;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Token {
     // Keywords
-    KwLet, KwFun,
+    KwLet, KwMut, KwFun,
     KwDo, KwEnd,
     KwIf, KwThen, KwElse,
     KwReturn,
@@ -30,6 +30,7 @@ impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Token::KwLet => write!(f, "let"),
+            Token::KwMut => write!(f, "mut"),
             Token::KwFun => write!(f, "fun"),
             Token::KwDo => write!(f, "do"),
             Token::KwEnd => write!(f, "end"),
