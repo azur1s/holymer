@@ -6,7 +6,7 @@ fun main: void = do
     @write("Hello, World!");
 end;
 ```
-or with the pipe operator:
+or with the pipeline operator:
 ```sml
 fun main: void = do
     "Hello, World!\n"

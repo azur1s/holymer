@@ -1,0 +1,12 @@
+fun main: void = do
+    let foo: int = 69;
+
+    case foo of
+        | 1 -> @write("One");
+        | 2 -> @write("Two");
+        | 3 -> do
+            @write("Three");
+        end;
+        -- \ @write("idk");
+    end;
+end;

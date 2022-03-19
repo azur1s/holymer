@@ -11,7 +11,7 @@ pub enum Expr {
     Unary { op: String, rhs: Box<Spanned<Self>> },
     Binary { lhs: Box<Spanned<Self>>, op: String, rhs: Box<Spanned<Self>> },
     Call { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
-    Pipe { lhs: Box<Spanned<Self>>, rhs: Box<Spanned<Self>> },
+    Pipeline { lhs: Box<Spanned<Self>>, rhs: Box<Spanned<Self>> },
     Intrinsic { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
 
     Let {
@@ -32,6 +32,11 @@ pub enum Expr {
         cond: Box<Spanned<Self>>,
         body: Box<Spanned<Self>>,
         else_body: Box<Spanned<Self>>
+    },
+    Case {
+        expr: Box<Spanned<Self>>,
+        cases: Spanned<Vec<(Spanned<Self>, Spanned<Self>)>>,
+        default: Box<Spanned<Self>>
     },
     Do {
         body: Vec<Spanned<Self>>
@@ -178,14 +183,14 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
-        let pipe = compare.clone()
+        let pipeline = compare.clone()
             .then(
-                just(Token::Pipe)
+                just(Token::Pipeline)
                 .ignore_then(compare)
                 .repeated())
             .foldl(|lhs, rhs| {
                 (
-                    Expr::Pipe {
+                    Expr::Pipeline {
                         lhs: Box::new(lhs),
                         rhs: Box::new(rhs.clone()),
                     },
@@ -194,7 +199,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             });
 
         let let_ = just(Token::KwLet)
-            .ignore_then(just(Token::KwMut)).or_not()
+            .ignore_then(just(Token::KwMut).or_not())
             .then(identifier)
             .then_ignore(just(Token::Colon))
             .then(identifier)
@@ -294,12 +299,44 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
+        let case = just(Token::KwCase)
+            .ignore_then(expr.clone())
+            .then_ignore(just(Token::KwOf))
+            .then(
+                just(Token::Pipe)
+                    .ignore_then(expr.clone())
+                    .then_ignore(just(Token::Arrow))
+                    .then(expr.clone())
+                    .then_ignore(just(Token::SemiColon))
+                    .repeated()
+            )
+            .then(
+                just(Token::EndPipe)
+                    .ignore_then(expr.clone())
+                    .then_ignore(just(Token::SemiColon))
+            )
+            .then_ignore(just(Token::KwEnd))
+            .map(|((expr, cases), default)| {
+                (
+                    Expr::Case {
+                        expr: Box::new(expr.clone()),
+                        cases: (
+                            cases.clone(),
+                            cases.first().unwrap().1.start()..cases.last().unwrap().1.end()
+                        ),
+                        default: Box::new(default.clone()),
+                    },
+                    expr.1.start()..default.1.end(),
+                )
+            });
+
         let_
             .or(fun)
             .or(return_)
             .or(do_block)
             .or(if_block)
-            .or(pipe)
+            .or(case)
+            .or(pipeline)
     }).labelled("expression");
 
     expr

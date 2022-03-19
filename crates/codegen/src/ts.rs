@@ -33,7 +33,7 @@ impl Codegen {
         match ir {
             IRKind::Define { name, type_hint, value, mutable } => {
                 format!(
-                    "{} {}: {} = {}{}\n",
+                    "{} v_{}: {} = {}{}\n",
                     if *mutable { "let" } else { "const" },
                     name, 
                     type_hint,
@@ -102,6 +102,25 @@ impl Codegen {
                     self.gen_ir(cond, true),
                     self.gen_ir(body, true),
                     self.gen_ir(else_body, true),
+                )
+            },
+
+            IRKind::Case { cond, cases, default } => {
+                format!(
+                    "switch ({}) {{\n{}{}\n}}\n",
+                    self.gen_ir(cond, true),
+                    cases
+                        .iter()
+                        .map(|(pattern, body)| format!(
+                            "case {}: {}\nbreak;\n",
+                            self.gen_ir(pattern, true),
+                            self.gen_ir(body, true)))
+                        .collect::<Vec<_>>()
+                        .join("\n"),
+                    format!(
+                        "default: {}\nbreak;\n",
+                        self.gen_ir(default, true),
+                    ),
                 )
             },
 

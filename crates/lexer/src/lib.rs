@@ -6,6 +6,7 @@ pub enum Token {
     KwLet, KwMut, KwFun,
     KwDo, KwEnd,
     KwIf, KwThen, KwElse,
+    KwCase, KwOf,
     KwReturn,
 
     // Literals
@@ -14,8 +15,9 @@ pub enum Token {
 
     // Operators
     Plus, Minus, Multiply, Divide, Modulus,
+    Pipe, EndPipe,
     Not, Equal, NotEqual, Less, Greater,
-    Pipe,
+    Pipeline, Arrow,
 
     // Symbols & Delimiters
     Assign,
@@ -37,6 +39,8 @@ impl std::fmt::Display for Token {
             Token::KwIf => write!(f, "if"),
             Token::KwThen => write!(f, "then"),
             Token::KwElse => write!(f, "else"),
+            Token::KwCase => write!(f, "case"),
+            Token::KwOf => write!(f, "of"),
             Token::KwReturn => write!(f, "return"),
 
             Token::Int(i) => write!(f, "{}", i),
@@ -54,7 +58,10 @@ impl std::fmt::Display for Token {
             Token::NotEqual => write!(f, "!="),
             Token::Less => write!(f, "<"),
             Token::Greater => write!(f, ">"),
-            Token::Pipe => write!(f, "|>"),
+            Token::Pipeline => write!(f, "|>"),
+            Token::Pipe => write!(f, "|"),
+            Token::EndPipe => write!(f, "\\"),
+            Token::Arrow => write!(f, "->"),
 
             Token::Assign => write!(f, "="),
             Token::Dot => write!(f, "."),
@@ -81,6 +88,8 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .map(Token::String);
 
     let symbol = choice((
+        just("->").to(Token::Arrow),
+
         just('+').to(Token::Plus),
         just('-').to(Token::Minus),
         just('*').to(Token::Multiply),
@@ -89,7 +98,9 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         just('!').to(Token::Not),
         just("==").to(Token::Equal),
 
-        just("|>").to(Token::Pipe),
+        just("|>").to(Token::Pipeline),
+        just("|").to(Token::Pipe),
+        just("\\").to(Token::EndPipe),
 
         just('<').to(Token::Less),
         just('>').to(Token::Greater),
@@ -116,6 +127,8 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         "if" => Token::KwIf,
         "then" => Token::KwThen,
         "else" => Token::KwElse,
+        "case" => Token::KwCase,
+        "of" => Token::KwOf,
         "return" => Token::KwReturn,
         _ => Token::Identifier(s),
     });

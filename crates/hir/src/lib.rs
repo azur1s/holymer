@@ -19,6 +19,7 @@ pub enum IRKind {
     Intrinsic { name: String, args: Vec<Self> },
     Do { body: Vec<Self> },
     If { cond: Box<Self>, body: Box<Self>, else_body: Box<Self> },
+    Case { cond: Box<Self>, cases: Vec<(Box<Self>, Box<Self>)>, default: Box<Self> },
     Unary { op: String, right: Box<Self> },
     Binary { op: String, left: Box<Self>, right: Box<Self> },
     Value { value: Value },
@@ -102,7 +103,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             return (Some(ir_kind), None);
         },
 
-        Expr::Pipe { lhs, rhs } => {
+        Expr::Pipeline { lhs, rhs } => {
             let lhs_ir = expr_to_ir(&lhs.0);
             if_err_return!(lhs_ir.1);
 
@@ -279,6 +280,34 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                 cond: Box::new(cond.0.unwrap()),
                 body: Box::new(body.0.unwrap()),
                 else_body: Box::new(else_body.0.unwrap())
+            };
+            return (Some(ir_kind), None);
+        },
+
+        Expr::Case { expr, cases, default } => {
+            let expr = expr_to_ir(&expr.0);
+            if_err_return!(expr.1);
+
+            let mut lcases = Vec::new();
+            for case in &cases.0 {
+                let lcond = expr_to_ir(&case.0.0);
+                if_err_return!(lcond.1);
+
+                let lcase = expr_to_ir(&case.1.0);
+                if_err_return!(lcase.1);
+
+                lcases.push(
+                    (Box::new(lcond.0.unwrap()), Box::new(lcase.0.unwrap()))
+                );
+            }
+
+            let default = expr_to_ir(&default.0);
+            if_err_return!(default.1);
+
+            let ir_kind = IRKind::Case {
+                cond: Box::new(expr.0.unwrap()),
+                cases: lcases,
+                default: Box::new(default.0.unwrap())
             };
             return (Some(ir_kind), None);
         },
