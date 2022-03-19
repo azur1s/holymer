@@ -1,0 +1,14 @@
+fun say_hi (name: string): void = do
+    @write("Hi ");
+    @write(name);
+    @write("!");
+end;
+
+fun main: void = do
+    let input: string = @read("Enter your name:");
+
+    case input of
+        | "" -> @write("I don't know your name :(");
+        \ say_hi(input);
+    end;
+end;
