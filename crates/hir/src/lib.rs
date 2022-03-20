@@ -40,21 +40,19 @@ pub struct LoweringError {
     pub note: Option<String>,
 }
 
-impl IR {
-    pub fn new(kind: IRKind, span: Range<usize>) -> Self {
-        Self { kind, span }
-    }
-}
-
 pub fn ast_to_ir(ast: Vec<(Expr, Range<usize>)>) -> (Vec<IR>, Vec<LoweringError>) {
     let mut irs = Vec::new();
     let mut errors = Vec::new();
     for expr in ast {
         let ir_kind = expr_to_ir(&expr.0);
-        if let Some(err) = ir_kind.1 {
-            errors.push(err);
-        } else {
-            irs.push(IR::new(ir_kind.0.unwrap(), expr.1));
+        match ir_kind {
+            (Some(ir), None) => {
+                irs.push(IR { kind: ir, span: expr.1 });
+            },
+            (None, Some(err)) => {
+                errors.push(err);
+            },
+            _ => unreachable!(),
         }
     }
     (irs, errors)

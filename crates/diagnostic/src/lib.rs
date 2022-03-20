@@ -47,7 +47,6 @@ impl Diagnostics {
             _ => None,
         });
 
-        // TODO: Lowering error
         lex_error.into_iter()
         .map(|e| e.map(|e| e.to_string()))
         .chain(parse_error.into_iter().map(|e| e.map(|tok| tok.to_string())))
