@@ -52,7 +52,8 @@ fn main() {
                 logif!(0, format!("Parsing took {}ms", start.elapsed().as_millis()));
             }
 
-            if print_ast { log(0, format!("{:#?}", ast)); }
+            // TODO: S-Expr syntax for AST
+            // if print_ast { log(0, format!("{:#?}", ast)); }
 
             match ast {
                 Some(ast) => {
@@ -60,7 +61,7 @@ fn main() {
                     let (ir, lowering_error) = ast_to_ir(ast);
                     for err in lowering_error { diagnostics.add_lowering_error(err); }
 
-                    if print_ast { log(0, format!("{:#?}", ir)); }
+                    if print_ast { log(0, format!("IR\n{}", ir.iter().map(|x| format!("{}", x.kind)).collect::<Vec<String>>().join("\n\n"))); }
 
                     // Report lowering errors if any
                     if diagnostics.has_error() {

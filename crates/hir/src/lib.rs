@@ -12,6 +12,17 @@ const INTRINSICS: [&str; 5] = [
 #[derive(Debug, Clone)]
 pub enum Value { Int(i64), Boolean(bool), String(String), Ident(String) }
 
+impl std::fmt::Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Value::Int(i) => write!(f, "{}", i),
+            Value::Boolean(b) => write!(f, "{}", b),
+            Value::String(s) => write!(f, "\"{}\"", s),
+            Value::Ident(s) => write!(f, "{}", s),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum IRKind {
     Define {
@@ -44,6 +55,60 @@ pub enum IRKind {
 pub struct IR {
     pub kind: IRKind,
     pub span: Range<usize>
+}
+
+impl std::fmt::Display for IRKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            IRKind::Define { ref public, ref name, ref type_hint, ref value, ref mutable } => {
+                write!(f, "(let {} {} {} {} {})",
+                    if *public { "export" } else { "" },
+                    name,
+                    type_hint,
+                    value,
+                    if *mutable { "mut" } else { "" },
+                )
+            },
+            IRKind::Fun { ref public, ref name, ref return_type_hint, ref args, ref body } => {
+                write!(f, "(fun{} {} {} {} {})",
+                    if *public { "export" } else { "" },
+                    name,
+                    return_type_hint,
+                    args.iter().map(|(name, type_hint)| format!(":{} {}", name, type_hint)).collect::<Vec<_>>().join(" "),
+                    body,
+                )
+            },
+            IRKind::Call { ref name, ref args } => {
+                write!(f, "({} {})", name, args.iter().map(|arg| arg.to_string()).collect::<Vec<_>>().join(" "))
+            },
+            IRKind::Intrinsic { ref name, ref args } => {
+                write!(f, "(@{} {})", name, args.iter().map(|arg| arg.to_string()).collect::<Vec<_>>().join(" "))
+            },
+            IRKind::Do { ref body } => {
+                write!(f, "(do {})", body.iter().map(|expr| expr.to_string()).collect::<Vec<_>>().join(" "))
+            },
+            IRKind::If { ref cond, ref body, ref else_body } => {
+                write!(f, "(if {} {} {})", cond, body, else_body)
+            },
+            IRKind::Case { ref cond, ref cases, ref default } => {
+                write!(f, "(case {} {} {})", cond, cases.iter().map(|(cond, body)| format!("({} {})", cond, body)).collect::<Vec<_>>().join(" "), default)
+            },
+            IRKind::Unary { ref op, ref right } => {
+                write!(f, "({} {})", op, right)
+            },
+            IRKind::Binary { ref op, ref left, ref right } => {
+                write!(f, "({} {} {})", op, left, right)
+            },
+            IRKind::Value { ref value } => {
+                write!(f, "{}", value)
+            },
+            IRKind::Return { ref value } => {
+                write!(f, "(return {})", value)
+            }
+            #[allow(unreachable_patterns)]
+            _ => { dbg!(self); unreachable!() }
+        }
+    }
 }
 
 #[derive(Debug)]
