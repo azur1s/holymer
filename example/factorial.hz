@@ -1,7 +1,7 @@
 fun factorial (n: int): int = do
     case n of
         | 0 -> return 1;
-        \ return n * factorial(n - 1);
+        | else return n * factorial(n - 1);
     end;
 end;
 

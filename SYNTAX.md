@@ -70,7 +70,7 @@ Hazure is also [expression-oriented](https://en.wikipedia.org/wiki/Expression-or
     ```sml
     case 1 + 1 of
         | 2 -> @write("Yes");
-        \ @write("How?");
+        | else @write("How?");
     end;
     ```
 10) Do notation. It allows you to have multiple expression because something like right hand side of the function declaration `fun a: int = ...` can only have 1 expression. Do allows you to bypass that.

@@ -70,8 +70,8 @@ impl std::fmt::Display for IRKind {
                 )
             },
             IRKind::Fun { ref public, ref name, ref return_type_hint, ref args, ref body } => {
-                write!(f, "(fun{} {} {} {} {})",
-                    if *public { "export" } else { "" },
+                write!(f, "(fun{} {} :{} [{}] {})",
+                    if *public { " export" } else { "" },
                     name,
                     return_type_hint,
                     args.iter().map(|(name, type_hint)| format!(":{} {}", name, type_hint)).collect::<Vec<_>>().join(" "),

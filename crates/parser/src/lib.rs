@@ -317,7 +317,8 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                     .repeated()
             )
             .then(
-                just(Token::EndPipe)
+                just(Token::Pipe)
+                    .ignore_then(just(Token::KwElse))
                     .ignore_then(expr.clone())
                     .then_ignore(just(Token::SemiColon))
             )

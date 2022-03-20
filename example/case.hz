@@ -7,6 +7,6 @@ fun main: void = do
         | 3 -> do
             @write("Three");
         end;
-        \ @write("idk");
+        | else @write("idk");
     end;
 end;
