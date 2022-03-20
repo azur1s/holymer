@@ -15,12 +15,14 @@ pub enum Expr {
     Intrinsic { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
 
     Let {
+        public: bool,
         name: String,
         type_hint: String,
         value: Box<Spanned<Self>>,
         mutable: bool,
     },
     Fun {
+        public: bool,
         name: String,
         type_hint: String,
         args: Spanned<Vec<(Spanned<String>, Spanned<String>)>>,
@@ -198,16 +200,18 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
-        let let_ = just(Token::KwLet)
-            .ignore_then(just(Token::KwMut).or_not())
+        let let_ = just(Token::KwPub).or_not()
+            .then_ignore(just(Token::KwLet))
+            .then(just(Token::KwMut).or_not())
             .then(identifier)
             .then_ignore(just(Token::Colon))
             .then(identifier)
             .then_ignore(just(Token::Assign))
             .then(expr.clone())
-            .map(|(((mutable, name), type_hint), value)| {
+            .map(|((((public, mutable), name), type_hint), value)| {
                 (
                     Expr::Let {
+                        public: public.is_some(),
                         name: name.0.clone(),
                         type_hint: type_hint.0,
                         value: Box::new(value.clone()),
@@ -217,8 +221,9 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
-        let fun = just(Token::KwFun)
-            .ignore_then(identifier)
+        let fun = just(Token::KwPub).or_not()
+            .then_ignore(just(Token::KwFun))
+            .then(identifier)
             .then(
                 identifier
                     .then_ignore(just(Token::Colon))
@@ -233,9 +238,10 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .then(identifier)
             .then_ignore(just(Token::Assign))
             .then(expr.clone())
-            .map(|(((name, args), type_hint), body)| {
+            .map(|((((public, name), args), type_hint), body)| {
                 (
                     Expr::Fun {
+                        public: public.is_some(),
                         name: name.0.clone(),
                         type_hint: type_hint.0,
                         args: (args, name.1.clone()),

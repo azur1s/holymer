@@ -14,8 +14,21 @@ pub enum Value { Int(i64), Boolean(bool), String(String), Ident(String) }
 
 #[derive(Debug, Clone)]
 pub enum IRKind {
-    Define { name: String, type_hint: String, value: Box<Self>, mutable: bool },
-    Fun { name: String, return_type_hint: String, args: Vec<(String, String)>, body: Box<Self> },
+    Define {
+        public: bool,
+        name: String,
+        type_hint: String,
+        value: Box<Self>,
+        mutable: bool
+    },
+    Fun {
+        public: bool,
+        name: String,
+        return_type_hint: String,
+        args: Vec<(String, String)>,
+        body: Box<Self>
+    },
+
     Call { name: String, args: Vec<Self> },
     Intrinsic { name: String, args: Vec<Self> },
     Do { body: Vec<Self> },
@@ -186,12 +199,13 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             };
         },
 
-        Expr::Let { name, type_hint, value, mutable } => {
+        Expr::Let { public, name, type_hint, value, mutable } => {
             let value = expr_to_ir(&value.0);
             if_err_return!(value.1);
 
             let value = value.0.unwrap();
             let ir_kind = IRKind::Define {
+                public: *public,
                 name: name.clone(),
                 type_hint: gen_type_hint(type_hint),
                 value: Box::new(value),
@@ -233,7 +247,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             return (Some(ir_kind), None);
         },
 
-        Expr::Fun { name, type_hint, args, body } => {
+        Expr::Fun { public, name, type_hint, args, body } => {
             // Iterate each argument and give it a type hint
             let args = args.0.iter().map(|arg| (arg.0.0.clone(), gen_type_hint(&arg.1.0))).collect::<Vec<_>>();
 
@@ -241,7 +255,13 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
             if_err_return!(body.1);
 
             let body = body.0.unwrap();
-            let ir_kind = IRKind::Fun { name: name.clone(), return_type_hint: gen_type_hint(type_hint), args, body: Box::new(body) };
+            let ir_kind = IRKind::Fun {
+                public: *public,
+                name: name.clone(),
+                return_type_hint: gen_type_hint(type_hint),
+                args,
+                body: Box::new(body)
+            };
             return (Some(ir_kind), None);
         },
 

@@ -31,9 +31,10 @@ impl Codegen {
         macro_rules! semicolon { () => { if should_gen_semicolon { ";" } else { "" } }; }
 
         match ir {
-            IRKind::Define { name, type_hint, value, mutable } => {
+            IRKind::Define { public, name, type_hint, value, mutable } => {
                 format!(
-                    "{} v_{}: {} = {}{}\n",
+                    "{} {} v_{}: {} = {}{}\n",
+                    if *public { "export" } else { "" },
                     if *mutable { "let" } else { "const" },
                     name, 
                     type_hint,
@@ -67,14 +68,15 @@ impl Codegen {
                 }
             },
 
-            IRKind::Fun { name, return_type_hint, args, body } => {
+            IRKind::Fun { public, name, return_type_hint, args, body } => {
                 let args = args
                     .iter()
                     .map(|arg| format!("v_{}: {}", arg.0, arg.1))
                     .collect::<Vec<_>>().
                     join(", ");
                 format!(
-                    "const f_{} = ({}): {} => {};\n",
+                    "{} const f_{} = ({}): {} => {};\n",
+                    if *public { "export" } else { "" },
                     name,
                     args,
                     return_type_hint,
