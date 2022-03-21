@@ -63,7 +63,8 @@ impl Codegen {
                     "write_file" => { format!("writeFile({}, {}){}\n", self.gen_ir(&args[0], false), self.gen_ir(&args[1], false), semicolon!()) },
                     "read"       => { format!("read({}){}\n"         , self.gen_ir(&args[0], false), semicolon!()) },
                     "read_file"  => { format!("readFile({}){}\n"     , self.gen_ir(&args[0], false), semicolon!()) }
-                    "emit" => { format!("{}", self.gen_ir(&args[0], false).trim_start_matches('"').trim_end_matches('"')) }, 
+                    "emit" => { format!("{}", self.gen_ir(&args[0], false).trim_start_matches('"').trim_end_matches('"')) },
+                    "get" => { format!("{}[{}]", self.gen_ir(&args[0], false), self.gen_ir(&args[1], false)) },
                     _ => unreachable!(format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
                 }
             },
@@ -143,6 +144,17 @@ impl Codegen {
                     Value::String(value)  => format!("\"{}\"", value),
                     Value::Ident(value)   => format!("v_{}", value),
                 }
+            },
+
+            IRKind::Vector { values } => {
+                format!(
+                    "[{}]",
+                    values
+                        .iter()
+                        .map(|value| self.gen_ir(value, false))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
             },
 
             #[allow(unreachable_patterns)]

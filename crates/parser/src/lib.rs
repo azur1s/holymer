@@ -8,6 +8,8 @@ pub enum Expr {
     Int(i64), Float(f64), Boolean(bool),
     String(String), Identifier(String),
 
+    Vector(Vec<Spanned<Self>>),
+
     Unary { op: String, rhs: Box<Spanned<Self>> },
     Binary { lhs: Box<Spanned<Self>>, op: String, rhs: Box<Spanned<Self>> },
     Call { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
@@ -67,11 +69,23 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .separated_by(just(Token::Comma))
             .allow_trailing();
 
+        let vector = expr.clone()
+            .separated_by(just(Token::Comma))
+            .allow_trailing()
+            .delimited_by(
+                just(Token::OpenBracket),
+                just(Token::CloseBracket),
+            )
+            .map_with_span(|args, span| {
+                (
+                    Expr::Vector(args),
+                    span,
+                )
+            });
+
         let atom = literal
             .or(identifier.map(|(s, span)| (Expr::Identifier(s), span)))
-            // .or(
-            //     expr.clone()
-            //     .delimited_by(just(Token::OpenParen), just(Token::CloseParen)))
+            .or(vector)
             .labelled("atom");
 
         let call = atom.clone()

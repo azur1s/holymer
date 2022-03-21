@@ -25,6 +25,7 @@ pub enum Token {
     Dot, Comma,
     Colon, SemiColon,
     OpenParen, CloseParen,
+    OpenBracket, CloseBracket,
     At,
     Hole,
 }
@@ -69,8 +70,12 @@ impl std::fmt::Display for Token {
             Token::Comma => write!(f, ","),
             Token::Colon => write!(f, ":"),
             Token::SemiColon => write!(f, ";"),
+
             Token::OpenParen => write!(f, "("),
             Token::CloseParen => write!(f, ")"),
+            Token::OpenBracket => write!(f, "["),
+            Token::CloseBracket => write!(f, "]"),
+
             Token::At => write!(f, "@"),
             Token::Hole => write!(f, "_"),
         }
@@ -112,6 +117,8 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         just(';').to(Token::SemiColon),
         just('(').to(Token::OpenParen),
         just(')').to(Token::CloseParen),
+        just('[').to(Token::OpenBracket),
+        just(']').to(Token::CloseBracket),
         just('@').to(Token::At),
         just('_').to(Token::Hole),
     ));

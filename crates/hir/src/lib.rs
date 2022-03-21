@@ -1,12 +1,13 @@
 use std::ops::Range;
 use parser::Expr;
 
-const INTRINSICS: [&str; 5] = [
+const INTRINSICS: [&str; 6] = [
     "write",
     "read",
     "write_file",
     "read_file",
     "emit",
+    "get",
 ];
 
 #[derive(Debug, Clone)]
@@ -47,7 +48,10 @@ pub enum IRKind {
     Case { cond: Box<Self>, cases: Vec<(Box<Self>, Box<Self>)>, default: Box<Self> },
     Unary { op: String, right: Box<Self> },
     Binary { op: String, left: Box<Self>, right: Box<Self> },
+
     Value { value: Value },
+    Vector { values: Vec<Self> },
+
     Return { value: Box<Self> },
 }
 
@@ -101,6 +105,9 @@ impl std::fmt::Display for IRKind {
             },
             IRKind::Value { ref value } => {
                 write!(f, "{}", value)
+            },
+            IRKind::Vector { ref values } => {
+                write!(f, "[{}]", values.iter().map(|expr| expr.to_string()).collect::<Vec<_>>().join(" "))
             },
             IRKind::Return { ref value } => {
                 write!(f, "(return {})", value)
@@ -402,6 +409,18 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
         Expr::Boolean(value)    => (Some(IRKind::Value { value: Value::Boolean(*value) }), None),
         Expr::String(value)     => (Some(IRKind::Value { value: Value::String(value.clone()) }), None),
         Expr::Identifier(value) => (Some(IRKind::Value { value: Value::Ident(value.clone()) }), None),
+
+        Expr::Vector(values) => {
+            let mut lvalues = Vec::new();
+            for value in values {
+                let value = expr_to_ir(&value.0);
+                if_err_return!(value.1);
+
+                lvalues.push(value.0.unwrap());
+            }
+            (Some(IRKind::Vector { values: lvalues }), None)
+        },
+
         // Probably will never happen because it is catched in parser
         Expr::Hole(start, end) => (None, Some(LoweringError {
             span: *start..*end,
@@ -418,6 +437,10 @@ fn gen_type_hint(type_hint: &str) -> String {
         "bool"   => "boolean".to_string(),
         "string" => "string".to_string(),
         "void"   => "void".to_string(),
+        // TODO: Un-hardcode vector type
+        "vec_int"  => "number[]".to_string(),
+        "vec_bool" => "boolean[]".to_string(),
+        "vec_str"  => "string[]".to_string(),
         _ => { dbg!(type_hint); todo!() }
     }
 }
