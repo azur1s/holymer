@@ -8,4 +8,3 @@ edition = "2021"
 
 [dependencies]
 parser = { path = "../parser" }
-levenshtein = "1.0.5" # Used for error reporting

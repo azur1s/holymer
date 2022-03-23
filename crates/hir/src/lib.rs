@@ -454,17 +454,3 @@ fn gen_type_hint(type_hint: &str) -> String {
         _ => { dbg!(type_hint); todo!() }
     }
 }
-
-// Get the closet intrinsic name to the given name
-fn closet_intrinsic(got: String) -> String {
-    let mut closest = String::new();
-    let mut closest_dist = std::usize::MAX;
-    for intrinsic in INTRINSICS.iter() {
-        let dist = levenshtein::levenshtein(got.as_str(), intrinsic);
-        if dist < closest_dist {
-            closest = intrinsic.to_string();
-            closest_dist = dist;
-        }
-    }
-    closest
-}
