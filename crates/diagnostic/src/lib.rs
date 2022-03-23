@@ -12,6 +12,7 @@ pub enum Kind {
     LexError(Simple<char>),
     ParseError(Simple<Token>),
     LoweringError(hir::LoweringError),
+    TypecheckError(typecheck::TypecheckError),
 }
 
 impl Diagnostics {
@@ -35,6 +36,10 @@ impl Diagnostics {
 
     pub fn add_lowering_error(&mut self, error: hir::LoweringError) {
         self.errors.push(Kind::LoweringError(error));
+    }
+
+    pub fn add_typecheck_error(&mut self, error: typecheck::TypecheckError) {
+        self.errors.push(Kind::TypecheckError(error));
     }
 
     pub fn display(&self, src: String) {
@@ -120,6 +125,11 @@ impl Diagnostics {
             Kind::LoweringError(error) => Some(error.clone()),
             _ => None,
         });
+        let typecheck_error = self.errors.iter().filter_map(|kind| match kind {
+            Kind::TypecheckError(error) => Some(error.clone()),
+            _ => None,
+        });
+        // TODO: so many .iter(), maybe collapse them into one?
 
         lower_error.into_iter()
         .for_each(|e| {
@@ -138,13 +148,27 @@ impl Diagnostics {
                     .with_color(Color::Red)
                 );
 
-            if let Some(note) = &e.note {
-                report
-                .with_note(note)
-                .finish().print(Source::from(&src)).unwrap();
-            } else {
-                report.finish().print(Source::from(&src)).unwrap();
-            }
+            report.finish().print(Source::from(&src)).unwrap();
         });
+
+        typecheck_error.into_iter()
+        .for_each(|e| {
+            let span = &e.span;
+            let message = &e.kind;
+
+            let report = Report::build(ReportKind::Error, (), span.start)
+                .with_message(
+                    format!("{}", message)
+                )
+                .with_label(
+                    Label::new(span.clone())
+                    .with_message(
+                        format!("{}", message)
+                    )
+                    .with_color(Color::Red)
+                );
+
+            report.finish().print(Source::from(&src)).unwrap();
+        })
     }
 }

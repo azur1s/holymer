@@ -18,6 +18,7 @@ lexer = { path = "../lexer" }
 parser = { path = "../parser" }
 
 # Diagnostics
+typecheck = { path = "../typecheck" }
 diagnostic = { path = "../diagnostic" }
 
 # Codegen

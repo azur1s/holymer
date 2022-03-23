@@ -31,7 +31,7 @@ impl Codegen {
         macro_rules! semicolon { () => { if should_gen_semicolon { ";" } else { "" } }; }
 
         match ir {
-            IRKind::Define { public, name, type_hint, value, mutable } => {
+            IRKind::Define { public, name, type_hint, value, mutable, .. } => {
                 format!(
                     "{} {} v_{}: {} = {}{}\n",
                     if *public { "export" } else { "" },
@@ -43,7 +43,7 @@ impl Codegen {
                 )
             },
 
-            IRKind::Call { name, args } => {
+            IRKind::Call { name, args, .. } => {
                 format!(
                     "f_{}({}){}",
                     name,
@@ -57,7 +57,7 @@ impl Codegen {
                 )
             },
 
-            IRKind::Intrinsic { name, args } => {
+            IRKind::Intrinsic { name, args, .. } => {
                 match name.as_str() {
                     "write"      => { format!("write({}){}\n"        , self.gen_ir(&args[0], false), semicolon!()) },
                     "write_file" => { format!("writeFile({}, {}){}\n", self.gen_ir(&args[0], false), self.gen_ir(&args[1], false), semicolon!()) },
@@ -71,7 +71,7 @@ impl Codegen {
                 }
             },
 
-            IRKind::Fun { public, name, return_type_hint, args, body } => {
+            IRKind::Fun { public, name, return_type_hint, args, body, .. } => {
                 let args = args
                     .iter()
                     .map(|arg| format!("v_{}: {}", arg.0, arg.1))
@@ -87,14 +87,14 @@ impl Codegen {
                 )
             },
 
-            IRKind::Return { value } => {
+            IRKind::Return { value, .. } => {
                 format!(
                     "return {};\n",
                     self.gen_ir(value, false)
                 )
             },
 
-            IRKind::Do { body } => {
+            IRKind::Do { body, .. } => {
                 let mut out = "{\n".to_string();
                 for expr in body {
                     out.push_str(&self.gen_ir(&expr, true));
@@ -103,7 +103,7 @@ impl Codegen {
                 out
             },
 
-            IRKind::If { cond, body, else_body } => {
+            IRKind::If { cond, body, else_body, .. } => {
                 format!(
                     "if ({}) {{\n{}}} else {{\n{}}}\n",
                     self.gen_ir(cond, true),
@@ -112,7 +112,7 @@ impl Codegen {
                 )
             },
 
-            IRKind::Case { cond, cases, default } => {
+            IRKind::Case { cond, cases, default, .. } => {
                 format!(
                     "switch ({}) {{\n{}{}\n}}\n",
                     self.gen_ir(cond, true),
@@ -131,11 +131,11 @@ impl Codegen {
                 )
             },
 
-            IRKind::Unary { op, right } => {
+            IRKind::Unary { op, right, .. } => {
                 format!("{}{}", op, self.gen_ir(right, false))
             },
 
-            IRKind::Binary { left, op, right } => {
+            IRKind::Binary { left, op, right, .. } => {
                 format!("{} {} {}", self.gen_ir(left, false), op, self.gen_ir(right, false))
             },
 

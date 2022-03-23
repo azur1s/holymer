@@ -18,15 +18,15 @@ pub enum Expr {
 
     Let {
         public: bool,
-        name: String,
-        type_hint: String,
+        name: Spanned<String>,
+        type_hint: Spanned<String>,
         value: Box<Spanned<Self>>,
         mutable: bool,
     },
     Fun {
         public: bool,
-        name: String,
-        type_hint: String,
+        name: Spanned<String>,
+        type_hint: Spanned<String>,
         args: Spanned<Vec<(Spanned<String>, Spanned<String>)>>,
         body: Box<Spanned<Self>>
     },
@@ -43,7 +43,7 @@ pub enum Expr {
         default: Box<Spanned<Self>>
     },
     Do {
-        body: Vec<Spanned<Self>>
+        body: Spanned<Vec<Spanned<Self>>>
     },
 
     // Hole for positional argument(s) in piping
@@ -226,8 +226,8 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 (
                     Expr::Let {
                         public: public.is_some(),
-                        name: name.0.clone(),
-                        type_hint: type_hint.0,
+                        name: name.clone(),
+                        type_hint,
                         value: Box::new(value.clone()),
                         mutable: mutable.is_some(),
                     },
@@ -256,8 +256,8 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 (
                     Expr::Fun {
                         public: public.is_some(),
-                        name: name.0.clone(),
-                        type_hint: type_hint.0,
+                        name: name.clone(),
+                        type_hint,
                         args: (args, name.1.clone()),
                         body: Box::new(body.clone()),
                     },
@@ -286,7 +286,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .map_with_span(|body, span| {
                 (
                     Expr::Do {
-                        body: body.clone(),
+                        body: (body.clone(), span.clone()),
                     },
                     span,
                 )

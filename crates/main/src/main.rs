@@ -6,6 +6,7 @@ use lexer::lex;
 use parser::parse;
 use diagnostic::Diagnostics;
 use hir::ast_to_ir;
+use typecheck::check;
 use codegen::ts;
 
 pub mod args;
@@ -52,16 +53,24 @@ fn main() {
                 logif!(0, format!("Parsing took {}ms", start.elapsed().as_millis()));
             }
 
-            // TODO: S-Expr syntax for AST
-            // if print_ast { log(0, format!("{:#?}", ast)); }
-
             match ast {
                 Some(ast) => {
                     // Convert the AST to HIR
                     let (ir, lowering_error) = ast_to_ir(ast);
                     for err in lowering_error { diagnostics.add_lowering_error(err); }
 
-                    if print_ast { log(0, format!("IR\n{}", ir.iter().map(|x| format!("{}", x.kind)).collect::<Vec<String>>().join("\n\n"))); }
+                    if print_ast { log(0, format!("IR\n{:#?}", ir)); }
+
+                    // Typecheck the HIR
+                    match check(&ir) {
+                        Ok(_) => {},
+                        Err(err) => {
+                            diagnostics.add_typecheck_error(err);
+                            diagnostics.display(src);
+                            logif!(0, "Typechecking failed");
+                            std::process::exit(1);
+                        }
+                    }
 
                     // Report lowering errors if any
                     if diagnostics.has_error() {
