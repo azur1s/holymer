@@ -27,6 +27,13 @@ impl std::fmt::Display for Value {
 
 #[derive(Debug, Clone)]
 pub enum IRKind {
+    Value { value: Value },
+    Vector { values: Vec<Self> },
+    Unary { op: String, right: Box<Self> },
+    Binary { op: String, left: Box<Self>, right: Box<Self> },
+    Call { name: String, args: Vec<Self> },
+    Intrinsic { name: String, args: Vec<Self> },
+
     Define {
         public: bool,
         name: String,
@@ -42,16 +49,9 @@ pub enum IRKind {
         body: Box<Self>
     },
 
-    Call { name: String, args: Vec<Self> },
-    Intrinsic { name: String, args: Vec<Self> },
-    Do { body: Vec<Self> },
     If { cond: Box<Self>, body: Box<Self>, else_body: Box<Self> },
     Case { cond: Box<Self>, cases: Vec<(Box<Self>, Box<Self>)>, default: Box<Self> },
-    Unary { op: String, right: Box<Self> },
-    Binary { op: String, left: Box<Self>, right: Box<Self> },
-
-    Value { value: Value },
-    Vector { values: Vec<Self> },
+    Do { body: Vec<Self> },
 
     Return { value: Box<Self> },
 }
@@ -438,7 +438,7 @@ fn gen_type_hint(type_hint: &str) -> String {
         "bool"   => "boolean".to_string(),
         "string" => "string".to_string(),
         "void"   => "void".to_string(),
-        // TODO: Un-hardcode vector type
+        // TODO: Un-hardcode types
         "vec_int"  => "number[]".to_string(),
         "vec_bool" => "boolean[]".to_string(),
         "vec_str"  => "string[]".to_string(),
