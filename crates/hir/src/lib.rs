@@ -62,6 +62,8 @@ pub struct IR {
     pub span: Range<usize>
 }
 
+// S-Expression displaying for IR
+// Used for debugging (run `compile` with `-a`)
 impl std::fmt::Display for IRKind {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {

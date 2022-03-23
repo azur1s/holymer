@@ -3,8 +3,11 @@ fun iter_ (vec: vec_int) (current: int): void = do
         do end;
     else
         do
+            -- iter logic
+            -- TODO: function as argument
             @get(vec, current) |> @write(_);
             @write("\n");
+
             iter_(vec, current + 1);
         end;
     end;
