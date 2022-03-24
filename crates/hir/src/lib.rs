@@ -448,9 +448,9 @@ fn gen_type_hint(type_hint: &str) -> String {
         "string" => "string".to_string(),
         "void"   => "void".to_string(),
         // TODO: Un-hardcode types
-        "vec_int"  => "number[]".to_string(),
-        "vec_bool" => "boolean[]".to_string(),
-        "vec_str"  => "string[]".to_string(),
+        "vec_int"    => "number[]".to_string(),
+        "vec_bool"   => "boolean[]".to_string(),
+        "vec_string" => "string[]".to_string(),
         _ => { dbg!(type_hint); todo!() }
     }
 }
