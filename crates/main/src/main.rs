@@ -75,7 +75,6 @@ fn main() {
                             std::process::exit(1);
                         }
                     }
-                    dbg!(check(&ir));
 
                     // Report lowering errors if any
                     if diagnostics.has_error() {
@@ -111,5 +110,42 @@ fn main() {
                 None => { unreachable!(); }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lexer() {
+        let src = "
+            let x: int = 1;
+        ";
+
+        let (tokens, lex_error) = lex(src.to_string());
+        assert!(lex_error.is_empty());
+
+        assert_eq!(tokens.unwrap().len(), 7);
+    }
+
+    #[test]
+    fn test_parser() {
+        let src = "
+            fun main (foo: int) (bar: bool): string = do
+                do
+                    let x: int = foo + 1;
+                end;
+                let y: bool = bar;
+            end;
+        ";
+
+        let (tokens, lex_error) = lex(src.to_string());
+        assert!(lex_error.is_empty());
+
+        let (ast, parse_error) = parse(tokens.unwrap(), src.chars().count());
+        assert!(parse_error.is_empty());
+
+        assert!(ast.is_some());
     }
 }
