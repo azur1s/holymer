@@ -19,6 +19,7 @@ Note: Everything in this project can be changed at anytime! (I'm still finding o
 # Prerequistie
 - `deno` for running Typescript
 - Rust (if you're going to build from source)
+- (Optional) if you use Vim, you can get the syntax highlighting [here](https://github.com/azur1s/hazure.vim)
 
 # Contributing
 Found a bug? Found a better way to do something? Make a pull request or tell me in the issues tab! Anything contributions helps :D
