@@ -63,14 +63,19 @@ fn main() {
 
                     // Typecheck the HIR
                     match check(&ir) {
-                        Ok(_) => {},
-                        Err(err) => {
-                            diagnostics.add_typecheck_error(err);
+                        Ok(_) => {
+                            logif!(0, format!("Typechecking took {}ms", start.elapsed().as_millis()));
+                        },
+                        Err(errs) => {
+                            for err in errs {
+                                diagnostics.add_typecheck_error(err);
+                            }
                             diagnostics.display(src);
-                            logif!(0, "Typechecking failed");
+                            logif!(2, "Typechecking failed");
                             std::process::exit(1);
                         }
                     }
+                    dbg!(check(&ir));
 
                     // Report lowering errors if any
                     if diagnostics.has_error() {

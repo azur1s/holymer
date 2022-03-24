@@ -1,0 +1,3 @@
+let foo: int = "123";
+let bar: string = 69;
+let baz: bool = "true";
