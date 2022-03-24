@@ -1,7 +1,7 @@
 use std::ops::Range;
 use parser::Expr;
 
-const INTRINSICS: [&str; 7] = [
+const INTRINSICS: [&str; 8] = [
     "write",
     "read",
     "write_file",
@@ -9,6 +9,7 @@ const INTRINSICS: [&str; 7] = [
     "emit",
     "get",
     "len",
+    "throw",
 ];
 
 #[derive(Debug, Clone)]
