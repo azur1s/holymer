@@ -21,6 +21,16 @@ Note: Everything in this project can be changed at anytime! (I'm still finding o
 - Rust (if you're going to build from source)
 - (Optional) if you use Vim, you can get the syntax highlighting [here](https://github.com/azur1s/hazure.vim)
 
+# Installing
+Currently there is only a build script on linux:
+```
+curl -s https://raw.githubusercontent.com/azur1s/hazure/master/build.sh | bash -s
+```
+or if you want to build in debug mode:
+```
+curl -s https://raw.githubusercontent.com/azur1s/hazure/master/build.sh | bash -s d
+```
+
 # Contributing
 Found a bug? Found a better way to do something? Make a pull request or tell me in the issues tab! Anything contributions helps :D
 
