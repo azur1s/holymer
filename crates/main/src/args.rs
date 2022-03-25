@@ -3,7 +3,7 @@ use clap::{ Parser, Subcommand };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Hades compiler.
+/// Hazure compiler
 #[derive(Parser, Debug)]
 #[clap(
     version = VERSION,
@@ -17,16 +17,16 @@ pub struct Args {
 pub enum Options {
     #[clap(about = "Compile an input file.")]
     Compile {
-        /// The input file to compile.
+        /// The input file to compile
         #[clap(parse(from_os_str))]
         input: PathBuf,
-        /// Print parsed AST and exit (for debugging).
+        /// Print parsed AST and exit (for debugging)
         #[clap(short, long)]
         ast: bool,
-        /// Log process.
+        /// Log process
         #[clap(short, long)]
         log: bool,
-        /// Output file path.
+        /// Output file path
         #[clap(short, long, parse(from_os_str))]
         output: Option<PathBuf>,
     },
