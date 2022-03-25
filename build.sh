@@ -41,10 +41,7 @@ git clone https://github.com/azur1s/hazure.git ~/.cache/hazure/build/
 
 cd ~/.cache/hazure/build/
 
-# Remove the progress bar
-CARGO_TERM_PROGRESS_WHEN=never
-
-if [ $1 = "d" ]; then
+if [[ $1 == *"d"* ]]; then
     log "Building in debug..."
     cargo build
     rm ~/bin/hazure -f
@@ -55,8 +52,6 @@ else
     rm ~/bin/hazure -f
     mv ~/.cache/hazure/build/target/release/hazure ~/bin/hazure
 fi
-
-unset CARGO_TERM_PROGRESS_WHEN
 
 log "Build done. Cleaning up..."
 
