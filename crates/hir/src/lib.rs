@@ -211,12 +211,12 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
                     }
 
                     // If there is no `Hole` in the args then return early
-                    if indexes.is_empty() {
-                        return_err!(LoweringError {
-                            span: rhs.1.clone(),
-                            message: "Expected hole in piping".to_string(),
-                        });
-                    }
+                    // if indexes.is_empty() {
+                    //     return_err!(LoweringError {
+                    //         span: rhs.1.clone(),
+                    //         message: "Expected hole in piping".to_string(),
+                    //     });
+                    // }
 
                     // Remove the `Hole` from the args
                     let mut new_args = args.0.clone();

@@ -1,5 +1,5 @@
 fun print_single (cell: bool): void = do
-    case cell of
+    match cell with
         | true -> @write("█");
         | else @write(" ");
     end;

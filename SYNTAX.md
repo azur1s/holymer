@@ -68,7 +68,7 @@ Hazure is also [expression-oriented](https://en.wikipedia.org/wiki/Expression-or
     ```
 9) Case matching
     ```sml
-    case 1 + 1 of
+    match 1 + 1 with
         | 2 -> @write("Yes");
         | else @write("How?");
     end;

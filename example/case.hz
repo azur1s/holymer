@@ -1,7 +1,7 @@
 fun main: void = do
     let foo: int = 3;
 
-    case foo of
+    match foo with
         | 1 -> @write("One");
         | 2 -> @write("Two");
         | 3 -> do
