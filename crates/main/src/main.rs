@@ -1,4 +1,4 @@
-use std::{fs, io::Write, process::Command, path::PathBuf};
+use std::{fs, io::Write, path::PathBuf};
 
 use clap::Parser as ArgParser;
 
