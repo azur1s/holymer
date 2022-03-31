@@ -94,7 +94,7 @@ pub struct IR {
     pub span: Range<usize>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LoweringError {
     pub span: Range<usize>,
     pub message: String,

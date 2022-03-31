@@ -165,9 +165,10 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .repeated()
 }
 
+#[allow(clippy::type_complexity)]
 pub fn lex(src: String) -> (Option<Vec<(Token, std::ops::Range<usize>)>>, Vec<Simple<char>>) {
     let (tokens, lex_error) = lexer().parse_recovery(src.as_str());
-    return (tokens, lex_error);
+    (tokens, lex_error)
 }
 
 #[cfg(test)]

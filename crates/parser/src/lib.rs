@@ -286,7 +286,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .map_with_span(|body, span| {
                 (
                     Expr::Do {
-                        body: (body.clone(), span.clone()),
+                        body: (body, span.clone()),
                     },
                     span,
                 )
@@ -366,13 +366,14 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
         .then_ignore(end())
 }
 
+#[allow(clippy::type_complexity)] // We are going to use this once anyway, why we need to make a type?
 pub fn parse(tokens: Vec<(Token, std::ops::Range<usize>)>, len: usize) -> (Option<Vec<(Expr, std::ops::Range<usize>)>>, Vec<Simple<Token>>) {
     let (ast, parse_error) = expr_parser().parse_recovery(Stream::from_iter(
         len..len + 1,
         tokens.into_iter(),
     ));
 
-    return (ast, parse_error)
+    (ast, parse_error)
 }
 
 #[cfg(test)]

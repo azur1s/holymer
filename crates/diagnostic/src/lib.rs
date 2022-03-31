@@ -15,6 +15,12 @@ pub enum Kind {
     TypecheckError(typecheck::TypecheckError),
 }
 
+impl Default for Diagnostics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Diagnostics {
     pub fn new() -> Self {
         Self {
@@ -126,7 +132,7 @@ impl Diagnostics {
             _ => None,
         });
         let typecheck_error = self.errors.iter().filter_map(|kind| match kind {
-            Kind::TypecheckError(error) => Some(error.clone()),
+            Kind::TypecheckError(error) => Some(<&typecheck::TypecheckError>::clone(&error)),
             _ => None,
         });
         // TODO: so many .iter(), maybe collapse them into one?
@@ -138,12 +144,12 @@ impl Diagnostics {
 
             let report = Report::build(ReportKind::Error, (), span.start)
                 .with_message(
-                    format!("{}", message)
+                    message.to_string()
                 )
                 .with_label(
                     Label::new(span.clone())
                     .with_message(
-                        format!("{}", message)
+                        message.to_string()
                     )
                     .with_color(Color::Red)
                 );

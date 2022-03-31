@@ -6,6 +6,12 @@ pub struct Codegen {
     pub emitted: String,
 }
 
+impl Default for Codegen {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Codegen {
     pub fn new() -> Self {
         Self { emitted: String::new() }
@@ -63,11 +69,11 @@ impl Codegen {
                     "write_file" => { format!("writeFile({}, {}){}\n", self.gen_ir(&args[0], false), self.gen_ir(&args[1], false), semicolon!()) },
                     "read"       => { format!("read({}){}\n"         , self.gen_ir(&args[0], false), semicolon!()) },
                     "read_file"  => { format!("readFile({}){}\n"     , self.gen_ir(&args[0], false), semicolon!()) },
-                    "emit" => { format!("{}", self.gen_ir(&args[0], false).trim_start_matches('"').trim_end_matches('"')) },
-                    
+                    "emit" => { self.gen_ir(&args[0], false).trim_start_matches('"').trim_end_matches('"').to_string() },
+
                     "get" => { format!("{}[{}]", self.gen_ir(&args[0], false), self.gen_ir(&args[1], false)) },
                     "len" => { format!("{}.length", self.gen_ir(&args[0], false)) },
-                    
+
                     "throw" => { format!("throw new Error({}){}", self.gen_ir(&args[0], false), semicolon!()) },
                     _ => unreachable!(format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
                 }
@@ -99,7 +105,7 @@ impl Codegen {
             IRKind::Do { body, .. } => {
                 let mut out = "{\n".to_string();
                 for expr in body {
-                    out.push_str(&self.gen_ir(&expr, true));
+                    out.push_str(&self.gen_ir(expr, true));
                 }
                 out.push_str("}\n");
                 out

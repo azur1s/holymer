@@ -29,7 +29,7 @@ pub struct TypecheckError {
     pub span: std::ops::Range<usize>,
 }
 
-pub fn check(irs: &Vec<IR>) -> Result<(), Vec<TypecheckError>> {
+pub fn check(irs: &[IR]) -> Result<(), Vec<TypecheckError>> {
     let mut errors = Vec::new();
     for ir in irs {
         match &ir.kind {
