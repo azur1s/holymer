@@ -1,4 +1,4 @@
-use std::{fs, io::Write, process::Command, path::PathBuf};
+use std::{fs, io::Write, path::PathBuf};
 
 use clap::Parser as ArgParser;
 
@@ -100,12 +100,6 @@ fn main() {
 
                     logif!(0, format!("Compilation took {}ms", duration));
                     logif!(0, format!("Wrote output to `{}`", output_path.display()));
-
-                    Command::new("chmod")
-                        .arg("+x")
-                        .arg(&output_path)
-                        .spawn()
-                        .expect("Failed to chmod file");
                 },
                 None => { unreachable!(); }
             }
