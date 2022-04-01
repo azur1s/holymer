@@ -277,7 +277,6 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             });
 
         let do_block = expr.clone()
-            .then_ignore(just(Token::SemiColon))
             .repeated()
             .delimited_by(
                 just(Token::KwDo),
@@ -299,13 +298,13 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .then(
                 do_block.clone()
                     .or(expr.clone())
-            ).then_ignore(just(Token::SemiColon))
+            )
 
             .then_ignore(just(Token::KwElse))
             .then(
                 do_block.clone()
                     .or(expr.clone())
-            ).then_ignore(just(Token::SemiColon))
+            )
 
             .then_ignore(just(Token::KwEnd))
             .map(|((cond, then), else_)| {
