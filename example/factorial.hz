@@ -1,10 +1,19 @@
-fun factorial (n: int): int = do
+fun factorial (n: int) : int = do
     match n with
-        | 0 -> return 1;
-        | else return n * factorial(n - 1);
-    end;
-end;
+        | 0 -> return 1
+        | else return n * factorial(n - 1)
+    end
+end
 
-fun main: void = do
-    factorial(5) |> @write(_);
-end;
+fun also_factorial (n: int) : int = do
+    if n == 0 then
+        return 1
+    else
+        return n * also_factorial(n - 1)
+    end
+end
+
+fun main : void = do
+    let result : int = factorial(5)
+    @write(result)
+end

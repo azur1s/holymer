@@ -327,14 +327,12 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                     .ignore_then(expr.clone())
                     .then_ignore(just(Token::Arrow))
                     .then(expr.clone())
-                    .then_ignore(just(Token::SemiColon))
                     .repeated()
             )
             .then(
                 just(Token::Pipe)
                     .ignore_then(just(Token::KwElse))
                     .ignore_then(expr.clone())
-                    .then_ignore(just(Token::SemiColon))
             )
             .then_ignore(just(Token::KwEnd))
             .map(|((expr, cases), default)| {
@@ -361,7 +359,6 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
     }).labelled("expression");
 
     expr
-        .then_ignore(just(Token::SemiColon))
         .repeated()
         .then_ignore(end())
 }
@@ -389,7 +386,6 @@ mod tests {
             (Token::Identifier("Int".to_string()), 7..10),
             (Token::Assign, 11..12),
             (Token::Int(1), 13..14),
-            (Token::SemiColon, 14..15),
         ], 15);
 
         assert_eq!(err, vec![]);

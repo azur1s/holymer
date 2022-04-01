@@ -1,93 +1,93 @@
 fun print_single (cell: bool): void = do
     match cell with
-        | true -> @write("█");
-        | else @write(" ");
-    end;
-end;
+        | true -> @write("█")
+        | else @write(" ")
+    end
+end
 
 fun print_vec (state: vec_bool) (length: int) (curr: int): void = do
-    if curr == length then @write(""); else
+    if curr == length then @write("") else
         do
-            @get(state, curr) |> print_single(_);
-            print_vec(state, length, curr + 1);
-        end; 
-    end;
-end;
+            @get(state, curr) |> print_single(_)
+            print_vec(state, length, curr + 1)
+        end 
+    end
+end
 
 fun cell_merger (a: bool) (b: bool) (c: bool): bool = do
     if a then
         if b then
             if c then
-                return false;
+                return false
             else
-                return true;
-            end;
+                return true
+            end
         else
             if c then
-                return true;
+                return true
             else
-                return false;
-            end;
-        end;
+                return false
+            end
+        end
     else
         if b then
             if c then
-                return true;
+                return true
             else
-                return true;
-            end;
+                return true
+            end
         else
             if c then
-                return true;
+                return true
             else
-                return false;
-            end;
-        end;
-    end;
-end;
+                return false
+            end
+        end
+    end
+end
 
 fun next (state: vec_bool) (pointer: int): bool = do
-    case pointer of
+    match pointer with
         | 0 -> do
-                let a: bool = false;
-                let b: bool = @get(state, 1);
-                let c: bool = @get(state, 2);
-                return cell_merger(a, b, c);
-            end; 
+                let a: bool = false
+                let b: bool = @get(state, 1)
+                let c: bool = @get(state, 2)
+                return cell_merger(a, b, c)
+            end
         | 1 -> do
-                let a: bool = @get(state, 0);
-                let b: bool = @get(state, 1);
-                let c: bool = @get(state, 2);
-                return cell_merger(a, b, c);
-            end;
+                let a: bool = @get(state, 0)
+                let b: bool = @get(state, 1)
+                let c: bool = @get(state, 2)
+                return cell_merger(a, b, c)
+            end
         | 2 -> do
-                let a: bool = @get(state, 1);
-                let b: bool = @get(state, 2);
-                let c: bool = @get(state, 3);
-                return cell_merger(a, b, c);
-            end;
+                let a: bool = @get(state, 1)
+                let b: bool = @get(state, 2)
+                let c: bool = @get(state, 3)
+                return cell_merger(a, b, c)
+            end
         | 3 -> do
-                let a: bool = @get(state, 2);
-                let b: bool = @get(state, 3);
-                let c: bool = @get(state, 4);
-                return cell_merger(a, b, c);
-            end;
+                let a: bool = @get(state, 2)
+                let b: bool = @get(state, 3)
+                let c: bool = @get(state, 4)
+                return cell_merger(a, b, c)
+            end
         | 4 -> do
-                let a: bool = @get(state, 3);
-                let b: bool = @get(state, 4);
-                let c: bool = @get(state, 5);
-                return cell_merger(a, b, c);
-            end;
+                let a: bool = @get(state, 3)
+                let b: bool = @get(state, 4)
+                let c: bool = @get(state, 5)
+                return cell_merger(a, b, c)
+            end
         | 5 -> do
-                return true;
-            end;
-        | else return false;
-    end;
-end;
+                return true
+            end
+        | else return false
+    end
+end
 
 fun iter (state: vec_bool) (for: int) (curr: int): void = do
     if curr == for then
-        @write("");
+        @write("")
     else
         do
             let next_state: vec_bool = [
@@ -97,19 +97,19 @@ fun iter (state: vec_bool) (for: int) (curr: int): void = do
                 next(state, 3),
                 next(state, 4),
                 next(state, 5)
-            ];
+            ]
 
-            print_vec(next_state, 6, 0);
-            @write("\n");
-            iter(next_state, for, curr + 1);
-        end;
-    end;
-end;
+            print_vec(next_state, 6, 0)
+            @write("\n")
+            iter(next_state, for, curr + 1)
+        end
+    end
+end
 
 fun main: void = do
-    let vec: vec_bool = [false, false, false, false, false, true];
-    print_vec(vec, 6, 0);
-    @write("\n");
+    let vec: vec_bool = [false, false, false, false, false, true]
+    print_vec(vec, 6, 0)
+    @write("\n")
 
-    iter(vec, 20, 0);
-end;
+    iter(vec, 20, 0)
+end

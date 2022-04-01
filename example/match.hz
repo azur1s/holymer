@@ -1,0 +1,12 @@
+fun main: void = do
+    let foo: int = 3
+
+    match foo with
+        | 1 -> @write("One")
+        | 2 -> @write("Two")
+        | 3 -> do
+            @write("Three")
+        end
+        | else @write("idk")
+    end
+end

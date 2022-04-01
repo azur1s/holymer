@@ -1,16 +1,16 @@
 fun main: void = do
-    let str: string = "Hello, World";
+    let str: string = "Hello, World"
 
     -- Matching string(s)
     match str with
-        | "Hello, World" -> @write("yes\n");
-        | else @write("no\n");
-    end;
+        | "Hello, World" -> @write("yes\n")
+        | else @write("no\n")
+    end
 
     -- Indexing character in string
-    let foo: string = @get(str, 0);
+    let foo: string = @get(str, 0)
     match foo with
-        | "H" -> @write("still yes");
-        | else @write("no H");
-    end;
-end;
+        | "H" -> @write("still yes")
+        | else @write("no H")
+    end
+end
