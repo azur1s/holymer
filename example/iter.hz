@@ -1,23 +1,23 @@
 fun iter_ (vec: vec_int) (current: int): void = do
     if current == @len(vec) then
-        do end;
+        do end
     else
         do
             -- iter logic
             -- TODO: function as argument
-            @get(vec current) |> @write(_);
-            @write("\n");
+            @get(vec, current) |> @write(_)
+            @write("\n")
 
-            iter_(vec, current + 1);
-        end;
-    end;
-end;
+            iter_(vec, current + 1)
+        end
+    end
+end
 
 fun iter (vec: vec_int): void = do
-    iter_(vec, 0);
-end;
+    iter_(vec, 0)
+end
 
 fun main: void = do
-    let foo: vec_int = [69, 420, 727, 1337, 42069, 69420];
-    iter(foo);
-end;
+    let foo: vec_int = [69, 420, 727, 1337, 42069, 69420]
+    iter(foo)
+end

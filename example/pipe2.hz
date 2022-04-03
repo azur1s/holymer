@@ -1,8 +1,8 @@
-fun foo  (xs: int)                    : int = return xs + 1;
-fun bar  (xs: int) (ys: int)          : int = return xs + ys;
-fun baz  (xs: int) (ys: int) (zs: int): int = return xs + ys + zs;
-fun qux  (xs: int)                    : int = return xs - 1;
-fun quux (xs: int) (xy: int)          : int = return xs - 2 + xy;
+fun foo  (xs: int)                    : int = return xs + 1
+fun bar  (xs: int) (ys: int)          : int = return xs + ys
+fun baz  (xs: int) (ys: int) (zs: int): int = return xs + ys + zs
+fun qux  (xs: int)                    : int = return xs - 1
+fun quux (xs: int) (xy: int)          : int = return xs - 2 + xy
 
 fun main: void = do
     66
@@ -11,9 +11,9 @@ fun main: void = do
     |> baz(1, 2, _)
     |> qux(_)
     |> quux(1, _)
-    |> @write(_);
+    |> @write(_)
 
     210
     |> bar(_, _)
-    |> @write(_);
-end;
+    |> @write(_)
+end

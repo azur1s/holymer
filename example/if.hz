@@ -1,15 +1,15 @@
 fun main: void = do
     if true then
-        @write("True");
+        @write("True")
     else
-        @write("False");
-    end;
+        @write("False")
+    end
 
     if true then
         do
-            @write("True");
-        end;
+            @write("True")
+        end
     else
-        @write("False");
-    end;
-end;
+        @write("False")
+    end
+end
