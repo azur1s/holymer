@@ -1,3 +1,0 @@
-pub fun print_something: void = @emit("console.log('something')")
-
-fun main: void = do end

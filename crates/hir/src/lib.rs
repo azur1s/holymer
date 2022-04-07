@@ -1,5 +1,5 @@
 use std::ops::Range;
-use parser::Expr;
+use parser::types::{Expr, Typehint};
 
 const INTRINSICS: [&str; 8] = [
     "write",
@@ -30,6 +30,7 @@ impl std::fmt::Display for Value {
 pub enum IRKind {
     Value { value: Value },
     Vector { values: Vec<Self> },
+    Tuple { values: Vec<Self> },
 
     Unary {
         op: String,
@@ -422,7 +423,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
         Expr::String(value)     => return_ok!(IRKind::Value { value: Value::String(value.clone()) }),
         Expr::Identifier(value) => return_ok!(IRKind::Value { value: Value::Ident(value.clone()) }),
 
-        Expr::Vector(values) => {
+        v @ Expr::Vector(values) | v @ Expr::Tuple(values) => {
             let mut lvalues = Vec::new();
             for value in values {
                 let value = expr_to_ir(&value.0);
@@ -430,7 +431,11 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
 
                 lvalues.push(value.0.unwrap());
             }
-            (Some(IRKind::Vector { values: lvalues }), None)
+            match v {
+                Expr::Vector(..) => return_ok!(IRKind::Vector { values: lvalues }),
+                Expr::Tuple(..) => return_ok!(IRKind::Tuple { values: lvalues }),
+                _ => unreachable!()
+            }
         },
 
         // Probably will never happen because it is catched in parser
@@ -442,16 +447,21 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
     }
 }
 
-fn gen_type_hint(type_hint: &str) -> String {
+fn gen_type_hint(type_hint: &Typehint) -> String {
     match type_hint {
-        "int"    => "number".to_string(),
-        "bool"   => "boolean".to_string(),
-        "string" => "string".to_string(),
-        "void"   => "void".to_string(),
-        // TODO: Un-hardcode types
-        "vec_int"    => "number[]".to_string(),
-        "vec_bool"   => "boolean[]".to_string(),
-        "vec_string" => "string[]".to_string(),
-        _ => { dbg!(type_hint); todo!() }
+        Typehint::Single(t) => match t.as_str() {
+            "int" => "number".to_string(),
+            "bool" => "boolean".to_string(),
+            _ => t.to_string()
+        },
+        Typehint::Tuple(ts) => {
+            let mut types = Vec::new();
+            for t in ts {
+                types.push(gen_type_hint(&t.0));
+            }
+            format!("[{}]", types.join(", "))
+        },
+        Typehint::Vector(t) => format!("{}[]", gen_type_hint(&t.0)),
+        Typehint::Function(_args, _ret) => {dbg!(type_hint); todo!()}, // TODO: Function type
     }
 }

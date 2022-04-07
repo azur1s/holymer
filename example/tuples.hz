@@ -1,0 +1,6 @@
+fun test (foo: int) (bar: int) : int = foo * bar
+fun f (fn: |int, int| -> int) (x: int) : int = fn(x)
+
+fun main: void = do
+    let x : int = 20
+end

@@ -170,24 +170,3 @@ pub fn lex(src: String) -> (Option<Vec<(Token, std::ops::Range<usize>)>>, Vec<Si
     let (tokens, lex_error) = lexer().parse_recovery(src.as_str());
     (tokens, lex_error)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn lex_let_simple() {
-        let (tokens, err) = lex("let x: Int = 1;".to_string());
-
-        assert_eq!(tokens, Some(vec![
-            (Token::KwLet, 0..3),
-            (Token::Identifier("x".to_string()), 4..5),
-            (Token::Colon, 5..6),
-            (Token::Identifier("Int".to_string()), 7..10),
-            (Token::Assign, 11..12),
-            (Token::Int(1), 13..14),
-            (Token::SemiColon, 14..15),
-        ]));
-        assert_eq!(err, vec![]);
-    }
-}

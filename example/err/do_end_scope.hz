@@ -1,7 +1,0 @@
-fun main: void = do
-    do
-        let foo: string = "Hello"
-        @write(foo)
-    end
-    @write(foo) -- TODO: This is a runtime error
-end

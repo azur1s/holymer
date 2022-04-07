@@ -1,3 +1,0 @@
-fun main: void = do
-    @writse() -- Unknown intrinsic
-end

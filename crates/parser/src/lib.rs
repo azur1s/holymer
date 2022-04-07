@@ -1,53 +1,53 @@
 use chumsky::{prelude::*, Stream};
 use lexer::Token;
 
-pub type Spanned<T> = (T, std::ops::Range<usize>);
+pub mod types;
+use types::{Expr, Spanned, Typehint};
 
-#[derive(Clone, Debug)]
-pub enum Expr {
-    Int(i64), Float(f64), Boolean(bool),
-    String(String), Identifier(String),
+fn typehint_parser() -> impl Parser<Token, Spanned<Typehint>, Error = Simple<Token>> + Clone {
+    let single = filter_map(|span, token| match token {
+        Token::Identifier(s) => Ok((Typehint::Single(s), span)),
+        _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
+    });
 
-    Vector(Vec<Spanned<Self>>),
+    let tuple = single
+        .separated_by(just(Token::Comma))
+        .allow_trailing()
+        .delimited_by(
+            just(Token::OpenParen),
+            just(Token::CloseParen),
+        )
+        .map_with_span(|args, span| {
+            (Typehint::Tuple(args), span)
+        });
 
-    Unary { op: String, rhs: Box<Spanned<Self>> },
-    Binary { lhs: Box<Spanned<Self>>, op: String, rhs: Box<Spanned<Self>> },
-    Call { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
-    Pipeline { lhs: Box<Spanned<Self>>, rhs: Box<Spanned<Self>> },
-    Intrinsic { name: Box<Spanned<Self>>, args: Spanned<Vec<Spanned<Self>>> },
+    let vector = single
+        .delimited_by(
+            just(Token::OpenBracket),
+            just(Token::CloseBracket),
+        )
+        .map_with_span(|arg, span| {
+            (Typehint::Vector(Box::new(arg)), span)
+        });
 
-    Let {
-        public: bool,
-        name: Spanned<String>,
-        type_hint: Spanned<String>,
-        value: Box<Spanned<Self>>,
-        mutable: bool,
-    },
-    Fun {
-        public: bool,
-        name: Spanned<String>,
-        type_hint: Spanned<String>,
-        args: Spanned<Vec<(Spanned<String>, Spanned<String>)>>,
-        body: Box<Spanned<Self>>
-    },
-    Return { expr: Box<Spanned<Self>> },
+    let function = single
+        .separated_by(just(Token::Comma))
+        .allow_trailing()
+        .delimited_by(
+            just(Token::Pipe),
+            just(Token::Pipe),
+        )
+        .then_ignore(just(Token::Arrow))
+        .then(single)
+        .map_with_span(|(args, ret), span| {
+            (Typehint::Function(args, Box::new(ret)), span)
+        });
 
-    If {
-        cond: Box<Spanned<Self>>,
-        body: Box<Spanned<Self>>,
-        else_body: Box<Spanned<Self>>
-    },
-    Case {
-        expr: Box<Spanned<Self>>,
-        cases: Spanned<Vec<(Spanned<Self>, Spanned<Self>)>>,
-        default: Box<Spanned<Self>>
-    },
-    Do {
-        body: Spanned<Vec<Spanned<Self>>>
-    },
-
-    // Hole for positional argument(s) in piping
-    Hole(usize, usize), // The usize is the span of the hole (prob should be single but whatever)
+    single
+        .or(tuple)
+        .or(vector)
+        .or(function)
+        .labelled("type hint")
 }
 
 fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>> + Clone {
@@ -83,9 +83,24 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
+        let tuple = expr.clone()
+            .separated_by(just(Token::Comma))
+            .allow_trailing()
+            .delimited_by(
+                just(Token::OpenParen),
+                just(Token::CloseParen),
+            )
+            .map_with_span(|args, span| {
+                (
+                    Expr::Tuple(args),
+                    span,
+                )
+            });
+
         let atom = literal
             .or(identifier.map(|(s, span)| (Expr::Identifier(s), span)))
             .or(vector)
+            .or(tuple)
             .labelled("atom");
 
         let call = atom.clone()
@@ -219,7 +234,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .then(just(Token::KwMut).or_not())
             .then(identifier)
             .then_ignore(just(Token::Colon))
-            .then(identifier)
+            .then(typehint_parser())
             .then_ignore(just(Token::Assign))
             .then(expr.clone())
             .map(|((((public, mutable), name), type_hint), value)| {
@@ -241,7 +256,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .then(
                 identifier
                     .then_ignore(just(Token::Colon))
-                    .then(identifier)
+                    .then(typehint_parser())
                     .delimited_by(
                         just(Token::OpenParen),
                         just(Token::CloseParen),
@@ -249,7 +264,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                     .repeated()
             )
             .then_ignore(just(Token::Colon))
-            .then(identifier)
+            .then(typehint_parser())
             .then_ignore(just(Token::Assign))
             .then(expr.clone())
             .map(|((((public, name), args), type_hint), body)| {
@@ -370,23 +385,4 @@ pub fn parse(tokens: Vec<(Token, std::ops::Range<usize>)>, len: usize) -> (Optio
     ));
 
     (ast, parse_error)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parse_simple() {
-        let (_, err) = parse(vec![
-            (Token::KwLet, 0..3),
-            (Token::Identifier("x".to_string()), 4..5),
-            (Token::Colon, 5..6),
-            (Token::Identifier("Int".to_string()), 7..10),
-            (Token::Assign, 11..12),
-            (Token::Int(1), 13..14),
-        ], 15);
-
-        assert_eq!(err, vec![]);
-    }
 }
