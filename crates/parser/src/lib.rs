@@ -31,7 +31,7 @@ fn typehint_parser() -> impl Parser<Token, Spanned<Typehint>, Error = Simple<Tok
                 (Typehint::Vector(Box::new(arg)), span)
             });
 
-        let function = ty
+        let function = ty.clone()
             .separated_by(just(Token::Comma))
             .allow_trailing()
             .delimited_by(
@@ -39,7 +39,7 @@ fn typehint_parser() -> impl Parser<Token, Spanned<Typehint>, Error = Simple<Tok
                 just(Token::Pipe),
             )
             .then_ignore(just(Token::Arrow))
-            .then(single)
+            .then(ty)
             .map_with_span(|(args, ret), span| {
                 (Typehint::Function(args, Box::new(ret)), span)
             });

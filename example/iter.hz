@@ -1,23 +1,23 @@
-fun iter_ (vec: vec_int) (current: int): void = do
+fun iter_ (vec: [int]) (fn: |int| -> int) (current: int): void = do
     if current == @len(vec) then
         do end
     else
         do
-            -- iter logic
-            -- TODO: function as argument
-            @get(vec, current) |> @write(_)
+            @get(vec, current)
+            |> fn(_)
+            |> @write(_)
             @write("\n")
 
-            iter_(vec, current + 1)
+            iter_(vec, fn, current + 1)
         end
     end
 end
 
-fun iter (vec: vec_int): void = do
-    iter_(vec, 0)
-end
+fun iter (vec: [int]) (fn: |int| -> int): void = iter_(vec, fn, 0)
+
+fun mul10 (x: int): int = x * 10
 
 fun main: void = do
-    let foo: vec_int = [69, 420, 727, 1337, 42069, 69420]
-    iter(foo)
+    let foo: [int] = [69, 420, 727, 1337, 42069, 69420]
+    iter(foo, mul10)
 end
