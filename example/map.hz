@@ -1,4 +1,4 @@
-fun iter_ (vec: [int]) (fn: |int| -> int) (current: int): void = do
+fun map_ (vec: [int]) (fn: |int| -> int) (current: int): void = do
     if current == @len(vec) then
         do end
     else
@@ -8,16 +8,16 @@ fun iter_ (vec: [int]) (fn: |int| -> int) (current: int): void = do
             |> @write(_)
             @write("\n")
 
-            iter_(vec, fn, current + 1)
+            map_(vec, fn, current + 1)
         end
     end
 end
 
-fun iter (vec: [int]) (fn: |int| -> int): void = iter_(vec, fn, 0)
+fun map (vec: [int]) (fn: |int| -> int): void = map_(vec, fn, 0)
 
 fun mul10 (x: int): int = x * 10
 
 fun main: void = do
     let foo: [int] = [69, 420, 727, 1337, 42069, 69420]
-    iter(foo, mul10)
+    map(foo, mul10)
 end
