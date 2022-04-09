@@ -2,7 +2,7 @@
 Programming language that compiles to Typescript!
 
 ```sml
-fun main  : void = do
+fun main : void = do
     @write("Hello, World!")
 end
 ```
