@@ -2,16 +2,16 @@
 Programming language that compiles to Typescript!
 
 ```sml
-fun main: void = do
-    @write("Hello, World!");
-end;
+fun main  : void = do
+    @write("Hello, World!")
+end
 ```
 or with the pipeline operator:
 ```sml
-fun main: void = do
+fun main : void = do
     "Hello, World!\n"
-    |> @write(_);
-end;
+    |> @write(_)
+end
 ```
 
 Note: Everything in this project can be changed at anytime! (I'm still finding out what work best for lots of thing) if you have an idea, feel free to create an issues about it, or even create a PR! (I'd be very happy)
