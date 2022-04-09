@@ -1,6 +1,14 @@
-fun test (foo: int) (bar: int) : int = foo * bar
-fun f (fn: |int, int| -> int) (x: int) : int = fn(x)
+fun mul (foo: int) (bar: int) : int = foo * bar
+fun map
+    (fn: |int, int| -> int)
+    (to: int)
+    : int
+= fn(to, 10)
 
 fun main: void = do
-    let x : int = 20
+    let foo : int = 69
+    let bar : int = 10
+
+    map(mul, foo)
+    |> @write(_)
 end

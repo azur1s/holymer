@@ -455,13 +455,23 @@ fn gen_type_hint(type_hint: &Typehint) -> String {
             _ => t.to_string()
         },
         Typehint::Tuple(ts) => {
-            let mut types = Vec::new();
-            for t in ts {
-                types.push(gen_type_hint(&t.0));
-            }
+            let types = ts.iter().map(|arg| gen_type_hint(&arg.0)).collect::<Vec<_>>();
             format!("[{}]", types.join(", "))
         },
         Typehint::Vector(t) => format!("{}[]", gen_type_hint(&t.0)),
-        Typehint::Function(_args, _ret) => {dbg!(type_hint); todo!()}, // TODO: Function type
+        Typehint::Function(args, ret) => {
+            let args_ty = args.iter().map(|arg| gen_type_hint(&arg.0)).collect::<Vec<_>>();
+            let return_ty = gen_type_hint(&ret.0);
+            format!(
+                "({}) => {}",
+                args_ty
+                    .iter()
+                    .enumerate()
+                    .map(|(i, arg)| format!("__{}: {}", i, arg))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                return_ty
+            )
+        },
     }
 }

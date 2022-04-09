@@ -29,7 +29,7 @@ impl Codegen {
             self.emit(&self.gen_ir(&ir.kind, true));
         }
 
-        self.emit("f_main();");
+        self.emit("_main();");
     }
 
     fn gen_ir(&self, ir: &IRKind, should_gen_semicolon: bool) -> String {
@@ -39,7 +39,7 @@ impl Codegen {
         match ir {
             IRKind::Define { public, name, type_hint, value, mutable, .. } => {
                 format!(
-                    "{} {} v_{}: {} = {}{}\n",
+                    "{} {} _{}: {} = {}{}\n",
                     if *public { "export" } else { "" },
                     if *mutable { "let" } else { "const" },
                     name, 
@@ -51,7 +51,7 @@ impl Codegen {
 
             IRKind::Call { name, args, .. } => {
                 format!(
-                    "f_{}({}){}",
+                    "_{}({}){}",
                     name,
                     args
                         .iter()
@@ -82,11 +82,11 @@ impl Codegen {
             IRKind::Fun { public, name, return_type_hint, args, body, .. } => {
                 let args = args
                     .iter()
-                    .map(|arg| format!("v_{}: {}", arg.0, arg.1))
+                    .map(|arg| format!("_{}: {}", arg.0, arg.1))
                     .collect::<Vec<_>>().
                     join(", ");
                 format!(
-                    "{} const f_{} = ({}): {} => {};\n",
+                    "{} const _{} = ({}): {} => {};\n",
                     if *public { "export" } else { "" },
                     name,
                     args,
@@ -152,7 +152,7 @@ impl Codegen {
                     Value::Int(value)     => format!("{}", value),
                     Value::Boolean(value) => format!("{}", value),
                     Value::String(value)  => format!("\"{}\"", value),
-                    Value::Ident(value)   => format!("v_{}", value),
+                    Value::Ident(value)   => format!("_{}", value),
                 }
             },
 

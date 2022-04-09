@@ -5,49 +5,51 @@ pub mod types;
 use types::{Expr, Spanned, Typehint};
 
 fn typehint_parser() -> impl Parser<Token, Spanned<Typehint>, Error = Simple<Token>> + Clone {
-    let single = filter_map(|span, token| match token {
-        Token::Identifier(s) => Ok((Typehint::Single(s), span)),
-        _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
-    });
-
-    let tuple = single
-        .separated_by(just(Token::Comma))
-        .allow_trailing()
-        .delimited_by(
-            just(Token::OpenParen),
-            just(Token::CloseParen),
-        )
-        .map_with_span(|args, span| {
-            (Typehint::Tuple(args), span)
+    recursive(|ty| {
+        let single = filter_map(|span, token| match token {
+            Token::Identifier(s) => Ok((Typehint::Single(s), span)),
+            _ => Err(Simple::expected_input_found(span, Vec::new(), Some(token))),
         });
 
-    let vector = single
-        .delimited_by(
-            just(Token::OpenBracket),
-            just(Token::CloseBracket),
-        )
-        .map_with_span(|arg, span| {
-            (Typehint::Vector(Box::new(arg)), span)
-        });
+        let tuple = single
+            .separated_by(just(Token::Comma))
+            .allow_trailing()
+            .delimited_by(
+                just(Token::OpenParen),
+                just(Token::CloseParen),
+            )
+            .map_with_span(|args, span| {
+                (Typehint::Tuple(args), span)
+            });
 
-    let function = single
-        .separated_by(just(Token::Comma))
-        .allow_trailing()
-        .delimited_by(
-            just(Token::Pipe),
-            just(Token::Pipe),
-        )
-        .then_ignore(just(Token::Arrow))
-        .then(single)
-        .map_with_span(|(args, ret), span| {
-            (Typehint::Function(args, Box::new(ret)), span)
-        });
+        let vector = single
+            .delimited_by(
+                just(Token::OpenBracket),
+                just(Token::CloseBracket),
+            )
+            .map_with_span(|arg, span| {
+                (Typehint::Vector(Box::new(arg)), span)
+            });
 
-    single
-        .or(tuple)
-        .or(vector)
-        .or(function)
-        .labelled("type hint")
+        let function = ty
+            .separated_by(just(Token::Comma))
+            .allow_trailing()
+            .delimited_by(
+                just(Token::Pipe),
+                just(Token::Pipe),
+            )
+            .then_ignore(just(Token::Arrow))
+            .then(single)
+            .map_with_span(|(args, ret), span| {
+                (Typehint::Function(args, Box::new(ret)), span)
+            });
+
+        single
+            .or(tuple)
+            .or(vector)
+            .or(function)
+            .labelled("type hint")
+    })
 }
 
 fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>> + Clone {
