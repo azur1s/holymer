@@ -1,7 +1,7 @@
 use std::ops::Range;
 use parser::types::{Expr, Typehint};
 
-const INTRINSICS: [&str; 8] = [
+const INTRINSICS: [&str; 10] = [
     "write",
     "read",
     "write_file",
@@ -9,6 +9,8 @@ const INTRINSICS: [&str; 8] = [
     "emit",
     "get",
     "len",
+    "insert",
+    "concat",
     "throw",
 ];
 

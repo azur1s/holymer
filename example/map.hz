@@ -1,23 +1,23 @@
-fun map_ (vec: [int]) (fn: |int| -> int) (current: int): void = do
+fun map_ (vec: [int]) (fn: |int| -> int) (current: int): [int] = do
     if current == @len(vec) then
-        do end
+        return []
     else
         do
-            @get(vec, current)
-            |> fn(_)
-            |> @write(_)
-            @write("\n")
+            let new : [int] = []
+            let x : int = @get(vec, current) |> fn(_)
+            @insert(new, x)
 
-            map_(vec, fn, current + 1)
+            let y : [int] = map_(vec, fn, current + 1)
+            return @concat(new, y)
         end
     end
 end
 
-fun map (vec: [int]) (fn: |int| -> int): void = map_(vec, fn, 0)
+fun map (vec: [int]) (fn: |int| -> int): [int] = return map_(vec, fn, 0)
 
-fun mul10 (x: int): int = x * 10
+fun mul10 (x: int): int = return x * 10
 
 fun main: void = do
     let foo: [int] = [69, 420, 727, 1337, 42069, 69420]
-    map(foo, mul10)
+    map(foo, mul10) |> @write(_)
 end

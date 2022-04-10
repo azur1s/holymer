@@ -73,6 +73,8 @@ impl Codegen {
 
                     "get" => { format!("{}[{}]", self.gen_ir(&args[0], false), self.gen_ir(&args[1], false)) },
                     "len" => { format!("{}.length", self.gen_ir(&args[0], false)) },
+                    "insert" => { format!("{}.push({})", self.gen_ir(&args[0], false), self.gen_ir(&args[1], false)) },
+                    "concat" => { format!("{}.concat({})", self.gen_ir(&args[0], false), self.gen_ir(&args[1], false)) },
 
                     "throw" => { format!("throw new Error({}){}", self.gen_ir(&args[0], false), semicolon!()) },
                     _ => unreachable!("{}", format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
