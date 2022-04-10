@@ -75,7 +75,7 @@ impl Codegen {
                     "len" => { format!("{}.length", self.gen_ir(&args[0], false)) },
 
                     "throw" => { format!("throw new Error({}){}", self.gen_ir(&args[0], false), semicolon!()) },
-                    _ => unreachable!(format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
+                    _ => unreachable!("{}", format!("Unknown intrinsic: {}", name)) // Shoul be handled by lowering
                 }
             },
 
@@ -86,7 +86,7 @@ impl Codegen {
                     .collect::<Vec<_>>().
                     join(", ");
                 format!(
-                    "{} const _{} = ({}): {} => {};\n",
+                    "{} const _{} = ({}): {} => {{{}}};\n",
                     if *public { "export" } else { "" },
                     name,
                     args,
@@ -156,6 +156,16 @@ impl Codegen {
                 }
             },
 
+            IRKind::Tuple { values } => {
+                format!(
+                    "[{}]",
+                    values
+                        .iter()
+                        .map(|value| self.gen_ir(value, false))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            },
             IRKind::Vector { values } => {
                 format!(
                     "[{}]",

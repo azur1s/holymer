@@ -450,6 +450,7 @@ pub fn expr_to_ir(expr: &Expr) -> (Option<IRKind>, Option<LoweringError>) {
 fn gen_type_hint(type_hint: &Typehint) -> String {
     match type_hint {
         Typehint::Single(t) => match t.as_str() {
+            "any" => "any".to_string(),
             "int" => "number".to_string(),
             "bool" => "boolean".to_string(),
             _ => t.to_string()
