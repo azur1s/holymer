@@ -335,9 +335,9 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
-        let match_ = just(Token::KwMatch)
+        let match_ = just(Token::KwCase)
             .ignore_then(expr.clone())
-            .then_ignore(just(Token::KwWith))
+            .then_ignore(just(Token::KwOf))
             .then(
                 just(Token::Pipe)
                     .ignore_then(expr.clone())

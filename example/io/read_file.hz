@@ -1,5 +1,0 @@
--- Run this file from root path
-fun main: void = do
-    @read_file("./example/io/read_file.hz")
-    |> @write(_);
-end;

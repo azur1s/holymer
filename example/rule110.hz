@@ -1,5 +1,5 @@
 fun print_single (cell: bool): void = do
-    match cell with
+    case cell of
         | true -> @write("█")
         | else @write(" ")
     end
@@ -47,7 +47,7 @@ fun cell_merger (a: bool) (b: bool) (c: bool): bool = do
 end
 
 fun next (state: vec_bool) (pointer: int): bool = do
-    match pointer with
+    case pointer of
         | 0 -> do
                 let a: bool = false
                 let b: bool = @get(state, 1)

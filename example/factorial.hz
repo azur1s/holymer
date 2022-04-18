@@ -1,15 +1,7 @@
 fun factorial (n: int) : int = do
-    match n with
+    case n of
         | 0 -> return 1
         | else return n * factorial(n - 1)
-    end
-end
-
-fun also_factorial (n: int) : int = do
-    if n == 0 then
-        return 1
-    else
-        return n * also_factorial(n - 1)
     end
 end
 

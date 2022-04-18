@@ -16,7 +16,7 @@ end
 fun every (a : [any]) (b : [any]): bool = return every_(a, b, 0)
 
 fun eqTuples (a : [any]) (b : [any]) : bool =
-    match @len(a) == @len(b) with
+    case @len(a) == @len(b) of
         | true -> return every(a, b)
         | else return false
     end
