@@ -6,7 +6,7 @@ pub enum Typehint {
     Single(String), // e.g. `int`, `bool`, `string`
     Tuple(Vec<Spanned<Self>>), // e.g. `(int, bool)`
     Vector(Box<Spanned<Self>>), // e.g. `[int]`
-    Function(Vec<Spanned<Self>>, Box<Spanned<Self>>), // e.g. `(a: int, b: bool) -> string`, `(b: int) -> [bool]`
+    Function(Vec<Spanned<Self>>, Box<Spanned<Self>>), // e.g. `|A: int, B: bool| -> string`, `|A: int| -> [bool]`
 }
 
 #[derive(Clone, Debug)]

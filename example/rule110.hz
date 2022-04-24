@@ -2,7 +2,6 @@ fun print_single (cell: bool): void = do
     case cell of
         | true -> @write("█")
         | else @write(" ")
-    end
 end
 
 fun print_vec (state: vec_bool) (length: int) (curr: int): void = do
@@ -82,7 +81,6 @@ fun next (state: vec_bool) (pointer: int): bool = do
                 return true
             end
         | else return false
-    end
 end
 
 fun iter (state: vec_bool) (for: int) (curr: int): void = do

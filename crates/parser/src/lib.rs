@@ -335,7 +335,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                 )
             });
 
-        let match_ = just(Token::KwCase)
+        let case = just(Token::KwCase)
             .ignore_then(expr.clone())
             .then_ignore(just(Token::KwOf))
             .then(
@@ -350,7 +350,6 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
                     .ignore_then(just(Token::KwElse))
                     .ignore_then(expr.clone())
             )
-            .then_ignore(just(Token::KwEnd))
             .map(|((expr, cases), default)| {
                 (
                     Expr::Case {
@@ -370,7 +369,7 @@ fn expr_parser() -> impl Parser<Token, Vec<Spanned<Expr>>, Error = Simple<Token>
             .or(return_)
             .or(do_block)
             .or(if_block)
-            .or(match_)
+            .or(case)
             .or(pipeline)
     }).labelled("expression");
 

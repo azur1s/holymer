@@ -2,8 +2,7 @@ fun fib (n: int): int = do
     case n of
         | 1 -> return 1
         | 2 -> return 1
-        | else -> return fib(n - 1) + fib(n - 2)
-    end
+        | else return fib(n - 1) + fib(n - 2)
 end
 
 fun main: void = do
