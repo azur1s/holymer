@@ -44,13 +44,13 @@ cd ~/.cache/hazure/build/
 if [[ $1 == *"d"* ]]; then
     log "Building in debug..."
     cargo build
-    rm ~/bin/hazure -f
-    mv ~/.cache/hazure/build/target/debug/hazure ~/bin/hazure
+    rm ~/bin/hzc -f
+    mv ~/.cache/hazure/build/target/debug/hzc ~/bin/hzc
 else
     log "Building..."
     cargo build --release
-    rm ~/bin/hazure -f
-    mv ~/.cache/hazure/build/target/release/hazure ~/bin/hazure
+    rm ~/bin/hzc -f
+    mv ~/.cache/hazure/build/target/release/hzc ~/bin/hzc
 fi
 
 log "Build done. Cleaning up..."
@@ -58,4 +58,4 @@ log "Build done. Cleaning up..."
 rm -rf ~/.cache/hazure/build/
 
 log "Done."
-hazure -h
+hzc -v

@@ -1,0 +1,11 @@
+fun foo (a : int) (b : int) : int = do
+    c : int = a + b
+    return c
+end
+
+bar = foo(34, 35)
+@println(bar)
+
+if bar == 69
+ | @println("That's 69")
+ | @println("Ok")

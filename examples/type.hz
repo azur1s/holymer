@@ -1,0 +1,15 @@
+type Left E  = { tag: "Left", value: E }
+type Right T = { tag: "Right", value: T }
+
+type Either T E = Left E
+                | Right T
+
+it : Either<Int, String> = { tag: "Left", value: "Uninit" }
+
+fun rand_it : void = if @random() > 0.5
+                      | set it = { tag: "Left", value: "Error" }
+                      | set it = { tag: "Right", value: 42 }
+
+rand()
+@println(it.tag, it.value)
+

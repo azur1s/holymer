@@ -1,0 +1,8 @@
+[package]
+name = "hzc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+syntax = { path = "../syntax" }
+codegen = { path = "../codegen" }

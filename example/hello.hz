@@ -1,3 +1,0 @@
-fun main: void = do
-    @write("Hello, World!")
-end

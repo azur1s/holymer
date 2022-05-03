@@ -1,10 +1,7 @@
 [workspace]
 members = [
-    "crates/main",
-    "crates/lexer",
-    "crates/parser",
-    "crates/diagnostic",
-    "crates/hir",
-    "crates/typecheck",
-    "crates/codegen",
+    "core",
+    "syntax",
+    "transformer",
+    "codegen",
 ]
