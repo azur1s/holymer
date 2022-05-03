@@ -4,13 +4,11 @@ use syntax::{lex::lex, parse::parse};
 use codegen::Codegen;
 
 fn main() {
+    let path = std::env::args().nth(1).expect("No file specified");
+    let input = std::fs::read_to_string(path).expect("Failed to read file");
+
     let time = std::time::Instant::now();
 
-    let input = "
-fun len T (vec : [T]) : int = return ;vec.length
-
-@write(len([1, 2, 3]))
-";
     //
     // Lex
     //
@@ -37,6 +35,6 @@ fun len T (vec : [T]) : int = return ;vec.length
     let mut codegen = Codegen::new();
     codegen.gen(ast.unwrap());
 
-    let mut file = File::create("out.rs").unwrap();
+    let mut file = File::create("out.ts").unwrap();
     file.write_all(codegen.emitted.join("\n").as_bytes()).unwrap();
 }

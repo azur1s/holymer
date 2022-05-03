@@ -83,7 +83,7 @@ impl Codegen {
 
             Expr::Define { name, typehint, value } => {
                 format!(
-                    "let {} : {} = {}{}",
+                    "let _{} : {} = {}{}",
                     name.0,
                     self.gen_typehint(&typehint.0),
                     self.gen_expr(&value.0, false),
@@ -91,7 +91,7 @@ impl Codegen {
             },
             Expr::Redefine { name, value } => {
                 format!(
-                    "{} = {}{}",
+                    "_{} = {}{}",
                     name.0,
                     self.gen_expr(&value.0, false),
                     semicolon!())
@@ -117,7 +117,7 @@ impl Codegen {
 
             Expr::If { cond, t, f } => {
                 format!(
-                    "if {} {{{}}} else {{{}}}",
+                    "if ({}) {{{}}} else {{{}}}",
                     self.gen_expr(&cond.0, false),
                     self.gen_expr(&t.0, false),
                     self.gen_expr(&f.0, false))
