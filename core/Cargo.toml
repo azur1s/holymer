@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 syntax = { path = "../syntax" }
 codegen = { path = "../codegen" }
+
+colored = "2.0.0"

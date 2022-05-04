@@ -99,11 +99,6 @@ pub enum Expr {
         t: Box<Spanned<Self>>,
         f: Box<Spanned<Self>>
     },
-    Case {
-        cond: Box<Spanned<Self>>,
-        cases: Spanned<Vec<(Spanned<Self>, Spanned<Self>)>>,
-        default: Box<Spanned<Self>>
-    },
     Do {
         body: Spanned<Vec<Spanned<Self>>>
     },

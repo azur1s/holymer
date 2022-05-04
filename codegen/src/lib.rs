@@ -5,13 +5,15 @@ pub struct Codegen {
     /// The emitted code.
     /// When the codegen is done, this will be joined into a single string
     pub emitted: Vec<String>,
+    /// Finalized code in bytes
+    pub finalized: Vec<u8>,
 }
 
 impl Default for Codegen { fn default() -> Self { Self::new() } }
 
 impl Codegen {
     pub fn new() -> Codegen {
-        Codegen { emitted: Vec::new() }
+        Codegen { emitted: Vec::new(), finalized: Vec::new() }
     }
 
     /// Emit a string to the output.
@@ -182,5 +184,10 @@ impl Codegen {
                 .iter()
                 .map(|ty| self.gen_typehint(&ty.0)).collect::<Vec<_>>().join(" | "),
         }
+    }
+
+    /// Finalize the code generation.
+    pub fn finalize(&mut self) {
+        self.finalized = self.emitted.join("\n").as_bytes().to_vec();
     }
 }

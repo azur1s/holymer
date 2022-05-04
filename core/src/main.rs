@@ -3,6 +3,8 @@ use std::{fs::File, io::Write};
 use syntax::{lex::lex, parse::parse};
 use codegen::Codegen;
 
+pub mod util;
+
 fn main() {
     let path = std::env::args().nth(1).expect("No file specified");
     let input = std::fs::read_to_string(path).expect("Failed to read file");
@@ -29,12 +31,17 @@ fn main() {
         return;
     }
 
+    info!("Parsed in {}ms", time.elapsed().as_millis());
+
     //
     // Codegen
     //
     let mut codegen = Codegen::new();
     codegen.gen(ast.unwrap());
+    codegen.finalize();
 
     let mut file = File::create("out.ts").unwrap();
-    file.write_all(codegen.emitted.join("\n").as_bytes()).unwrap();
+    file.write_all(&codegen.finalized).unwrap();
+
+    info!("Generated {} bytes in {} ms", codegen.finalized.len(), time.elapsed().as_millis());
 }
