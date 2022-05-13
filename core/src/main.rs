@@ -31,6 +31,7 @@ fn main() {
         return;
     }
 
+    println!("{:#?}", ast.as_ref().unwrap());
     info!("Parsed in {}ms", time.elapsed().as_millis());
 
     //

@@ -22,7 +22,7 @@ pub enum Token {
     Arrow, And, Or,
 
     // Symbols & Delimiters
-    Assign, Dot, Comma, Colon, Semicolon, At,
+    Assign, Dot, Comma, Colon, Semicolon, At, Hash,
     Open(Delimiter), Close(Delimiter),
 }
 
@@ -62,6 +62,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         just(':').to(Token::Colon),
         just(';').to(Token::Semicolon),
         just('@').to(Token::At),
+        just('#').to(Token::Hash),
     ));
 
     let delim = choice((

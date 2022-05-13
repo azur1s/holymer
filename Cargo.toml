@@ -2,6 +2,7 @@
 members = [
     "core",
     "syntax",
+    "checker",
     "transformer",
     "codegen",
 ]

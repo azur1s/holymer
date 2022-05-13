@@ -1,0 +1,6 @@
+print T (x : T) : void = @write(x)
+
+a : int = 123
+print(a)
+b : string = "Hello, World!"
+print(b)

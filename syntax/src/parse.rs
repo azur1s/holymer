@@ -139,7 +139,7 @@ fn expr_parser() -> impl P<Spanned<Expr>> {
             .repeated())
         .foldl(|name, args| {( Expr::Intrinsic { name: Box::new(name.clone()), args }, name.1 )}).labelled("intrinsic");
 
-        let method = just(Token::Colon)
+        let method = just(Token::Hash)
         .ignore_then(identexpr.clone())
         .then_ignore(just(Token::Dot))
         .then(atom.clone())
@@ -154,7 +154,7 @@ fn expr_parser() -> impl P<Spanned<Expr>> {
             args: args.into_iter().flatten().collect()
         }, span )}).labelled("method");
 
-        let access = just(Token::Semicolon)
+        let access = just(Token::Colon)
         .ignore_then(identexpr)
         .then_ignore(just(Token::Dot))
         .then(atom.clone())
@@ -234,9 +234,8 @@ fn expr_parser() -> impl P<Spanned<Expr>> {
             (Expr::Redefine { name: *Box::new(ident), value: Box::new(expr) }, span)
         });
 
-        let function = just(Token::KwFun)
-        .ignore_then(identifier())
-        // Generics
+        let function = identifier()
+        // Generic
         .then(identifier().repeated())
         // Arguments
         .then(
@@ -300,7 +299,10 @@ fn expr_parser() -> impl P<Spanned<Expr>> {
 
 #[allow(clippy::type_complexity)]
 pub fn parse(tokens: Vec<(Token, std::ops::Range<usize>)>, len: usize) -> (Option<Vec<(Expr, std::ops::Range<usize>)>>, Vec<Simple<Token>>) {
-    let (ast, parse_error) = expr_parser().repeated().then_ignore(end()).parse_recovery(Stream::from_iter(
+    let (ast, parse_error) = expr_parser()
+    .repeated()
+    .then_ignore(end())
+    .parse_recovery(Stream::from_iter(
         len..len + 1,
         tokens.into_iter(),
     ));

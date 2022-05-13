@@ -34,8 +34,7 @@ impl Codegen {
         match expr {
             Expr::Literal(lit)     => self.gen_literal(&lit.0),
             Expr::Identifier(name) => { format!("_{}{}", name.0, semicolon!()) },
-            Expr::Tuple(elems)     => { format!("({}{})", elems.iter().map(|e| self.gen_expr(&e.0, false)).collect::<Vec<_>>().join(", "), semicolon!()) },
-            Expr::Vector(elems)    => { format!("[{}{}]", elems.iter().map(|e| self.gen_expr(&e.0, false)).collect::<Vec<_>>().join(", "), semicolon!()) },
+            Expr::Tuple(elems) | Expr::Vector(elems) => { format!("[{}{}]", elems.iter().map(|e| self.gen_expr(&e.0, false)).collect::<Vec<_>>().join(", "), semicolon!()) },
             Expr::Object { fields } => {
                 format!("{{{}}}",
                     fields.iter().map(|(name, expr)| format!("{}: {}", name.0, self.gen_expr(&expr.0, false))).collect::<Vec<_>>().join(",\n "))
