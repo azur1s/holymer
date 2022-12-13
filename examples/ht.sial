@@ -1,0 +1,42 @@
+import http from "http"
+
+-- Define a custom type to represent a user
+type User =
+    id: number,
+    name: string,
+end
+
+-- Define a function to handle incoming HTTP requests
+fun handle_request
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+= do
+    let user_id = req.url.split("/")[1]
+    let name =
+        match user_id
+            | 12345 -> Some("John Smith")
+            | 727   -> Some("Foo Bar")
+            else None
+
+    match name
+        | Some name -> do
+                let user = User(user_id, name)
+                res.statusCode = 200
+                res.setHeader("Content-Type", "application/json")
+                res.write(JSON.stringify(user))
+            end
+        | None -> do
+                res.statusCode = 404
+                res.write("User not found")
+            end
+
+    res.end()
+end
+
+fun main = do
+    let
+        port = 8080,
+        server = http.createServer(handle_request),
+    in
+        server.listen(port, fun -> println("HTTP server listening on port 8080"))
+end

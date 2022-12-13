@@ -1,0 +1,16 @@
+fun succ x = do
+    let one = 1
+    let y = x + one in y
+end
+
+fun double x = x * 2
+
+fun main = do
+    let add = \x y -> x + y in
+        succ(34)
+            |> \x -> add(34, x)
+            |> \x -> println(x)
+
+    let result = add(34, 35)
+    println(result)
+end

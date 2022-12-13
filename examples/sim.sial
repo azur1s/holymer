@@ -1,0 +1,8 @@
+fun foo = \x -> x
+
+fun main = do
+    foo(1)
+    [1, 2, 3]
+    true
+    print("Hello, World")
+end
