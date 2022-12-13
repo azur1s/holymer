@@ -27,8 +27,34 @@ impl Compiler {
                 instrs.push(Instr::ListMake(count));
                 instrs
             }
-            Expr::Unary(_, _) => todo!(),
-            Expr::Binary(_, _, _) => todo!(),
+            Expr::Unary(op, x) => {
+                let mut instrs = self.compile_expr(x.0);
+                instrs.extend(match op.0 {
+                    parser::UnaryOp::Neg => vec![Instr::NumPush(-1), Instr::NumMul],
+                    parser::UnaryOp::Not => vec![Instr::BoolNot],
+                });
+                instrs
+            }
+            Expr::Binary(op, x, y) => {
+                let mut instrs = self.compile_expr(y.0);
+                instrs.extend(self.compile_expr(x.0));
+                instrs.push(match op.0 {
+                    parser::BinaryOp::Add => Instr::NumAdd,
+                    parser::BinaryOp::Sub => Instr::NumSub,
+                    parser::BinaryOp::Mul => Instr::NumMul,
+                    parser::BinaryOp::Div => Instr::NumDiv,
+                    // parser::BinaryOp::Eq => Instr::Eq,
+                    // parser::BinaryOp::Ne => Instr::Neq,
+                    // parser::BinaryOp::Lt => Instr::Lt,
+                    // parser::BinaryOp::Gt => Instr::Gt,
+                    // parser::BinaryOp::Le => Instr::Lte,
+                    // parser::BinaryOp::Ge => Instr::Gte,
+                    parser::BinaryOp::And => Instr::BoolAnd,
+                    parser::BinaryOp::Or => Instr::BoolOr,
+                    _ => todo!(),
+                });
+                instrs
+            }
             Expr::Lambda(args, body) => {
                 vec![Instr::FuncMake(args, self.compile_expr(body.0))]
             }
@@ -45,7 +71,34 @@ impl Compiler {
                 }
                 instrs
             }
-            Expr::Let(_, _) => todo!(),
+            Expr::Let(binds, body) => {
+                let mut instrs = vec![];
+                let binds = binds
+                    .into_iter()
+                    .flat_map(|(name, expr)| {
+                        let mut instrs = self.compile_expr(expr.0);
+                        instrs.extend(vec![Instr::Set(name)]);
+                        instrs
+                    })
+                    .collect::<Vec<_>>();
+                if let Some(e) = body {
+                    // If there is a body then we put the bindings
+                    // inside the closure so it gets undefined outside
+                    // the scope
+                    instrs.extend(vec![
+                        Instr::FuncMake(
+                            vec![],
+                            binds.into_iter().chain(self.compile_expr(e.0)).collect(),
+                        ),
+                        Instr::FuncApply,
+                    ]);
+                } else {
+                    // If there is no body then we just push the bindings
+                    // to the global scope
+                    instrs.extend(binds);
+                }
+                instrs
+            }
             Expr::Do(es) => {
                 let mut instrs = vec![];
                 for e in es {

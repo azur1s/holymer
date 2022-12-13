@@ -13,6 +13,7 @@ fn main() {
         if let Some(ast) = ast {
             let mut compiler = Compiler::new();
             let instrs = compiler.compile_program(ast);
+            instrs.iter().for_each(|i| println!("{:?}", i));
             let mut executor = Executor::new(instrs);
             match executor.run() {
                 Ok(_) => {}

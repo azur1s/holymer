@@ -5,4 +5,10 @@ fun main = do
     [1, 2, 3]
     true
     print("Hello, World")
+    let seven = 7 in
+        print(5 - seven)
+
+    let a = 34 in
+        let b = 35 in
+            print(a + b)
 end

@@ -198,7 +198,7 @@ impl Instr {
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
-        // a macro that will return the next index and increment it
+        // A macro that will return the next index and increment it
         // so we don't have to rewrite all the first bytes again when
         // we changes the order or add new instructions
         macro_rules! index {
