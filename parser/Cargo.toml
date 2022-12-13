@@ -1,0 +1,8 @@
+[package]
+name = "parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chumsky = "0.8.0"
+ariadne = "0.1.5"

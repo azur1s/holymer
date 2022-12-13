@@ -1,0 +1,9 @@
+[package]
+name = "entry"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+parser = { path = "../parser" }
+compiler = { path = "../compiler" }
+vm = { path = "../vm" }
