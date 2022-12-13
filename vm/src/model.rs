@@ -159,6 +159,9 @@ pub enum Instr {
     Get(String), // ┐ 1 + string.len() + 1 bytes
     Set(String), // ┘
 
+    Jump(usize),        // ┐ 9 bytes: 1 byte for the enum, 8 bytes for the usize (64-bit)
+    JumpIfFalse(usize), // ┘
+
     Print, // 1 byte
 }
 
@@ -178,7 +181,7 @@ impl Instr {
             Instr::Pop | Instr::Dup => 1,
 
             Instr::ListMake(_) | Instr::ListGet(_) | Instr::ListSet(_) => {
-                std::mem::size_of::<usize>() + 1
+                1 + std::mem::size_of::<usize>()
             }
             Instr::ListLen | Instr::ListJoin => 1,
 
@@ -192,6 +195,8 @@ impl Instr {
             Instr::FuncCall(s) => 1 + s.len() + 1,
 
             Instr::Get(s) | Instr::Set(s) => 1 + s.len() + 1,
+
+            Instr::Jump(_) | Instr::JumpIfFalse(_) => 1 + std::mem::size_of::<usize>(),
 
             Instr::Print => 1,
         }
@@ -283,6 +288,15 @@ impl Instr {
                 bytes.push(index!());
                 bytes.extend(s.as_bytes());
                 bytes.push(0x00);
+            }
+
+            Instr::Jump(n) => {
+                bytes.push(index!());
+                bytes.extend(n.to_le_bytes());
+            }
+            Instr::JumpIfFalse(n) => {
+                bytes.push(index!());
+                bytes.extend(n.to_le_bytes());
             }
 
             Instr::Print => bytes.push(index!()),

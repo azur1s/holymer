@@ -44,6 +44,9 @@ pub enum Token {
     Fun,
     Let,
     In,
+    If,
+    Then,
+    Else,
     Do,
     End,
 }
@@ -102,6 +105,9 @@ impl std::fmt::Display for Token {
             Token::Fun => write!(f, "fun"),
             Token::Let => write!(f, "let"),
             Token::In => write!(f, "in"),
+            Token::If => write!(f, "if"),
+            Token::Then => write!(f, "then"),
+            Token::Else => write!(f, "else"),
             Token::Do => write!(f, "do"),
             Token::End => write!(f, "end"),
         }
@@ -155,6 +161,9 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         "fun" => Token::Fun,
         "let" => Token::Let,
         "in" => Token::In,
+        "if" => Token::If,
+        "then" => Token::Then,
+        "else" => Token::Else,
         "do" => Token::Do,
         "end" => Token::End,
         _ => Token::Sym(s),
@@ -223,6 +232,11 @@ pub enum Expr {
     Lambda(Vec<String>, Box<Spanned<Self>>),
     Call(Box<Spanned<Self>>, Vec<Spanned<Self>>),
     Let(Vec<(String, Spanned<Self>)>, Option<Box<Spanned<Self>>>),
+    If(
+        Box<Spanned<Self>>,
+        Box<Spanned<Self>>,
+        Option<Box<Spanned<Self>>>,
+    ),
     Do(Vec<Spanned<Expr>>),
 }
 
@@ -327,6 +341,15 @@ pub fn expr_parser() -> impl P<Spanned<Expr>> {
             .map(|binds| Expr::Let(binds, None))
             .labelled("let");
 
+        let if_ = just(Token::If)
+            .ignore_then(expr.clone())
+            .then_ignore(just(Token::Then))
+            .then(expr.clone())
+            .then(just(Token::Else).ignore_then(expr.clone()).or_not())
+            .map(|((cond, then), else_)| {
+                Expr::If(Box::new(cond), Box::new(then), else_.map(Box::new))
+            });
+
         let block = just(Token::Do)
             .ignore_then(expr.clone().repeated())
             .then_ignore(just(Token::End))
@@ -339,6 +362,7 @@ pub fn expr_parser() -> impl P<Spanned<Expr>> {
             .or(lam)
             .or(let_in)
             .or(let_def)
+            .or(if_)
             .or(block)
             .map_with_span(|e, s| (e, s))
             .boxed()

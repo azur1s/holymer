@@ -31,7 +31,7 @@ impl Executor {
     }
 
     pub fn run(&mut self) -> Result<(), Error> {
-        for _ in 0..self.instrs.len() {
+        while self.ip < self.instrs.len() {
             self.step()?;
             self.ip += 1;
         }
@@ -247,6 +247,19 @@ impl Executor {
             Instr::Set(name) => {
                 let v = self.pop()?;
                 self.set(name, v)?;
+            }
+
+            Instr::Jump(n) => {
+                self.ip += n;
+            }
+            Instr::JumpIfFalse(n) => {
+                if let Value::Bool(b) = self.pop()? {
+                    if !b {
+                        self.ip += n;
+                    }
+                } else {
+                    return Err(Error::make("can't apply `if` to non-boolean", self.ip));
+                }
             }
 
             Instr::Print => {

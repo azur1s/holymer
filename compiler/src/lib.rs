@@ -99,6 +99,21 @@ impl Compiler {
                 }
                 instrs
             }
+            Expr::If(c, t, f) => {
+                let mut instrs = self.compile_expr(c.0);
+                let t = self.compile_expr(t.0);
+                if let Some(f) = f {
+                    let f = self.compile_expr(f.0);
+                    instrs.push(Instr::JumpIfFalse(t.len() + 1));
+                    instrs.extend(t);
+                    instrs.push(Instr::Jump(f.len()));
+                    instrs.extend(f);
+                } else {
+                    instrs.push(Instr::JumpIfFalse(t.len()));
+                    instrs.extend(t);
+                }
+                instrs
+            }
             Expr::Do(es) => {
                 let mut instrs = vec![];
                 for e in es {
