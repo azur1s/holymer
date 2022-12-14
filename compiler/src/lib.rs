@@ -43,15 +43,15 @@ impl Compiler {
                     parser::BinaryOp::Sub => Instr::NumSub,
                     parser::BinaryOp::Mul => Instr::NumMul,
                     parser::BinaryOp::Div => Instr::NumDiv,
-                    // parser::BinaryOp::Eq => Instr::Eq,
-                    // parser::BinaryOp::Ne => Instr::Neq,
-                    // parser::BinaryOp::Lt => Instr::Lt,
-                    // parser::BinaryOp::Gt => Instr::Gt,
-                    // parser::BinaryOp::Le => Instr::Lte,
-                    // parser::BinaryOp::Ge => Instr::Gte,
+                    parser::BinaryOp::Eq => Instr::NumEq,
+                    parser::BinaryOp::Ne => todo!(),
+                    parser::BinaryOp::Lt => todo!(),
+                    parser::BinaryOp::Gt => todo!(),
+                    parser::BinaryOp::Le => todo!(),
+                    parser::BinaryOp::Ge => todo!(),
                     parser::BinaryOp::And => Instr::BoolAnd,
                     parser::BinaryOp::Or => Instr::BoolOr,
-                    _ => todo!(),
+                    parser::BinaryOp::Pipe => todo!(),
                 });
                 instrs
             }
@@ -128,10 +128,13 @@ impl Compiler {
         match stmt {
             Stmt::Fun(name, args, body) => {
                 let is_main = name == "main";
-                let mut instrs = vec![
-                    Instr::FuncMake(args, self.compile_expr(body.0)),
-                    Instr::Set(name),
-                ];
+                let mut instrs = match body.0 {
+                    // If the body is a lambda then we don't have to compile
+                    // it into a function
+                    Expr::Lambda(_, _) => self.compile_expr(body.0),
+                    _ => vec![Instr::FuncMake(args, self.compile_expr(body.0))],
+                };
+                instrs.push(Instr::Set(name));
                 if is_main {
                     instrs.pop();
                     instrs.push(Instr::FuncApply);

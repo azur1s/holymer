@@ -1,4 +1,8 @@
+fun foo x = x
+
+fun fac n = if n == 0 then 1 else n * fac(n - 1)
+
 fun main = do
-    let foo = if true then 10 else 5 in
-        print(foo)
+    print(foo(1))
+    print(fac(5))
 end

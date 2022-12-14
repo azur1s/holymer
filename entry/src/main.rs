@@ -13,9 +13,12 @@ fn main() {
         if let Some(ast) = ast {
             let mut compiler = Compiler::new();
             let instrs = compiler.compile_program(ast);
-            instrs.iter().for_each(|i| println!("{:?}", i));
+            // instrs.iter().for_each(|i| println!("{:?}", i));
             let mut executor = Executor::new(instrs);
-            match executor.run() {
+            match executor.run_with(|exec| {
+                // println!("{:?}", exec.stack);
+                Ok(())
+            }) {
                 Ok(_) => {}
                 Err(e) => println!("Runtime error: {:?}", e),
             }

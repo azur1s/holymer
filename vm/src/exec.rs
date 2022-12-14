@@ -38,6 +38,15 @@ impl Executor {
         Ok(())
     }
 
+    pub fn run_with<F: Fn(&mut Self) -> Result<(), Error>>(&mut self, f: F) -> Result<(), Error> {
+        while self.ip < self.instrs.len() {
+            self.step()?;
+            self.ip += 1;
+            f(self)?;
+        }
+        Ok(())
+    }
+
     fn err(&self, msg: &str) -> Error {
         Error::make(msg, self.ip)
     }
@@ -93,10 +102,10 @@ impl Executor {
             .ok_or_else(|| self.err("invalid instruction pointer"))?;
 
         macro_rules! impl_num_binop {
-            ($op:tt) => {
+            ($op:tt, $ret:ident) => {
                 match (self.pop()?, self.pop()?) {
                     (Value::Num(a), Value::Num(b)) => {
-                        self.stack.push(Value::Num(a $op b));
+                        self.stack.push(Value::$ret(a $op b));
                     }
                     _ => return Err(Error::make("can't apply operator to non-numbers", self.ip)),
                 }
@@ -117,11 +126,12 @@ impl Executor {
             Instr::NumPush(x) => {
                 self.push(Value::Num(*x))?;
             }
-            Instr::NumAdd => impl_num_binop!(+),
-            Instr::NumSub => impl_num_binop!(-),
-            Instr::NumMul => impl_num_binop!(*),
-            Instr::NumDiv => impl_num_binop!(/),
-            Instr::NumMod => impl_num_binop!(%),
+            Instr::NumAdd => impl_num_binop!(+, Num),
+            Instr::NumSub => impl_num_binop!(-, Num),
+            Instr::NumMul => impl_num_binop!(*, Num),
+            Instr::NumDiv => impl_num_binop!(/, Num),
+            Instr::NumMod => impl_num_binop!(%, Num),
+            Instr::NumEq => impl_num_binop!(==, Bool),
 
             Instr::BoolPush(x) => {
                 self.push(Value::Bool(*x))?;

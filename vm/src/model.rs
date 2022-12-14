@@ -103,7 +103,8 @@ pub enum Instr {
     NumSub,       // │ 1 byte
     NumMul,       // │
     NumDiv,       // │
-    NumMod,       // ┘
+    NumMod,       // │
+    NumEq,        // ┘
 
     BoolPush(bool), // 2 bytes: 1 byte for the enum, 1 byte for the bool
     BoolAnd,        // ┐ 1 byte
@@ -171,7 +172,12 @@ impl Instr {
     pub fn size(&self) -> usize {
         match self {
             Instr::NumPush(_) => 1 + std::mem::size_of::<i64>(),
-            Instr::NumAdd | Instr::NumSub | Instr::NumMul | Instr::NumDiv | Instr::NumMod => 1,
+            Instr::NumAdd
+            | Instr::NumSub
+            | Instr::NumMul
+            | Instr::NumDiv
+            | Instr::NumMod
+            | Instr::NumEq => 1,
 
             Instr::BoolPush(_) => 1 + std::mem::size_of::<bool>(),
             Instr::BoolAnd | Instr::BoolOr | Instr::BoolNot => 1,
@@ -227,6 +233,7 @@ impl Instr {
             Instr::NumMul => bytes.push(index!()),
             Instr::NumDiv => bytes.push(index!()),
             Instr::NumMod => bytes.push(index!()),
+            Instr::NumEq => bytes.push(index!()),
 
             Instr::BoolPush(b) => {
                 bytes.push(index!());
