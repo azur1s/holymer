@@ -1,4 +1,16 @@
-fun foo x = x
+// start
+
+fun foo x = do
+    69 // unused
+    print("Hi")
+    x
+end
+
+/* block comment
+
+fun invalid =
+
+*/
 
 fun fac n = if n == 0 then 1 else n * fac(n - 1)
 
@@ -6,3 +18,5 @@ fun main = do
     print(foo(1))
     print(fac(5))
 end
+
+// end

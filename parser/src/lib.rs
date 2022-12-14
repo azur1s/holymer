@@ -174,15 +174,25 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .or(symbol)
         .or(delim)
         .or(keyword)
+        .map_with_span(move |token, span| (token, span))
+        .padded()
         .recover_with(skip_then_retry_until([]));
 
-    let comment = just("--").then(take_until(just('\n'))).padded();
+    let comments = just('/')
+        .then_ignore(
+            just('*')
+                .ignore_then(take_until(just("*/")).ignored())
+                .or(just('/').ignore_then(none_of('\n').ignored().repeated().ignored())),
+        )
+        .padded()
+        .ignored()
+        .repeated();
 
     token
-        .padded_by(comment.repeated())
-        .map_with_span(|token, span| (token, span))
-        .padded()
+        .padded_by(comments)
         .repeated()
+        .padded()
+        .then_ignore(end())
 }
 
 pub fn lex(src: String) -> (Option<Vec<(Token, Span)>>, Vec<Simple<char>>) {
