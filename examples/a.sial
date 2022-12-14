@@ -14,3 +14,8 @@ fun main = do
     let result = add(34, 35)
     println(result)
 end
+
+fun main = do
+    let add = \x y -> x + y in
+        print(add(34, succ(34)))
+end

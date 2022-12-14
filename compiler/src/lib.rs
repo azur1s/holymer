@@ -63,12 +63,16 @@ impl Compiler {
                 for x in xs {
                     instrs.extend(self.compile_expr(x.0));
                 }
-                if f.0 == Expr::Sym("print".to_string()) {
-                    instrs.push(Instr::Print);
-                } else {
-                    instrs.extend(self.compile_expr(f.0));
-                    instrs.push(Instr::FuncApply);
-                }
+                if let Expr::Sym(fname) = &f.0 {
+                    match fname.as_str() {
+                        "print" => instrs.push(Instr::Print),
+                        "println" => instrs.push(Instr::PrintLn),
+                        _ => {
+                            instrs.extend(self.compile_expr(f.0));
+                            instrs.push(Instr::FuncApply);
+                        }
+                    }
+                };
                 instrs
             }
             Expr::Let(binds, body) => {

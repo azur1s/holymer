@@ -124,6 +124,7 @@ pub enum Instr {
     //                                               └─╼ null delimiter
     // Total of 15 bytes (1 + 13 + 1)
     StrPush(String), // 1 + string.len() + 1 bytes
+    StrConcat,       // 1 byte
 
     Pop, // ┐ 1 byte
     Dup, // ┘
@@ -163,7 +164,8 @@ pub enum Instr {
     Jump(usize),        // ┐ 9 bytes: 1 byte for the enum, 8 bytes for the usize (64-bit)
     JumpIfFalse(usize), // ┘
 
-    Print, // 1 byte
+    Print,   // ┐ 1 byte
+    PrintLn, // ┘
 }
 
 static mut INSTR_INDEX: Cell<u8> = Cell::new(0);
@@ -183,6 +185,7 @@ impl Instr {
             Instr::BoolAnd | Instr::BoolOr | Instr::BoolNot => 1,
 
             Instr::StrPush(s) => 1 + s.len() + 1,
+            Instr::StrConcat => 1,
 
             Instr::Pop | Instr::Dup => 1,
 
@@ -204,7 +207,7 @@ impl Instr {
 
             Instr::Jump(_) | Instr::JumpIfFalse(_) => 1 + std::mem::size_of::<usize>(),
 
-            Instr::Print => 1,
+            Instr::Print | Instr::PrintLn => 1,
         }
     }
 
@@ -248,6 +251,7 @@ impl Instr {
                 bytes.extend(s.as_bytes());
                 bytes.push(0x00);
             }
+            Instr::StrConcat => bytes.push(index!()),
 
             Instr::Pop => bytes.push(index!()),
             Instr::Dup => bytes.push(index!()),
@@ -307,6 +311,7 @@ impl Instr {
             }
 
             Instr::Print => bytes.push(index!()),
+            Instr::PrintLn => bytes.push(index!()),
         }
         bytes
     }

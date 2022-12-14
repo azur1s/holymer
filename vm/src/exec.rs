@@ -101,23 +101,13 @@ impl Executor {
             .get(self.ip)
             .ok_or_else(|| self.err("invalid instruction pointer"))?;
 
-        macro_rules! impl_num_binop {
-            ($op:tt, $ret:ident) => {
+        macro_rules! impl_binop {
+            ($op:tt, $inp:ident, $ret:ident) => {
                 match (self.pop()?, self.pop()?) {
-                    (Value::Num(a), Value::Num(b)) => {
+                    (Value::$inp(a), Value::$inp(b)) => {
                         self.stack.push(Value::$ret(a $op b));
                     }
-                    _ => return Err(Error::make("can't apply operator to non-numbers", self.ip)),
-                }
-            };
-        }
-        macro_rules! impl_bool_binop {
-            ($op:tt) => {
-                match (self.pop()?, self.pop()?) {
-                    (Value::Bool(a), Value::Bool(b)) => {
-                        self.stack.push(Value::Bool(a $op b));
-                    }
-                    _ => return Err(Error::make("can't apply operator to non-booleans", self.ip)),
+                    _ => return Err(Error::make(format!("can't apply operator to non-{}", stringify!($inp)).as_str(), self.ip)),
                 }
             };
         }
@@ -126,18 +116,18 @@ impl Executor {
             Instr::NumPush(x) => {
                 self.push(Value::Num(*x))?;
             }
-            Instr::NumAdd => impl_num_binop!(+, Num),
-            Instr::NumSub => impl_num_binop!(-, Num),
-            Instr::NumMul => impl_num_binop!(*, Num),
-            Instr::NumDiv => impl_num_binop!(/, Num),
-            Instr::NumMod => impl_num_binop!(%, Num),
-            Instr::NumEq => impl_num_binop!(==, Bool),
+            Instr::NumAdd => impl_binop!(+, Num, Num),
+            Instr::NumSub => impl_binop!(-, Num, Num),
+            Instr::NumMul => impl_binop!(*, Num, Num),
+            Instr::NumDiv => impl_binop!(/, Num, Num),
+            Instr::NumMod => impl_binop!(%, Num, Num),
+            Instr::NumEq => impl_binop!(==, Num, Bool),
 
             Instr::BoolPush(x) => {
                 self.push(Value::Bool(*x))?;
             }
-            Instr::BoolAnd => impl_bool_binop!(&&),
-            Instr::BoolOr => impl_bool_binop!(||),
+            Instr::BoolAnd => impl_binop!(&&, Bool, Bool),
+            Instr::BoolOr => impl_binop!(||, Bool, Bool),
             Instr::BoolNot => {
                 if let Value::Bool(b) = self.pop()? {
                     self.push(Value::Bool(!b))?;
@@ -149,7 +139,13 @@ impl Executor {
             Instr::StrPush(x) => {
                 self.push(Value::Str(x.clone()))?;
             }
-
+            Instr::StrConcat => {
+                if let (Value::Str(a), Value::Str(b)) = (self.pop()?, self.pop()?) {
+                    self.push(Value::Str(a + &b))?;
+                } else {
+                    return Err(Error::make("can't concatenate non-strings", self.ip));
+                }
+            }
             Instr::Pop => {
                 self.pop()?;
             }
@@ -273,6 +269,10 @@ impl Executor {
             }
 
             Instr::Print => {
+                let v = self.pop()?;
+                print!("{}", v);
+            }
+            Instr::PrintLn => {
                 let v = self.pop()?;
                 println!("{}", v);
             }
