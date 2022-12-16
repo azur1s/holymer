@@ -15,10 +15,7 @@ fn main() {
             let instrs = compiler.compile_program(ast);
             // instrs.iter().for_each(|i| println!("{:?}", i));
             let mut executor = Executor::new(instrs);
-            match executor.run_with(|exec| {
-                // println!("{:?}", exec.stack);
-                Ok(())
-            }) {
+            match executor.run() {
                 Ok(_) => {}
                 Err(e) => println!("Runtime error: {:?}", e),
             }

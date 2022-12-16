@@ -7,3 +7,7 @@ edition = "2021"
 parser = { path = "../parser" }
 compiler = { path = "../compiler" }
 vm = { path = "../vm" }
+
+[[bin]]
+name = "hmc"
+path = "src/main.rs"

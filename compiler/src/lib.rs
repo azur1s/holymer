@@ -1,6 +1,7 @@
 #![allow(clippy::new_without_default)]
+#![allow(clippy::only_used_in_recursion)]
 use parser::{Expr, Literal, Span, Stmt};
-use vm::model::{Instr, Value};
+use vm::model::Instr;
 
 pub struct Compiler {}
 
@@ -11,7 +12,10 @@ impl Compiler {
 
     pub fn compile_expr(&mut self, expr: Expr) -> Vec<Instr> {
         match expr {
-            Expr::Error => unreachable!(),
+            Expr::Error => {
+                println!("{:?}", expr);
+                unreachable!()
+            }
             Expr::Literal(x) => match x {
                 Literal::Num(x) => vec![Instr::NumPush(x)],
                 Literal::Bool(x) => vec![Instr::BoolPush(x)],
@@ -63,16 +67,21 @@ impl Compiler {
                 for x in xs {
                     instrs.extend(self.compile_expr(x.0));
                 }
-                if let Expr::Sym(fname) = &f.0 {
-                    match fname.as_str() {
+                match &f.0 {
+                    Expr::Sym(fname) => match fname.as_str() {
                         "print" => instrs.push(Instr::Print),
                         "println" => instrs.push(Instr::PrintLn),
                         _ => {
                             instrs.extend(self.compile_expr(f.0));
                             instrs.push(Instr::FuncApply);
                         }
+                    },
+                    Expr::Lambda(_, _) => {
+                        instrs.extend(self.compile_expr(f.0));
+                        instrs.push(Instr::FuncApply);
                     }
-                };
+                    _ => todo!(),
+                }
                 instrs
             }
             Expr::Let(binds, body) => {

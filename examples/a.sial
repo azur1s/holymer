@@ -19,3 +19,6 @@ fun main = do
     let add = \x y -> x + y in
         print(add(34, succ(34)))
 end
+
+// succ(34) |> \x -> add (34, x)
+// (\x -> add(34, x))(succ(34))

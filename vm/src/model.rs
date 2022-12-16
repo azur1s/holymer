@@ -123,7 +123,7 @@ pub enum Instr {
     // where x is the enum (1 byte)
     //       s is the string (n bytes)
     // Example: StrPush "Hello, World!"
-    // [05] [48 65 6c 6c 6f 2c 20 57 6f 72 6c 64 21] [00]
+    // [XX] [48 65 6c 6c 6f 2c 20 57 6f 72 6c 64 21] [00]
     // └────┼────────────────────────────────────────┼─╼ enum
     //      └────────────────────────────────────────┼─╼ string
     //                                               └─╼ null delimiter
@@ -153,7 +153,7 @@ pub enum Instr {
     //       ╴╴┴──────┴────┴╶╶
     //       i is the instructions (m bytes)
     // Example: FuncMake ["x", "y"] [Get "x", Get "yz", NumAdd]
-    // [0d] [02 ..] [03 ..] [78 00 79 7a 00] [16 78 00 16 79 7a 00 01]
+    // [XX] [02 ..] [03 ..] [78 00 79 7a 00] [16 78 00 16 79 7a 00 01]
     // └────┼───────┼───────┼────────────────┼─╼ enum
     //      └───────┼───────┼────────────────┼─╼ number of arguments
     //              └───────┼────────────────┼─╼ number of instructions

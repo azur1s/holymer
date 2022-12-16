@@ -1,4 +1,5 @@
 #![feature(trait_alias)]
+#![allow(clippy::type_complexity)]
 use ariadne::{Color, Fmt, Label, Report, ReportKind, Source};
 use chumsky::{error, prelude::*, Stream};
 
@@ -323,6 +324,12 @@ pub fn expr_parser() -> impl P<Spanned<Expr>> {
         })
         .labelled("vector");
 
+        let paren_expr = just(Token::Open(Delimiter::Paren))
+            .ignore_then(expr.clone())
+            .then_ignore(just(Token::Close(Delimiter::Paren)))
+            .map(|e| e.0)
+            .labelled("parenthesized expression");
+
         let lam = just(Token::Backslash)
             .ignore_then(symbol_parser().repeated())
             .then_ignore(just(Token::Arrow))
@@ -369,6 +376,7 @@ pub fn expr_parser() -> impl P<Spanned<Expr>> {
         let atom = lit
             .or(ident)
             .or(vec)
+            .or(paren_expr)
             .or(lam)
             .or(let_in)
             .or(let_def)
@@ -481,7 +489,7 @@ pub fn expr_parser() -> impl P<Spanned<Expr>> {
             })
             .boxed();
 
-        let pipe = logical
+        logical
             .clone()
             .then(
                 just(Token::Pipe)
@@ -494,9 +502,7 @@ pub fn expr_parser() -> impl P<Spanned<Expr>> {
                 let s = lhs.1.start()..rhs.1.end();
                 (Expr::Binary(op, Box::new(lhs), Box::new(rhs)), s)
             })
-            .boxed();
-
-        pipe
+            .boxed()
     })
 }
 
