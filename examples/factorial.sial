@@ -1,0 +1,9 @@
+fun factorial n =
+    let helper = \n acc ->
+        if n > 0
+        then helper(n - 1, acc * n)
+        else acc
+    in
+        helper(n, 1)
+
+fun main = println(factorial(20))

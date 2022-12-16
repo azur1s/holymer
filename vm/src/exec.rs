@@ -122,6 +122,11 @@ impl Executor {
             Instr::NumDiv => impl_binop!(/, Num, Num),
             Instr::NumMod => impl_binop!(%, Num, Num),
             Instr::NumEq => impl_binop!(==, Num, Bool),
+            Instr::NumNe => impl_binop!(!=, Num, Bool),
+            Instr::NumLt => impl_binop!(<, Num, Bool),
+            Instr::NumGt => impl_binop!(>, Num, Bool),
+            Instr::NumLe => impl_binop!(<=, Num, Bool),
+            Instr::NumGe => impl_binop!(>=, Num, Bool),
 
             Instr::BoolPush(x) => {
                 self.push(Value::Bool(*x))?;

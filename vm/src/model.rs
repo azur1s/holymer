@@ -99,12 +99,17 @@ pub enum Instr {
     // 00 67 00 00 00 00 00 00 00
     // 01
     NumPush(i64), // 9 bytes: 1 byte for the enum, 8 bytes for the i64
-    NumAdd,       // ┐
-    NumSub,       // │ 1 byte
+    NumAdd,       // ┐ 1 byte
+    NumSub,       // │
     NumMul,       // │
     NumDiv,       // │
     NumMod,       // │
-    NumEq,        // ┘
+    NumEq,        // │
+    NumNe,        // │
+    NumLt,        // │
+    NumGt,        // │
+    NumLe,        // │
+    NumGe,        // ┘
 
     BoolPush(bool), // 2 bytes: 1 byte for the enum, 1 byte for the bool
     BoolAnd,        // ┐ 1 byte
@@ -179,7 +184,12 @@ impl Instr {
             | Instr::NumMul
             | Instr::NumDiv
             | Instr::NumMod
-            | Instr::NumEq => 1,
+            | Instr::NumEq
+            | Instr::NumNe
+            | Instr::NumLt
+            | Instr::NumGt
+            | Instr::NumLe
+            | Instr::NumGe => 1,
 
             Instr::BoolPush(_) => 1 + std::mem::size_of::<bool>(),
             Instr::BoolAnd | Instr::BoolOr | Instr::BoolNot => 1,
@@ -231,12 +241,17 @@ impl Instr {
                 bytes.push(index!());
                 bytes.extend(n.to_le_bytes());
             }
-            Instr::NumAdd => bytes.push(index!()),
-            Instr::NumSub => bytes.push(index!()),
-            Instr::NumMul => bytes.push(index!()),
-            Instr::NumDiv => bytes.push(index!()),
-            Instr::NumMod => bytes.push(index!()),
-            Instr::NumEq => bytes.push(index!()),
+            Instr::NumAdd
+            | Instr::NumSub
+            | Instr::NumMul
+            | Instr::NumDiv
+            | Instr::NumMod
+            | Instr::NumEq
+            | Instr::NumNe
+            | Instr::NumLt
+            | Instr::NumGt
+            | Instr::NumLe
+            | Instr::NumGe => bytes.push(index!()),
 
             Instr::BoolPush(b) => {
                 bytes.push(index!());
