@@ -1,3 +1,5 @@
 fun main = do
-    println((\x -> x + 1)(9))
+    1
+    |> \x -> x + 1
+    |> \x -> println(x)
 end

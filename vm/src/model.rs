@@ -49,13 +49,38 @@ impl Display for Value {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Env {
     pub binds: FnvHashMap<String, Value>,
+    pub parent: Option<Rc<Self>>,
 }
 
 impl Env {
     pub fn new() -> Self {
         Self {
             binds: FnvHashMap::default(),
+            parent: None,
         }
+    }
+
+    pub fn new_with_parent(parent: Rc<Self>) -> Self {
+        Self {
+            binds: FnvHashMap::default(),
+            parent: Some(parent),
+        }
+    }
+
+    pub fn get(&self, name: &str) -> Option<Value> {
+        // Get the value from the current environment first
+        // and then from the parent environment recursively
+        self.binds
+            .get(name)
+            .cloned()
+            .or_else(|| self.parent.as_ref().and_then(|p| p.get(name)).or(None))
+    }
+
+    pub fn set(&mut self, name: String, value: Value) {
+        // Set the value in the current environment
+        // The handling of deciding whether to create a new binding
+        // is done in the Executor
+        self.binds.insert(name, value);
     }
 }
 
@@ -73,16 +98,17 @@ impl Func {
 
     pub fn run(self, args: Vec<Value>) -> Result<Vec<Value>, Error> {
         // Create a new environment for the closure
-        let mut new_env = Env::new();
+        let mut closure_env = Env::new();
         for (arg, val) in self.args.iter().zip(args) {
-            new_env.binds.insert(arg.clone(), val);
+            closure_env.binds.insert(arg.clone(), val);
         }
-        let new_env = Rc::new(RefCell::new(new_env));
+        // Set the parent to the current environment
+        closure_env.parent = Some(Rc::new(self.env.borrow().clone()));
 
         // Execute the closure
         let mut new_executor = Executor {
             stack: Vec::new(),
-            env: new_env,
+            env: Rc::new(RefCell::new(closure_env)),
             outer_env: Some(Rc::clone(&self.env)),
             instrs: self.instrs,
             ip: 0,

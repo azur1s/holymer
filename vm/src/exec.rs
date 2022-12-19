@@ -61,20 +61,10 @@ impl Executor {
     }
 
     fn get(&self, name: &str) -> Result<Value, Error> {
-        // Get from the current environment first
         self.env
             .borrow()
-            .binds
             .get(name)
-            .cloned()
-            // If it doesn't exist then try the outer environment
-            .or_else(|| {
-                self.outer_env
-                    .as_ref()
-                    .and_then(|env| env.borrow().binds.get(name).cloned())
-                    .or(None)
-            })
-            .ok_or_else(|| self.err(format!("undefined variable {}", name).as_str()))
+            .ok_or_else(|| self.err(format!("unbound variable: {}", name).as_str()))
     }
 
     fn set(&mut self, name: &str, v: Value) -> Result<(), Error> {

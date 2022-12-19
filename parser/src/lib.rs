@@ -532,6 +532,17 @@ pub fn parse(
     (ast, parse_error)
 }
 
+pub fn parse_expr(
+    tokens: Vec<Spanned<Token>>,
+    len: usize,
+) -> (Option<Spanned<Expr>>, Vec<Simple<Token>>) {
+    let (ast, parse_error) = expr_parser()
+        .then_ignore(end())
+        .parse_recovery(Stream::from_iter(len..len + 1, tokens.into_iter()));
+
+    (ast, parse_error)
+}
+
 pub fn report(e: Simple<String>, src: &str) {
     let report = Report::build(ReportKind::Error, (), e.span().start());
 

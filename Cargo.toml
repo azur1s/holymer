@@ -2,6 +2,7 @@
 members = [
     "entry",
     "parser",
+    "lower",
     "compiler",
     "vm",
 ]
