@@ -1,6 +1,6 @@
 #![allow(clippy::new_without_default)]
 #![allow(clippy::only_used_in_recursion)]
-use parser::{Expr, Literal, Span, Stmt};
+use lower::model::{BinaryOp, Expr, Literal, Stmt, UnaryOp};
 use vm::model::Instr;
 
 pub struct Compiler {}
@@ -26,58 +26,58 @@ impl Compiler {
                 let mut instrs = vec![];
                 let count = xs.len();
                 for x in xs {
-                    instrs.extend(self.compile_expr(x.0));
+                    instrs.extend(self.compile_expr(x));
                 }
                 instrs.push(Instr::ListMake(count));
                 instrs
             }
             Expr::Unary(op, x) => {
-                let mut instrs = self.compile_expr(x.0);
-                instrs.extend(match op.0 {
-                    parser::UnaryOp::Neg => vec![Instr::NumPush(-1), Instr::NumMul],
-                    parser::UnaryOp::Not => vec![Instr::BoolNot],
+                let mut instrs = self.compile_expr(*x);
+                instrs.extend(match op {
+                    UnaryOp::Neg => vec![Instr::NumPush(-1), Instr::NumMul],
+                    UnaryOp::Not => vec![Instr::BoolNot],
                 });
                 instrs
             }
             Expr::Binary(op, x, y) => {
-                let mut instrs = self.compile_expr(y.0);
-                instrs.extend(self.compile_expr(x.0));
-                instrs.push(match op.0 {
-                    parser::BinaryOp::Add => Instr::NumAdd,
-                    parser::BinaryOp::Sub => Instr::NumSub,
-                    parser::BinaryOp::Mul => Instr::NumMul,
-                    parser::BinaryOp::Div => Instr::NumDiv,
-                    parser::BinaryOp::Eq => Instr::NumEq,
-                    parser::BinaryOp::Ne => Instr::NumNe,
-                    parser::BinaryOp::Lt => Instr::NumLt,
-                    parser::BinaryOp::Gt => Instr::NumGt,
-                    parser::BinaryOp::Le => Instr::NumLe,
-                    parser::BinaryOp::Ge => Instr::NumGe,
-                    parser::BinaryOp::And => Instr::BoolAnd,
-                    parser::BinaryOp::Or => Instr::BoolOr,
-                    parser::BinaryOp::Pipe => todo!(),
+                let mut instrs = self.compile_expr(*y);
+                instrs.extend(self.compile_expr(*x));
+                instrs.push(match op {
+                    BinaryOp::Add => Instr::NumAdd,
+                    BinaryOp::Sub => Instr::NumSub,
+                    BinaryOp::Mul => Instr::NumMul,
+                    BinaryOp::Div => Instr::NumDiv,
+                    BinaryOp::Eq => Instr::NumEq,
+                    BinaryOp::Ne => Instr::NumNe,
+                    BinaryOp::Lt => Instr::NumLt,
+                    BinaryOp::Gt => Instr::NumGt,
+                    BinaryOp::Le => Instr::NumLe,
+                    BinaryOp::Ge => Instr::NumGe,
+                    BinaryOp::And => Instr::BoolAnd,
+                    BinaryOp::Or => Instr::BoolOr,
+                    BinaryOp::Pipe => todo!(),
                 });
                 instrs
             }
             Expr::Lambda(args, body) => {
-                vec![Instr::FuncMake(args, self.compile_expr(body.0))]
+                vec![Instr::FuncMake(args, self.compile_expr(*body))]
             }
             Expr::Call(f, xs) => {
                 let mut instrs = vec![];
                 for x in xs {
-                    instrs.extend(self.compile_expr(x.0));
+                    instrs.extend(self.compile_expr(x));
                 }
-                match &f.0 {
-                    Expr::Sym(fname) => match fname.as_str() {
+                match *f {
+                    Expr::Sym(ref fname) => match fname.as_str() {
                         "print" => instrs.push(Instr::Print),
                         "println" => instrs.push(Instr::PrintLn),
                         _ => {
-                            instrs.extend(self.compile_expr(f.0));
+                            instrs.extend(self.compile_expr(*f));
                             instrs.push(Instr::FuncApply);
                         }
                     },
                     Expr::Lambda(_, _) => {
-                        instrs.extend(self.compile_expr(f.0));
+                        instrs.extend(self.compile_expr(*f));
                         instrs.push(Instr::FuncApply);
                     }
                     _ => todo!(),
@@ -89,7 +89,7 @@ impl Compiler {
                 let binds = binds
                     .into_iter()
                     .flat_map(|(name, expr)| {
-                        let mut instrs = self.compile_expr(expr.0);
+                        let mut instrs = self.compile_expr(expr);
                         instrs.extend(vec![Instr::Set(name)]);
                         instrs
                     })
@@ -101,7 +101,7 @@ impl Compiler {
                     instrs.extend(vec![
                         Instr::FuncMake(
                             vec![],
-                            binds.into_iter().chain(self.compile_expr(e.0)).collect(),
+                            binds.into_iter().chain(self.compile_expr(*e)).collect(),
                         ),
                         Instr::FuncApply,
                     ]);
@@ -113,10 +113,10 @@ impl Compiler {
                 instrs
             }
             Expr::If(c, t, f) => {
-                let mut instrs = self.compile_expr(c.0);
-                let t = self.compile_expr(t.0);
+                let mut instrs = self.compile_expr(*c);
+                let t = self.compile_expr(*t);
                 if let Some(f) = f {
-                    let f = self.compile_expr(f.0);
+                    let f = self.compile_expr(*f);
                     instrs.push(Instr::JumpIfFalse(t.len() + 1));
                     instrs.extend(t);
                     instrs.push(Instr::Jump(f.len()));
@@ -130,7 +130,7 @@ impl Compiler {
             Expr::Do(es) => {
                 let mut instrs = vec![];
                 for e in es {
-                    instrs.extend(self.compile_expr(e.0));
+                    instrs.extend(self.compile_expr(e));
                 }
                 instrs
             }
@@ -141,11 +141,11 @@ impl Compiler {
         match stmt {
             Stmt::Fun(name, args, body) => {
                 let is_main = name == "main";
-                let mut instrs = match body.0 {
+                let mut instrs = match body {
                     // If the body is a lambda then we don't have to compile
                     // it into a function
-                    Expr::Lambda(_, _) => self.compile_expr(body.0),
-                    _ => vec![Instr::FuncMake(args, self.compile_expr(body.0))],
+                    Expr::Lambda(_, _) => self.compile_expr(body),
+                    _ => vec![Instr::FuncMake(args, self.compile_expr(body))],
                 };
                 instrs.push(Instr::Set(name));
                 if is_main {

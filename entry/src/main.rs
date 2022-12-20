@@ -1,5 +1,5 @@
 use compiler::Compiler;
-use lower::Lower;
+use lower::{model::converts, Lower};
 use parser::{lex, parse, report};
 use vm::exec::Executor;
 
@@ -12,10 +12,11 @@ fn main() {
         let (ast, parse_errors) = parse(tokens, src.len());
 
         if let Some(ast) = ast {
+            let stripped = converts(ast);
             let mut lower = Lower::new();
-            let last = lower.opt_stmts(ast.iter().map(|(s, _)| s.clone()).collect());
+            let lowered = lower.opt_stmts(stripped);
             let mut compiler = Compiler::new();
-            let instrs = compiler.compile_program(last);
+            let instrs = compiler.compile_program(lowered);
             // instrs.iter().for_each(|i| println!("{:?}", i));
             let mut executor = Executor::new(instrs);
             match executor.run() {

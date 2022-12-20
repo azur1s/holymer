@@ -8,5 +8,9 @@ end
 fun double x = x * 2
 
 fun main = do
-    x |> \a -> println(a)
+
+    1
+    |> \a -> succ(a)
+    |> \b -> double(b)
+    |> \c -> println(c)
 end
