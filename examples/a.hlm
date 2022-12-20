@@ -8,6 +8,5 @@ end
 fun double x = x * 2
 
 fun main = do
-    let add = \x y -> x + y in
-        print(add(double(17), succ(34)))
+    x |> \a -> println(a)
 end

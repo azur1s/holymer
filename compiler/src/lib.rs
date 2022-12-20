@@ -157,9 +157,9 @@ impl Compiler {
         }
     }
 
-    pub fn compile_program(&mut self, stmts: Vec<(Stmt, Span)>) -> Vec<Instr> {
+    pub fn compile_program(&mut self, stmts: Vec<Stmt>) -> Vec<Instr> {
         let mut instrs = vec![];
-        for (stmt, _) in stmts {
+        for stmt in stmts {
             instrs.extend(self.compile_stmt(stmt));
         }
         instrs

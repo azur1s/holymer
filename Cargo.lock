@@ -76,6 +76,7 @@ name = "entry"
 version = "0.1.0"
 dependencies = [
  "compiler",
+ "lower",
  "parser",
  "vm",
 ]

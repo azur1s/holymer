@@ -1,12 +1,15 @@
+// This is just proof of concept on what the language
+// might look like in the future
+
 import http from "http"
 
--- Define a custom type to represent a user
+// Define a custom type to represent a user
 type User =
     id: number,
     name: string,
 end
 
--- Define a function to handle incoming HTTP requests
+// Define a function to handle incoming HTTP requests
 fun handle_request
     req: http.IncomingMessage,
     res: http.ServerResponse,
