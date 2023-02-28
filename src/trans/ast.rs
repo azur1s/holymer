@@ -24,6 +24,7 @@ pub enum Literal {
 pub enum Expr {
     Lit(Literal),
     Sym(String),
+    Vec(Vec<Self>),
 
     UnaryOp(UnaryOp, Box<Self>),
     BinaryOp(BinaryOp, Box<Self>, Box<Self>),
@@ -44,9 +45,17 @@ impl Display for Expr {
                 Literal::Bool(b) => write!(f, "{}", b),
             },
             Expr::Sym(s) => write!(f, "{}", s),
+            Expr::Vec(v) => {
+                write!(f, "[")?;
+                for (i, e) in v.iter().enumerate() {
+                    if i > 0 { write!(f, " ")?; }
+                    write!(f, "{}", e)?;
+                }
+                write!(f, "]")
+            },
 
-            Expr::UnaryOp(op, e) => write!(f, "({:?} {})", op, e),
-            Expr::BinaryOp(op, e1, e2) => write!(f, "({:?} {} {})", op, e1, e2),
+            Expr::UnaryOp(op, e)       => write!(f, "({} {})", format!("{:?}", op).to_lowercase(), e),
+            Expr::BinaryOp(op, e1, e2) => write!(f, "({} {} {})", format!("{:?}", op).to_lowercase(), e1, e2),
 
             Expr::Call(c, args) => {
                 write!(f, "({}", c)?;

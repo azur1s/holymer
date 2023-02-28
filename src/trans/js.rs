@@ -9,6 +9,7 @@ pub enum JSLiteral { Num(i64), Str(String), Bool(bool) }
 pub enum JSExpr {
     Lit(JSLiteral),
     Sym(String),
+    Array(Vec<Self>),
 
     Op(&'static str, Box<Self>, Option<Box<Self>>),
 
@@ -29,6 +30,14 @@ impl Display for JSExpr {
                 JSLiteral::Bool(b) => write!(f, "{}", b),
             },
             JSExpr::Sym(s) => write!(f, "{}", s),
+            JSExpr::Array(v) => {
+                write!(f, "[")?;
+                for (i, e) in v.iter().enumerate() {
+                    if i > 0 { write!(f, ", ")?; }
+                    write!(f, "{}", e)?;
+                }
+                write!(f, "]")
+            },
 
             JSExpr::Op(op, lhs, rhs) => {
                 match rhs {

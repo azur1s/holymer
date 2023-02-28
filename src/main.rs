@@ -2,54 +2,58 @@
 pub mod parse;
 pub mod trans;
 
-use parse::parse::lex;
+use parse::parse::{lex, parse};
+use trans::low::{translate_expr, translate_js};
 
 fn main() {
-    let input = r#"
-        println((\x: int -> x + 1)(1));
-    "#;
+    let path = std::env::args().nth(1).expect("No file path provided");
+    let src = std::fs::read_to_string(path).expect("Failed to read file");
 
-    let tokens = lex(input.to_owned());
-    println!("{:?}", tokens);
+    let (tokens, lex_errs) = lex(src.to_owned());
 
-    // use parse::past::*;
-    // use trans::ty::Type;
-    // use trans::low::*;
+    let parse_errs = if let Some(tokens) = tokens {
+        let (ast, parse_errs) = parse(tokens, src.len());
 
-    // let exprs = vec![
-    //     PExpr::Call(Box::new(PExpr::Sym("println".to_string())), vec![
-    //         PExpr::Str("Hello, world!".to_string()),
-    //     ]),
-    //     PExpr::Let {
-    //         vars: vec![
-    //             ("x".to_string(), Type::Num, PExpr::Num(1)),
-    //         ],
-    //         body: Box::new(PExpr::Sym("x".to_string())),
-    //     },
-    //     PExpr::Let {
-    //         vars: vec![
-    //             ("x".to_string(), Type::Num, PExpr::Num(34)),
-    //             ("y".to_string(), Type::Num, PExpr::Num(35)),
-    //         ],
-    //         body: Box::new(PExpr::BinaryOp(
-    //             PBinaryOp::Add,
-    //             Box::new(PExpr::Sym("x".to_string())),
-    //             Box::new(PExpr::Sym("y".to_string())),
-    //         )),
-    //     },
-    // ];
+        if let Some(ast) = ast {
+            println!();
+            println!("\x1b[90m───SOURCE─────────────────────────────────────────\x1b[0m");
+            println!("{src}");
+            println!("\x1b[90m───PARSE TREE─────────────────────────────────────\x1b[0m");
+            for (e, _) in &ast {
+                println!("{}", {
+                    let e = format!("{:?}", e);
+                    if e.len() > 50 {
+                        format!("{}...", &e[..47])
+                    } else {
+                        e
+                    }
+                });
+            }
+            println!("\x1b[90m───INTERNAL AST───────────────────────────────────\x1b[0m");
+            let nexprs = ast.into_iter().map(|(e, _)| translate_expr(e)).collect::<Vec<_>>();
 
-    // let nexprs = exprs.into_iter().map(translate_expr).collect::<Vec<_>>();
+            for expr in &nexprs {
+                println!("{}", expr);
+            }
+            println!("\x1b[90m───JS OUTPUT──────────────────────────────────────\x1b[0m");
+            let jsexprs = nexprs.into_iter().map(translate_js).collect::<Vec<_>>();
 
-    // for expr in &nexprs {
-    //     println!("{}", expr);
-    // }
+            for expr in &jsexprs {
+                println!("{}", expr);
+            }
+            println!();
+        }
 
-    // println!("──────────────────────────────────────────────────");
+        parse_errs
+    } else {
+        Vec::new()
+    };
 
-    // let jsexprs = nexprs.into_iter().map(translate_js).collect::<Vec<_>>();
-
-    // for expr in &jsexprs {
-    //     println!("{}", expr);
-    // }
+    if !lex_errs.is_empty() || !parse_errs.is_empty() {
+        lex_errs
+            .into_iter()
+            .map(|e| e.map(|c| c.to_string()))
+            .chain(parse_errs.into_iter().map(|e| e.map(|t| t.to_string())))
+            .for_each(|e| println!("{}", e));
+    }
 }
