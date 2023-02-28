@@ -39,7 +39,8 @@ fn main() {
             let jsexprs = nexprs.into_iter().map(translate_js).collect::<Vec<_>>();
 
             for expr in &jsexprs {
-                println!("{}", expr);
+                let s = format!("{}", expr);
+                println!("{}{}", s, if s.ends_with(';') { "" } else { ";" });
             }
             println!();
         }

@@ -20,7 +20,7 @@ pub enum Token {
     Open(Delim), Close(Delim),
     Lambda, Arrow,
 
-    Let, Func,
+    Let, In, Func,
 }
 
 impl Display for Token {
@@ -64,6 +64,7 @@ impl Display for Token {
             Token::Arrow  => write!(f, "->"),
 
             Token::Let  => write!(f, "let"),
+            Token::In   => write!(f, "in"),
             Token::Func => write!(f, "func"),
         }
     }
@@ -121,6 +122,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
             "true"  => Token::Bool(true),
             "false" => Token::Bool(false),
             "let"   => Token::Let,
+            "in"    => Token::In,
             "func"  => Token::Func,
             _       => Token::Sym(s),
         });
@@ -275,11 +277,42 @@ pub fn expr_parser() -> impl P<Spanned<PExpr>> {
         })
         .labelled("lambda");
 
+        let let_binds = symbol_parser()
+        .then_ignore(just(Token::Colon))
+        .then(type_parser())
+        .then_ignore(just(Token::Assign))
+        .then(expr.clone())
+        .map(|((sym, ty), body)| (sym, ty, body))
+        .separated_by(just(Token::Comma))
+        .allow_trailing()
+        .labelled("let bindings");
+
+        let let_in = just(Token::Let)
+        .ignore_then(let_binds.clone())
+        .then_ignore(just(Token::In))
+        .then(expr.clone())
+        .map(|(vars, body)| PExpr::Let {
+            vars,
+            body: Some(Box::new(body)),
+        })
+        .boxed()
+        .labelled("let..in");
+
+        let let_def = just(Token::Let)
+        .ignore_then(let_binds)
+        .map(|vars| PExpr::Let {
+            vars,
+            body: None,
+        })
+        .labelled("let");
+
         let atom = lit
         .or(sym)
         .or(vec)
         .or(paren_expr)
         .or(lam)
+        .or(let_in)
+        .or(let_def)
         .map_with_span(|e, s| (e, s))
         .boxed()
         .labelled("atom");
