@@ -1,8 +1,8 @@
 #![feature(trait_alias)]
-pub mod parse;
+pub mod read;
 pub mod trans;
 
-use parse::parse::{lex, parse};
+use read::parse::{lex, parse};
 use trans::low::{translate_expr, translate_js};
 
 fn main() {
