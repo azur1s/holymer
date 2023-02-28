@@ -2,6 +2,8 @@
 pub mod read;
 pub mod trans;
 
+use std::io::Write;
+
 use read::parse::{lex, parse};
 use trans::low::{translate_expr, translate_js};
 
@@ -15,34 +17,23 @@ fn main() {
         let (ast, parse_errs) = parse(tokens, src.len());
 
         if let Some(ast) = ast {
-            println!();
-            println!("\x1b[90m───SOURCE─────────────────────────────────────────\x1b[0m");
-            println!("{src}");
-            println!("\x1b[90m───PARSE TREE─────────────────────────────────────\x1b[0m");
-            for (e, _) in &ast {
-                println!("{}", {
-                    let e = format!("{:?}", e);
-                    if e.len() > 50 {
-                        format!("{}...", &e[..47])
-                    } else {
-                        e
-                    }
-                });
-            }
-            println!("\x1b[90m───INTERNAL AST───────────────────────────────────\x1b[0m");
             let nexprs = ast.into_iter().map(|(e, _)| translate_expr(e)).collect::<Vec<_>>();
-
-            for expr in &nexprs {
-                println!("{}", expr);
-            }
-            println!("\x1b[90m───JS OUTPUT──────────────────────────────────────\x1b[0m");
             let jsexprs = nexprs.into_iter().map(translate_js).collect::<Vec<_>>();
 
-            for expr in &jsexprs {
-                let s = format!("{}", expr);
-                println!("{}{}", s, if s.ends_with(';') { "" } else { ";" });
-            }
-            println!();
+            let mut file = std::fs::File::create("out.js").expect("Failed to create file");
+            let s = jsexprs
+                .into_iter()
+                .map(|e| {
+                    let s = format!("{}", e);
+                    if s.ends_with(';') {
+                        s
+                    } else {
+                        format!("{};", s)
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+            file.write_all(s.as_bytes()).expect("Failed to write to file");
         }
 
         parse_errs
