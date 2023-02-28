@@ -1,5 +1,5 @@
 #![allow(clippy::type_complexity)]
-use chumsky::{error, prelude::*, Stream};
+use chumsky::{prelude::*, Stream};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use crate::trans::ty::Type;
 
