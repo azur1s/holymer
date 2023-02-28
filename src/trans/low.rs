@@ -52,21 +52,34 @@ pub fn translate_expr(expr: PExpr) -> Expr {
             body: Box::new(translate_expr((*body).0)),
         },
         PExpr::Let { vars, body } => {
-            let mut expr: Expr = translate_expr(*body); // The expression we're building up
-            for (name, ty, val) in vars.into_iter().rev() { // Reverse so we can build up the lambda
-                // e.g.: let x : t = e1 in e2 end => (lambda (x : t) = e2)(e1)
+            if let Some(body) = body {
+                let mut expr: Expr = translate_expr(body.0); // The expression we're building up
+                for (name, ty, val) in vars.into_iter().rev() { // Reverse so we can build up the lambda
+                    // e.g.: let x : t = e1 in e2; => (lambda (x : t) = e2)(e1)
 
-                // Build up the lambda
-                expr = Expr::Lambda {
-                    args: vec![(name, ty)],
-                    body: Box::new(expr),
-                };
-                // Call the lambda with the value
-                let val = translate_expr(val);
-                expr = Expr::Call(Box::new(expr), vec![val]);
+                    // Build up the lambda
+                    expr = Expr::Lambda {
+                        args: vec![(name, ty)],
+                        body: Box::new(expr),
+                    };
+                    // Call the lambda with the value
+                    let val = translate_expr(val.0);
+                    expr = Expr::Call(Box::new(expr), vec![val]);
+                }
+
+                expr
+            } else {
+                // e.g. let a : t = 1; => (define a 1)
+                //      let a : t = 2, b : t = 3; => (define a 2) (define b 3)
+                let mut xs: Vec<(String, Box<Expr>)> = vec![];
+
+                for (name, _, val) in vars {
+                    let val = translate_expr(val.0);
+                    xs.push((name, Box::new(val)));
+                }
+
+                Expr::Define(xs)
             }
-
-            expr
         }
     }
 }
@@ -130,5 +143,13 @@ pub fn translate_js(expr: Expr) -> JSExpr {
             args,
             body: Box::new(translate_js(*body)),
         },
+        Expr::Define(xs) => {
+            let ns = xs
+            .into_iter()
+            .map(|(name, val)| (name, Box::new(translate_js(*val))))
+            .collect();
+
+            JSExpr::Let(ns)
+        }
     }
 }
