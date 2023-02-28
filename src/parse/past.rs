@@ -1,4 +1,3 @@
-use std::fmt::{Display, Formatter, Result as FmtResult};
 use crate::trans::ty::*;
 
 use super::parse::Spanned;
