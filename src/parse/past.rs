@@ -1,6 +1,8 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use crate::trans::ty::*;
 
+use super::parse::Spanned;
+
 #[derive(Clone, Debug)]
 pub enum PUnaryOp {
     Neg,
@@ -20,21 +22,22 @@ pub enum PLiteral { Num(i64), Str(String), Bool(bool) }
 /// Enum to represent a parsed expression
 #[derive(Clone, Debug)]
 pub enum PExpr {
+    Error,
+
     Lit(PLiteral),
     Sym(String),
+    Vec(Vec<Spanned<Self>>),
 
-    Vec(Vec<Self>),
+    Unary(Spanned<PUnaryOp>, Box<Spanned<Self>>),
+    Binary(Spanned<PBinaryOp>, Box<Spanned<Self>>, Box<Spanned<Self>>),
 
-    UnaryOp(PUnaryOp, Box<Self>),
-    BinaryOp(PBinaryOp, Box<Self>, Box<Self>),
-
-    Call(Box<Self>, Vec<Self>),
+    Call(Box<Spanned<Self>>, Vec<Spanned<Self>>),
     Lambda {
         args: Vec<(String, Type)>,
-        body: Box<Self>,
+        body: Box<Spanned<Self>>,
     },
     Let {
         vars: Vec<(String, Type, Self)>,
         body: Box<Self>,
-    }
+    },
 }

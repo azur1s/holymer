@@ -6,18 +6,21 @@ use super::{
 
 pub fn translate_expr(expr: PExpr) -> Expr {
     match expr {
+        PExpr::Error => panic!("Error in expression!"),
+
         PExpr::Lit(l) => Expr::Lit(match l {
             PLiteral::Num(n)  => Literal::Num(n),
             PLiteral::Str(s)  => Literal::Str(s),
             PLiteral::Bool(b) => Literal::Bool(b),
         }),
-        PExpr::Sym(s)  => Expr::Sym(s),
+        PExpr::Sym(s) => Expr::Sym(s),
+        PExpr::Vec(v) => Expr::Vec(v.into_iter().map(|e| translate_expr(e.0)).collect()),
 
-        PExpr::UnaryOp(op, e) => Expr::UnaryOp(match op {
+        PExpr::Unary(op, e) => Expr::UnaryOp(match op.0 {
             PUnaryOp::Neg => UnaryOp::Neg,
             PUnaryOp::Not => UnaryOp::Not,
-        }, Box::new(translate_expr(*e))),
-        PExpr::BinaryOp(op, e1, e2) => Expr::BinaryOp(
+        }, Box::new(translate_expr((*e).0))),
+        PExpr::Binary((op, _), e1, e2) => Expr::BinaryOp(
             match op {
                 PBinaryOp::Add => BinaryOp::Add,
                 PBinaryOp::Sub => BinaryOp::Sub,
@@ -36,33 +39,34 @@ pub fn translate_expr(expr: PExpr) -> Expr {
                 PBinaryOp::And => BinaryOp::And,
                 PBinaryOp::Or  => BinaryOp::Or,
             },
-            Box::new(translate_expr(*e1)),
-            Box::new(translate_expr(*e2)),
+            Box::new(translate_expr((*e1).0)),
+            Box::new(translate_expr((*e2).0)),
         ),
 
         PExpr::Call(f, args) => Expr::Call(
-            Box::new(translate_expr(*f)),
-            args.into_iter().map(translate_expr).collect(),
+            Box::new(translate_expr((*f).0)),
+            args.into_iter().map(|a| translate_expr(a.0)).collect(),
         ),
         PExpr::Lambda { args, body } => Expr::Lambda {
             args,
-            body: Box::new(translate_expr(*body)),
+            body: Box::new(translate_expr((*body).0)),
         },
         PExpr::Let { vars, body } => {
-            let mut expr = *body; // The expression we're building up
+            let mut expr: Expr = translate_expr(*body); // The expression we're building up
             for (name, ty, val) in vars.into_iter().rev() { // Reverse so we can build up the lambda
                 // e.g.: let x : t = e1 in e2 end => (lambda (x : t) = e2)(e1)
 
                 // Build up the lambda
-                expr = PExpr::Lambda {
+                expr = Expr::Lambda {
                     args: vec![(name, ty)],
                     body: Box::new(expr),
                 };
                 // Call the lambda with the value
-                expr = PExpr::Call(Box::new(expr), vec![val]);
+                let val = translate_expr(val);
+                expr = Expr::Call(Box::new(expr), vec![val]);
             }
 
-            translate_expr(expr)
+            expr
         }
     }
 }
@@ -75,6 +79,7 @@ pub fn translate_js(expr: Expr) -> JSExpr {
             Literal::Bool(b) => JSExpr::Lit(JSLiteral::Bool(b)),
         },
         Expr::Sym(s) => JSExpr::Sym(s),
+        Expr::Vec(v) => JSExpr::Array(v.into_iter().map(translate_js).collect()),
 
         Expr::UnaryOp(op, e) => JSExpr::Op(match op {
             UnaryOp::Neg => "-",

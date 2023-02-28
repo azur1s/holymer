@@ -1,6 +1,8 @@
 #![allow(clippy::type_complexity)]
 use chumsky::{error, prelude::*, Stream};
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use crate::trans::ty::Type;
+
 use super::past::*;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -174,6 +176,32 @@ pub fn symbol_parser() -> impl P<String> {
     .labelled("symbol")
 }
 
+pub fn type_parser() -> impl P<Type> {
+    recursive(|ty| {
+        let litty = symbol_parser().map(|s| match s.as_str() {
+                "num"  => Type::Num,
+                "str"  => Type::Str,
+                "bool" => Type::Bool,
+                "?"    => Type::Unknown,
+                _      => Type::Sym(s),
+            });
+
+        let fun = just(Token::Open(Delim::Paren))
+            .ignore_then(
+                ty.clone()
+                    .separated_by(just(Token::Comma))
+            )
+            .then_ignore(just(Token::Close(Delim::Paren)))
+            .then_ignore(just(Token::Arrow))
+            .then(ty)
+            .map(|(args, ret)| Type::Fun(args, Box::new(ret)));
+
+        litty
+            .or(fun)
+            .labelled("type")
+    })
+}
+
 pub fn nested_parser<'a, T: 'a>(
     parser: impl P<T> + 'a,
     delim: Delim,
@@ -201,4 +229,182 @@ pub fn nested_parser<'a, T: 'a>(
             f,
         ))
         .boxed()
+}
+
+pub fn expr_parser() -> impl P<Spanned<PExpr>> {
+    recursive(|expr: Recursive<Token, Spanned<PExpr>, Simple<Token>>| {
+        let lit = literal_parser().map(PExpr::Lit);
+        let sym = symbol_parser().map(PExpr::Sym);
+
+        let vec = nested_parser(
+            expr.clone()
+                .separated_by(just(Token::Comma))
+                .allow_trailing()
+                .map(Some),
+            Delim::Brack,
+            |_| None,
+        )
+        .map(|xs| match xs {
+            Some(xs) => PExpr::Vec(xs),
+            None     => PExpr::Vec(Vec::new()),
+        })
+        .labelled("vector");
+
+        // (e)
+        let paren_expr = just(Token::Open(Delim::Paren))
+        .ignore_then(expr.clone())
+        .then_ignore(just(Token::Close(Delim::Paren)))
+        .map(|e| e.0)
+        .labelled("parenthesized expression");
+
+        // \[sym : type]* -> expr
+        let lam = just(Token::Lambda)
+        .ignore_then(
+            (
+                symbol_parser()
+                    .then_ignore(just(Token::Colon))
+                    .then(type_parser())
+            )
+                .repeated()
+        )
+        .then_ignore(just(Token::Arrow))
+        .then(expr.clone())
+        .map(|(args, body)| PExpr::Lambda {
+            args,
+            body: Box::new(body),
+        })
+        .labelled("lambda");
+
+        let atom = lit
+        .or(sym)
+        .or(vec)
+        .or(paren_expr)
+        .or(lam)
+        .map_with_span(|e, s| (e, s))
+        .boxed()
+        .labelled("atom");
+
+        // e(e*)
+        let call = atom
+        .then(
+            nested_parser(
+                expr.clone()
+                    .separated_by(just(Token::Comma))
+                    .allow_trailing()
+                    .map(Some),
+                Delim::Paren,
+                |_| None,
+            )
+            .or_not(),
+        )
+        .map_with_span(|(f, args), s| match args {
+            Some(Some(args)) => (PExpr::Call(Box::new(f), args), s),
+            Some(None) => (PExpr::Error, s),
+            None => f,
+        });
+
+        // op e
+        let unary = choice((
+            just(Token::Sub).to(PUnaryOp::Neg),
+            just(Token::Not).to(PUnaryOp::Not),
+        ))
+        .map_with_span(|op, s| (op, s))
+        .repeated()
+        .then(call)
+        .foldr(|op, expr| {
+            let s = op.1.start()..expr.1.end();
+            (PExpr::Unary(op, Box::new(expr)), s)
+        })
+        .boxed();
+
+        let product = unary
+        .clone()
+        .then(
+            choice((
+                just(Token::Mul).to(PBinaryOp::Mul),
+                just(Token::Div).to(PBinaryOp::Div),
+                just(Token::Mod).to(PBinaryOp::Mod),
+            ))
+            .map_with_span(|op, s| (op, s))
+            .then(unary)
+            .repeated(),
+        )
+        .foldl(|lhs, (op, rhs)| {
+            let s = lhs.1.start()..rhs.1.end();
+            (PExpr::Binary(op, Box::new(lhs), Box::new(rhs)), s)
+        })
+        .boxed();
+
+        let sum = product
+        .clone()
+        .then(
+            choice((
+                just(Token::Add).to(PBinaryOp::Add),
+                just(Token::Sub).to(PBinaryOp::Sub),
+            ))
+            .map_with_span(|op, s| (op, s))
+            .then(product)
+            .repeated(),
+        )
+        .foldl(|lhs, (op, rhs)| {
+            let s = lhs.1.start()..rhs.1.end();
+            (PExpr::Binary(op, Box::new(lhs), Box::new(rhs)), s)
+        })
+        .boxed();
+
+         let comparison = sum
+        .clone()
+        .then(
+            choice((
+                just(Token::Eq).to(PBinaryOp::Eq),
+                just(Token::Neq).to(PBinaryOp::Neq),
+                just(Token::Lt).to(PBinaryOp::Lt),
+                just(Token::Lte).to(PBinaryOp::Lte),
+                just(Token::Gt).to(PBinaryOp::Gt),
+                just(Token::Gte).to(PBinaryOp::Gte),
+            ))
+            .map_with_span(|op, s| (op, s))
+            .then(sum)
+            .repeated(),
+        )
+        .foldl(|lhs, (op, rhs)| {
+            let s = lhs.1.start()..rhs.1.end();
+            (PExpr::Binary(op, Box::new(lhs), Box::new(rhs)), s)
+        })
+        .boxed();
+
+        comparison
+        .clone()
+        .then(
+            choice((
+                just(Token::And).to(PBinaryOp::And),
+                just(Token::Or).to(PBinaryOp::Or),
+            ))
+            .map_with_span(|op, s| (op, s))
+            .then(comparison)
+            .repeated(),
+        )
+        .foldl(|lhs, (op, rhs)| {
+            let s = lhs.1.start()..rhs.1.end();
+            (PExpr::Binary(op, Box::new(lhs), Box::new(rhs)), s)
+        })
+        .boxed()
+    })
+}
+
+pub fn exprs_parser() -> impl P<Vec<Spanned<PExpr>>> {
+    expr_parser()
+        .then_ignore(just(Token::Semicolon))
+        .repeated()
+}
+
+pub fn parse(
+    tokens: Vec<Spanned<Token>>,
+    len: usize,
+) -> (Option<Vec<Spanned<PExpr>>>, Vec<Simple<Token>>) {
+    let (ast, parse_error) = exprs_parser()
+    .then_ignore(end())
+    .parse_recovery(Stream::from_iter(len..len + 1, tokens.into_iter()));
+
+    (ast, parse_error)
 }

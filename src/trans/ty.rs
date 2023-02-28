@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 #[derive(Clone, Debug)]
 pub enum Type {
     Num, Str, Bool,
+    Sym(String),
     Fun(Vec<Self>, Box<Self>),
     Unknown,
 }
@@ -13,6 +14,7 @@ impl Display for Type {
             Type::Num => write!(f, "num"),
             Type::Str => write!(f, "str"),
             Type::Bool => write!(f, "bool"),
+            Type::Sym(s) => write!(f, "{}", s),
             Type::Fun(args, ret) => {
                 write!(f, "(")?;
                 for (i, arg) in args.iter().enumerate() {

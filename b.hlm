@@ -1,5 +1,4 @@
-let foo : num = 1 in bar(foo) end
+println((\x: num -> x + 35)(34));
+16---1*3/-f(16)+8%-2;
 
-lambda (foo : num) -> unknown = bar(foo)
-
-let x : t = e1 in e2 end
+a(b, c(d(e, f), g(h), i), j(k, l), m);
