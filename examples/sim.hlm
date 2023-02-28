@@ -1,5 +1,0 @@
-fun main = do
-    1
-    |> \x -> x + 1
-    |> \x -> println(x)
-end

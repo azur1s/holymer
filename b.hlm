@@ -1,0 +1,5 @@
+let foo : num = 1 in bar(foo) end
+
+lambda (foo : num) -> unknown = bar(foo)
+
+let x : t = e1 in e2 end

@@ -1,8 +1,7 @@
-[workspace]
-members = [
-    "entry",
-    "parser",
-    "lower",
-    "compiler",
-    "vm",
-]
+[package]
+name = "renxi"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chumsky = "0.9.0"
