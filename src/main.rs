@@ -1,15 +1,17 @@
 #![feature(trait_alias)]
 pub mod read;
 pub mod trans;
+pub mod args;
 
 use std::io::Write;
-
+use args::Options;
 use read::parse::{lex, parse};
+use structopt::StructOpt;
 use trans::low::{translate_expr, translate_js};
 
 fn main() {
-    let path = std::env::args().nth(1).expect("No file path provided");
-    let src = std::fs::read_to_string(path).expect("Failed to read file");
+    let opt = Options::from_args();
+    let src = std::fs::read_to_string(opt.file).expect("Failed to read file");
 
     let (tokens, lex_errs) = lex(src.to_owned());
 
@@ -20,7 +22,8 @@ fn main() {
             let nexprs = ast.into_iter().map(|(e, _)| translate_expr(e)).collect::<Vec<_>>();
             let jsexprs = nexprs.into_iter().map(translate_js).collect::<Vec<_>>();
 
-            let mut file = std::fs::File::create("out.js").expect("Failed to create file");
+            let mut file = std::fs::File::create(opt.output.unwrap_or("out.js".into()))
+                .expect("Failed to create file");
             let s = jsexprs
                 .into_iter()
                 .map(|e| {
