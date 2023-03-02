@@ -17,8 +17,9 @@ pub enum JSExpr {
     Method(Box<Self>, String, Vec<Self>),
     Lambda {
         args: Vec<(String, Type)>,
-        body: Box<Self>,
+        body: Vec<Self>,
     },
+    Return(Box<Self>),
 }
 
 impl Display for JSExpr {
@@ -74,8 +75,18 @@ impl Display for JSExpr {
                     }
                     write!(f, "{}", name)?;
                 }
-                write!(f, ") => {})", body)
+                // write!(f, ") => {})", body)
+                if body.len() == 1 {
+                    write!(f, ") => {})", body[0])
+                } else {
+                    write!(f, ") => {{")?;
+                    for e in body {
+                        write!(f, "{};", e)?;
+                    }
+                    write!(f, "}})")
+                }
             },
+            JSExpr::Return(e) => write!(f, "return {}", e),
         }
     }
 }

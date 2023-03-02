@@ -32,8 +32,9 @@ pub enum Expr {
     Call(Box<Self>, Vec<Self>),
     Lambda {
         args: Vec<(String, Type)>,
-        body: Box<Self>,
+        body: Vec<Self>,
     },
+    Return(Box<Self>),
 }
 
 impl Display for Expr {
@@ -69,8 +70,17 @@ impl Display for Expr {
                 for (name, ty) in args {
                     write!(f, "[{} {}]", name, ty)?;
                 }
-                write!(f, " {})", body)
+                if body.len() == 1 {
+                    write!(f, " {})", body[0])
+                } else {
+                    write!(f, " (do")?;
+                    for e in body {
+                        write!(f, " {}", e)?;
+                    }
+                    write!(f, "))")
+                }
             },
+            Expr::Return(e) => write!(f, "(return {})", e),
         }
     }
 }

@@ -18,7 +18,6 @@ pub enum PBinaryOp {
 #[derive(Clone, Debug)]
 pub enum PLiteral { Num(i64), Str(String), Bool(bool) }
 
-/// Enum to represent a parsed expression
 #[derive(Clone, Debug)]
 pub enum PExpr {
     Error,
@@ -38,5 +37,18 @@ pub enum PExpr {
     Let {
         vars: Vec<(String, Type, Spanned<Self>)>,
         body: Box<Spanned<Self>>,
+    },
+    Block(Vec<Spanned<Self>>),
+    Return(Box<Spanned<Self>>),
+}
+
+#[derive(Clone, Debug)]
+pub enum PStmt {
+    Expr(Spanned<PExpr>),
+    Let(Vec<(String, Type, Spanned<PExpr>)>),
+    Func {
+        name: String,
+        args: Vec<(String, Type)>,
+        body: Box<Spanned<PExpr>>,
     },
 }

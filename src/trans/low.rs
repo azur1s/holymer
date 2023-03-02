@@ -49,7 +49,7 @@ pub fn translate_expr(expr: PExpr) -> Expr {
         ),
         PExpr::Lambda { args, body } => Expr::Lambda {
             args,
-            body: Box::new(translate_expr((*body).0)),
+            body: vec![translate_expr((*body).0)],
         },
         PExpr::Let { vars, body } => {
             let mut expr: Expr = translate_expr(body.0); // The expression we're building up
@@ -58,14 +58,22 @@ pub fn translate_expr(expr: PExpr) -> Expr {
                 // Build up the lambda
                 expr = Expr::Lambda {
                     args: vec![(name, ty)],
-                    body: Box::new(expr),
+                    body: vec![expr],
                 };
                 // Call the lambda with the value
                 let val = translate_expr(val.0);
                 expr = Expr::Call(Box::new(expr), vec![val]);
             }
             expr
-        }
+        },
+        PExpr::Block(es) => {
+            let lam = Expr::Lambda {
+                args: vec![],
+                body: es.into_iter().map(|e| translate_expr(e.0)).collect(),
+            };
+            Expr::Call(Box::new(lam), vec![])
+        },
+        PExpr::Return(e) => Expr::Return(Box::new(translate_expr((*e).0))),
     }
 }
 
@@ -126,7 +134,8 @@ pub fn translate_js(expr: Expr) -> JSExpr {
         }
         Expr::Lambda { args, body } => JSExpr::Lambda {
             args,
-            body: Box::new(translate_js(*body)),
+            body: body.into_iter().map(translate_js).collect(),
         },
+        Expr::Return(e) => JSExpr::Return(Box::new(translate_js(*e))),
     }
 }

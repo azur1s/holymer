@@ -1,15 +1,5 @@
-let name: str = "john";
-println("Hello, " + name + "!");
-
-let a: num = 17, b: num = 35 in
-    let c: num = a * 2 in
-        println(b + c);
-
-// func foo (a: int, b: int) {
-//     let c = a * 2;
-// 
-//     let res = b + c in
-//         return res + a;
-// }
-
-println((\x: int -> x + 1)(1));
+println({
+    println("Hello");
+    return let x: num = 17 * 2 in
+        x + 1;
+} + 34);
