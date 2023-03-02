@@ -49,6 +49,6 @@ fn main() {
             .into_iter()
             .map(|e| e.map(|c| c.to_string()))
             .chain(parse_errs.into_iter().map(|e| e.map(|t| t.to_string())))
-            .for_each(|e| println!("{}", e));
+            .for_each(|e| println!("[{:?} {:?}] {}", e.span(), e.label(), e));
     }
 }

@@ -20,7 +20,7 @@ pub enum Token {
     Open(Delim), Close(Delim),
     Lambda, Arrow,
 
-    Let, In, Func,
+    Let, In, Func, Return,
 }
 
 impl Display for Token {
@@ -63,9 +63,10 @@ impl Display for Token {
             Token::Lambda => write!(f, "\\"),
             Token::Arrow  => write!(f, "->"),
 
-            Token::Let  => write!(f, "let"),
-            Token::In   => write!(f, "in"),
-            Token::Func => write!(f, "func"),
+            Token::Let    => write!(f, "let"),
+            Token::In     => write!(f, "in"),
+            Token::Func   => write!(f, "func"),
+            Token::Return => write!(f, "return"),
         }
     }
 }
@@ -119,12 +120,13 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
 
     let kw = text::ident()
         .map(|s: String| match s.as_str() {
-            "true"  => Token::Bool(true),
-            "false" => Token::Bool(false),
-            "let"   => Token::Let,
-            "in"    => Token::In,
-            "func"  => Token::Func,
-            _       => Token::Sym(s),
+            "true"   => Token::Bool(true),
+            "false"  => Token::Bool(false),
+            "let"    => Token::Let,
+            "in"     => Token::In,
+            "func"   => Token::Func,
+            "return" => Token::Return,
+            _        => Token::Sym(s),
         });
 
     let token = num
@@ -298,12 +300,30 @@ pub fn expr_parser() -> impl P<Spanned<PExpr>> {
         .boxed()
         .labelled("let..in");
 
+        let block = nested_parser(
+            expr.clone()
+                .separated_by(just(Token::Semicolon))
+                .allow_trailing(),
+            Delim::Brace,
+            |_| Vec::new(),
+        )
+        .map(PExpr::Block)
+        .labelled("block");
+
+        let ret = just(Token::Return)
+        .ignore_then(expr.clone())
+        .map(Box::new)
+        .map(PExpr::Return)
+        .labelled("return");
+
         let atom = lit
         .or(sym)
         .or(vec)
         .or(paren_expr)
         .or(lam)
         .or(let_in)
+        .or(block)
+        .or(ret)
         .map_with_span(|e, s| (e, s))
         .boxed()
         .labelled("atom");
