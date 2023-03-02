@@ -37,6 +37,6 @@ pub enum PExpr {
     },
     Let {
         vars: Vec<(String, Type, Spanned<Self>)>,
-        body: Option<Box<Spanned<Self>>>,
+        body: Box<Spanned<Self>>,
     },
 }

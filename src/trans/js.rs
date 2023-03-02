@@ -19,7 +19,6 @@ pub enum JSExpr {
         args: Vec<(String, Type)>,
         body: Box<Self>,
     },
-    Let(Vec<(String, Box<Self>)>),
 }
 
 impl Display for JSExpr {
@@ -76,11 +75,6 @@ impl Display for JSExpr {
                     write!(f, "{}", name)?;
                 }
                 write!(f, ") => {})", body)
-            },
-            JSExpr::Let(vars) => {
-                vars.iter().try_for_each(|(name, expr)| {
-                    write!(f, "let {} = {};", name, expr)
-                })
             },
         }
     }
