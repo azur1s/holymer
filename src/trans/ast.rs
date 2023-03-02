@@ -34,7 +34,6 @@ pub enum Expr {
         args: Vec<(String, Type)>,
         body: Box<Self>,
     },
-    Define(Vec<(String, Box<Self>)>),
 }
 
 impl Display for Expr {
@@ -71,11 +70,6 @@ impl Display for Expr {
                     write!(f, "[{} {}]", name, ty)?;
                 }
                 write!(f, " {})", body)
-            },
-            Expr::Define(vars) => {
-                vars.iter().try_for_each(|(name, val)| {
-                    write!(f, "(define {} {})", name, val)
-                })
             },
         }
     }

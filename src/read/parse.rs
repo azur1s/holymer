@@ -293,18 +293,10 @@ pub fn expr_parser() -> impl P<Spanned<PExpr>> {
         .then(expr.clone())
         .map(|(vars, body)| PExpr::Let {
             vars,
-            body: Some(Box::new(body)),
+            body: Box::new(body),
         })
         .boxed()
         .labelled("let..in");
-
-        let let_def = just(Token::Let)
-        .ignore_then(let_binds)
-        .map(|vars| PExpr::Let {
-            vars,
-            body: None,
-        })
-        .labelled("let");
 
         let atom = lit
         .or(sym)
@@ -312,7 +304,6 @@ pub fn expr_parser() -> impl P<Spanned<PExpr>> {
         .or(paren_expr)
         .or(lam)
         .or(let_in)
-        .or(let_def)
         .map_with_span(|e, s| (e, s))
         .boxed()
         .labelled("atom");
