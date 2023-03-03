@@ -22,6 +22,18 @@ pub enum JSExpr {
     Return(Box<Self>),
 }
 
+#[derive(Clone, Debug)]
+pub enum JSStmt {
+    Expr(JSExpr),
+    Let(Vec<(String, Type, JSExpr)>),
+    Func {
+        name: String,
+        args: Vec<(String, Type)>,
+        ret: Type,
+        body: JSExpr,
+    },
+}
+
 impl Display for JSExpr {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match self {
@@ -87,6 +99,35 @@ impl Display for JSExpr {
                 }
             },
             JSExpr::Return(e) => write!(f, "return {}", e),
+        }
+    }
+}
+
+impl Display for JSStmt {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        match self {
+            JSStmt::Expr(e) => write!(f, "{}", e),
+            JSStmt::Let(vars) => {
+                write!(f, "let ")?;
+                for (i, (name, _ty, e)) in vars.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{} = {}", name, e)?;
+                }
+                write!(f, ";")
+            },
+            JSStmt::Func { name, args, ret: _, body } => {
+                // const name = (args) => body;
+                write!(f, "const {} = (", name)?;
+                for (i, (name, _ty)) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", name)?;
+                }
+                write!(f, ") => {};", body)
+            },
         }
     }
 }

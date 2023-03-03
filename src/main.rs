@@ -8,7 +8,7 @@ use std::io::Write;
 use args::Options;
 use read::parse::{lex, parse};
 use structopt::StructOpt;
-use trans::low::{translate_expr, translate_js};
+use trans::low::{translate_stmt, translate_js_stmt};
 
 fn main() {
     let opt = Options::from_args();
@@ -17,15 +17,15 @@ fn main() {
     let (tokens, lex_errs) = lex(src.to_owned());
 
     let parse_errs = if let Some(tokens) = tokens {
-        let (ast, parse_errs) = parse(tokens, src.len());
+        let (past, parse_errs) = parse(tokens, src.len());
 
-        if let Some(ast) = ast {
-            let nexprs = ast.into_iter().map(|(e, _)| translate_expr(e)).collect::<Vec<_>>();
-            let jsexprs = nexprs.into_iter().map(translate_js).collect::<Vec<_>>();
+        if let Some(past) = past {
+            let ast = past.into_iter().map(|(e, _)| translate_stmt(e)).collect::<Vec<_>>();
+            let js = ast.into_iter().map(translate_js_stmt).collect::<Vec<_>>();
 
             let mut file = std::fs::File::create(opt.output.unwrap_or("out.js".into()))
                 .expect("Failed to create file");
-            let s = jsexprs
+            let s = js
                 .into_iter()
                 .map(|e| {
                     let s = format!("{}", e);
