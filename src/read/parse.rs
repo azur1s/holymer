@@ -3,7 +3,7 @@ use chumsky::{prelude::*, Stream};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use crate::trans::ty::Type;
 
-use super::past::*;
+use crate::asts::past::*;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Delim { Paren, Brack, Brace }

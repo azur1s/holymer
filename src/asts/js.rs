@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use super::ty::Type;
+use crate::trans::ty::Type;
 
 #[derive(Clone, Debug)]
 pub enum JSLiteral { Num(i64), Str(String), Bool(bool) }

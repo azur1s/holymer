@@ -1,4 +1,5 @@
 #![feature(trait_alias)]
+pub mod asts;
 pub mod read;
 pub mod trans;
 pub mod args;
