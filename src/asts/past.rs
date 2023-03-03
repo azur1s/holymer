@@ -1,6 +1,6 @@
 use crate::trans::ty::*;
 
-use super::parse::Spanned;
+use crate::read::parse::Spanned;
 
 #[derive(Clone, Debug)]
 pub enum PUnaryOp {

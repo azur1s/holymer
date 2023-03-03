@@ -1,7 +1,7 @@
-use crate::read::past::{PExpr, PLiteral, PBinaryOp, PUnaryOp};
-use super::{
-    ast::{Expr, Literal, BinaryOp, UnaryOp},
-    js::{JSExpr, JSLiteral},
+use crate::asts::{
+    past::*,
+    ast::*,
+    js::*,
 };
 
 pub fn translate_expr(expr: PExpr) -> Expr {
