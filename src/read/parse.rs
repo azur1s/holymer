@@ -442,11 +442,44 @@ pub fn exprs_parser() -> impl P<Vec<Spanned<PExpr>>> {
         .repeated()
 }
 
+pub fn stmt_parser() -> impl P<Spanned<PStmt>> {
+    let func = just(Token::Func)
+        .ignore_then(symbol_parser())
+        .then(
+            symbol_parser()
+            .then_ignore(just(Token::Colon))
+            .then(type_parser())
+            .separated_by(just(Token::Comma))
+        )
+        .then_ignore(just(Token::Arrow))
+        .then(type_parser())
+        .then_ignore(just(Token::Assign))
+        .then(expr_parser().map(Box::new))
+        .map(|(((name, args), ret), body)| PStmt::Func {
+            name,
+            args,
+            ret,
+            body,
+        });
+
+    let expr = expr_parser().map(PStmt::Expr);
+
+    func
+    .or(expr)
+    .map_with_span(|s, span| (s, span))
+}
+
+pub fn stmts_parser() -> impl P<Vec<Spanned<PStmt>>> {
+    stmt_parser()
+        .then_ignore(just(Token::Semicolon))
+        .repeated()
+}
+
 pub fn parse(
     tokens: Vec<Spanned<Token>>,
     len: usize,
-) -> (Option<Vec<Spanned<PExpr>>>, Vec<Simple<Token>>) {
-    let (ast, parse_error) = exprs_parser()
+) -> (Option<Vec<Spanned<PStmt>>>, Vec<Simple<Token>>) {
+    let (ast, parse_error) = stmts_parser()
     .then_ignore(end())
     .parse_recovery(Stream::from_iter(len..len + 1, tokens.into_iter()));
 

@@ -37,6 +37,18 @@ pub enum Expr {
     Return(Box<Self>),
 }
 
+#[derive(Clone, Debug)]
+pub enum Stmt {
+    Expr(Expr),
+    Let(Vec<(String, Type, Expr)>),
+    Func {
+        name: String,
+        args: Vec<(String, Type)>,
+        ret: Type,
+        body: Expr,
+    },
+}
+
 impl Display for Expr {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match self {
@@ -81,6 +93,28 @@ impl Display for Expr {
                 }
             },
             Expr::Return(e) => write!(f, "(return {})", e),
+        }
+    }
+}
+
+impl Display for Stmt {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        match self {
+            Stmt::Expr(e) => write!(f, "{}", e),
+            Stmt::Let(vars) => {
+                write!(f, "(let")?;
+                for (name, ty, e) in vars {
+                    write!(f, " [{} {} {}]", name, ty, e)?;
+                }
+                write!(f, ")")
+            },
+            Stmt::Func { name, args, ret, body } => {
+                write!(f, "(defn {} [", name)?;
+                for (name, ty) in args {
+                    write!(f, "[{} {}]", name, ty)?;
+                }
+                write!(f, "] {} {})", ret, body)
+            },
         }
     }
 }

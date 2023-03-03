@@ -4,6 +4,19 @@ use crate::asts::{
     js::*,
 };
 
+pub fn translate_stmt(stmt: PStmt) -> Stmt {
+    match stmt {
+        PStmt::Expr(e) => Stmt::Expr(translate_expr(e.0)),
+        PStmt::Let(vars) => todo!(),
+        PStmt::Func { name, args, ret, body } => Stmt::Func {
+            name,
+            args,
+            ret,
+            body: translate_expr(body.0),
+        },
+    }
+}
+
 pub fn translate_expr(expr: PExpr) -> Expr {
     match expr {
         PExpr::Error => panic!("Error in expression!"),
@@ -77,7 +90,20 @@ pub fn translate_expr(expr: PExpr) -> Expr {
     }
 }
 
-pub fn translate_js(expr: Expr) -> JSExpr {
+pub fn translate_js_stmt(stmt: Stmt) -> JSStmt {
+    match stmt {
+        Stmt::Expr(e) => JSStmt::Expr(translate_js_expr(e)),
+        Stmt::Let(vars) => todo!(),
+        Stmt::Func { name, args, ret, body } => JSStmt::Func {
+            name,
+            args,
+            ret,
+            body: translate_js_expr(body),
+        },
+    }
+}
+
+pub fn translate_js_expr(expr: Expr) -> JSExpr {
     match expr {
         Expr::Lit(l) => match l {
             Literal::Num(n)  => JSExpr::Lit(JSLiteral::Num(n)),
@@ -85,12 +111,12 @@ pub fn translate_js(expr: Expr) -> JSExpr {
             Literal::Bool(b) => JSExpr::Lit(JSLiteral::Bool(b)),
         },
         Expr::Sym(s) => JSExpr::Sym(s),
-        Expr::Vec(v) => JSExpr::Array(v.into_iter().map(translate_js).collect()),
+        Expr::Vec(v) => JSExpr::Array(v.into_iter().map(translate_js_expr).collect()),
 
         Expr::UnaryOp(op, e) => JSExpr::Op(match op {
             UnaryOp::Neg => "-",
             UnaryOp::Not => "!",
-        }, Box::new(translate_js(*e)), None),
+        }, Box::new(translate_js_expr(*e)), None),
         Expr::BinaryOp(op, e1, e2) => JSExpr::Op(match op {
             BinaryOp::Add => "+",
             BinaryOp::Sub => "-",
@@ -107,7 +133,7 @@ pub fn translate_js(expr: Expr) -> JSExpr {
 
             BinaryOp::And => "&&",
             BinaryOp::Or  => "||",
-        }, Box::new(translate_js(*e1)), Some(Box::new(translate_js(*e2)))),
+        }, Box::new(translate_js_expr(*e1)), Some(Box::new(translate_js_expr(*e2)))),
 
         Expr::Call(f, args) => {
             match *f {
@@ -117,25 +143,25 @@ pub fn translate_js(expr: Expr) -> JSExpr {
                             JSExpr::Method(
                                 Box::new(JSExpr::Sym("console".to_string())),
                                 "log".to_string(),
-                                args.into_iter().map(translate_js).collect(),
+                                args.into_iter().map(translate_js_expr).collect(),
                             )
                         },
                         _ => JSExpr::Call(
-                            Box::new(translate_js(*f)),
-                            args.into_iter().map(translate_js).collect(),
+                            Box::new(translate_js_expr(*f)),
+                            args.into_iter().map(translate_js_expr).collect(),
                         ),
                     }
                 },
                 _ => JSExpr::Call(
-                    Box::new(translate_js(*f)),
-                    args.into_iter().map(translate_js).collect(),
+                    Box::new(translate_js_expr(*f)),
+                    args.into_iter().map(translate_js_expr).collect(),
                 ),
             }
         }
         Expr::Lambda { args, body } => JSExpr::Lambda {
             args,
-            body: body.into_iter().map(translate_js).collect(),
+            body: body.into_iter().map(translate_js_expr).collect(),
         },
-        Expr::Return(e) => JSExpr::Return(Box::new(translate_js(*e))),
+        Expr::Return(e) => JSExpr::Return(Box::new(translate_js_expr(*e))),
     }
 }

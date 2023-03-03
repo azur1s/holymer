@@ -49,6 +49,7 @@ pub enum PStmt {
     Func {
         name: String,
         args: Vec<(String, Type)>,
+        ret: Type,
         body: Box<Spanned<PExpr>>,
     },
 }
