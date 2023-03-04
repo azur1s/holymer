@@ -1,0 +1,43 @@
+println("Hello, " + name + "!");
+
+let a = 17, b = 35 in
+    let c = a * 2 in
+        println(b + c);
+
+func foo (a: int, b: int) {
+    let c = a * 2;
+
+    let res = b + c in
+        return res + a;
+}
+
+println((\x: int -> x + 1)(1));
+
+──────────────────────────────────────────────────
+
+(println (+ "Hello, " name "!"))
+
+(let [a 17] [b 35]
+    (let [c (* a 2)]
+        (println (+ b c))))
+
+(func foo [a int b int] (block
+    (let [c (* a 2)])
+    (let [res (+ b c)]
+        (return (+ res a)))
+))
+
+──────────────────────────────────────────────────
+
+console.log("Hello, " + name + "!");
+
+let a = 17;
+let b = 35;
+let c = a * 2;
+console.log(b + c);
+
+const foo = (a, b) => {
+    let c = a * 2;
+    let res = b + c;
+    return res + a; 
+}
