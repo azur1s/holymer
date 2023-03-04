@@ -16,7 +16,7 @@ pub enum PBinaryOp {
 }
 
 #[derive(Clone, Debug)]
-pub enum PLiteral { Num(i64), Str(String), Bool(bool) }
+pub enum PLiteral { Num(i64), Str(String), Bool(bool), Unit }
 
 #[derive(Clone, Debug)]
 pub enum PExpr {
@@ -36,7 +36,7 @@ pub enum PExpr {
     },
     Let {
         vars: Vec<(String, Type, Spanned<Self>)>,
-        body: Box<Spanned<Self>>,
+        body: Option<Box<Spanned<Self>>>,
     },
     Block(Vec<Spanned<Self>>),
     Return(Box<Spanned<Self>>),

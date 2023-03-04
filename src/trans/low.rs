@@ -10,11 +10,19 @@ pub fn translate_stmt(stmt: PStmt) -> Stmt {
         PStmt::Let(vars) => todo!(),
         PStmt::Func { name, args, ret, body } => Stmt::Func {
             name,
-            args,
+            args: args.into_iter().map(|(name, _ty)| name).collect(),
             ret,
             body: translate_expr(body.0),
         },
     }
+}
+
+pub fn exprs_to_lam(es: Vec<PExpr>) -> Expr {
+    let lam = Expr::Lambda {
+        args: vec![],
+        body: es.into_iter().map(|e| translate_expr(e)).collect(),
+    };
+    Expr::Call(Box::new(lam), vec![])
 }
 
 pub fn translate_expr(expr: PExpr) -> Expr {
@@ -25,6 +33,7 @@ pub fn translate_expr(expr: PExpr) -> Expr {
             PLiteral::Num(n)  => Literal::Num(n),
             PLiteral::Str(s)  => Literal::Str(s),
             PLiteral::Bool(b) => Literal::Bool(b),
+            PLiteral::Unit    => Literal::Unit,
         }),
         PExpr::Sym(s) => Expr::Sym(s),
         PExpr::Vec(v) => Expr::Vec(v.into_iter().map(|e| translate_expr(e.0)).collect()),
@@ -61,30 +70,32 @@ pub fn translate_expr(expr: PExpr) -> Expr {
             args.into_iter().map(|a| translate_expr(a.0)).collect(),
         ),
         PExpr::Lambda { args, body } => Expr::Lambda {
-            args,
+            args: args.into_iter().map(|(name, _ty)| name).collect(),
             body: vec![translate_expr((*body).0)],
         },
         PExpr::Let { vars, body } => {
-            let mut expr: Expr = translate_expr(body.0); // The expression we're building up
-            for (name, ty, val) in vars.into_iter().rev() { // Reverse so we can build up the lambda
-                // e.g.: let x : t = e1 in e2; => (lambda (x : t) = e2)(e1)
-                // Build up the lambda
-                expr = Expr::Lambda {
-                    args: vec![(name, ty)],
-                    body: vec![expr],
-                };
-                // Call the lambda with the value
-                let val = translate_expr(val.0);
-                expr = Expr::Call(Box::new(expr), vec![val]);
+            if let Some(body) = body {
+                let mut expr: Expr = translate_expr(body.0); // The expression we're building up
+                for (name, _ty, val) in vars.into_iter().rev() { // Reverse so we can build up the lambda
+                    // e.g.: let x : t = e1 in e2; => (lambda (x : t) = e2)(e1)
+                    // Build up the lambda
+                    expr = Expr::Lambda {
+                        args: vec![name],
+                        body: vec![expr],
+                    };
+                    // Call the lambda with the value
+                    let val = translate_expr(val.0);
+                    expr = Expr::Call(Box::new(expr), vec![val]);
+                }
+                expr
+            } else {
+                Expr::Defines(vars.into_iter().map(|(name, _ty, val)| {
+                    (name, translate_expr(val.0))
+                }).collect())
             }
-            expr
         },
         PExpr::Block(es) => {
-            let lam = Expr::Lambda {
-                args: vec![],
-                body: es.into_iter().map(|e| translate_expr(e.0)).collect(),
-            };
-            Expr::Call(Box::new(lam), vec![])
+            exprs_to_lam(es.into_iter().map(|e| e.0).collect())
         },
         PExpr::Return(e) => Expr::Return(Box::new(translate_expr((*e).0))),
     }
@@ -93,7 +104,6 @@ pub fn translate_expr(expr: PExpr) -> Expr {
 pub fn translate_js_stmt(stmt: Stmt) -> JSStmt {
     match stmt {
         Stmt::Expr(e) => JSStmt::Expr(translate_js_expr(e)),
-        Stmt::Let(vars) => todo!(),
         Stmt::Func { name, args, ret, body } => JSStmt::Func {
             name,
             args,
@@ -109,6 +119,7 @@ pub fn translate_js_expr(expr: Expr) -> JSExpr {
             Literal::Num(n)  => JSExpr::Lit(JSLiteral::Num(n)),
             Literal::Str(s)  => JSExpr::Lit(JSLiteral::Str(s)),
             Literal::Bool(b) => JSExpr::Lit(JSLiteral::Bool(b)),
+            Literal::Unit    => JSExpr::Lit(JSLiteral::Undefined),
         },
         Expr::Sym(s) => JSExpr::Sym(s),
         Expr::Vec(v) => JSExpr::Array(v.into_iter().map(translate_js_expr).collect()),
@@ -162,6 +173,9 @@ pub fn translate_js_expr(expr: Expr) -> JSExpr {
             args,
             body: body.into_iter().map(translate_js_expr).collect(),
         },
+        Expr::Defines(defs) => JSExpr::Defines(defs.into_iter().map(|(name, val)| {
+            (name, translate_js_expr(val))
+        }).collect()),
         Expr::Return(e) => JSExpr::Return(Box::new(translate_js_expr(*e))),
     }
 }

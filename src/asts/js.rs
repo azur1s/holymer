@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 use crate::trans::ty::Type;
 
 #[derive(Clone, Debug)]
-pub enum JSLiteral { Num(i64), Str(String), Bool(bool) }
+pub enum JSLiteral { Num(i64), Str(String), Bool(bool), Undefined }
 
 /// Enum to represent javascript expression
 #[derive(Clone, Debug)]
@@ -16,19 +16,19 @@ pub enum JSExpr {
     Call(Box<Self>, Vec<Self>),
     Method(Box<Self>, String, Vec<Self>),
     Lambda {
-        args: Vec<(String, Type)>,
+        args: Vec<String>,
         body: Vec<Self>,
     },
+    Defines(Vec<(String, Self)>),
     Return(Box<Self>),
 }
 
 #[derive(Clone, Debug)]
 pub enum JSStmt {
     Expr(JSExpr),
-    Let(Vec<(String, Type, JSExpr)>),
     Func {
         name: String,
-        args: Vec<(String, Type)>,
+        args: Vec<String>,
         ret: Type,
         body: JSExpr,
     },
@@ -38,9 +38,10 @@ impl Display for JSExpr {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match self {
             JSExpr::Lit(l) => match l {
-                JSLiteral::Num(n)  => write!(f, "{}", n),
-                JSLiteral::Str(s)  => write!(f, "'{}'", s),
-                JSLiteral::Bool(b) => write!(f, "{}", b),
+                JSLiteral::Num(n)    => write!(f, "{}", n),
+                JSLiteral::Str(s)    => write!(f, "'{}'", s),
+                JSLiteral::Bool(b)   => write!(f, "{}", b),
+                JSLiteral::Undefined => write!(f, "undefined"),
             },
             JSExpr::Sym(s) => write!(f, "{}", s),
             JSExpr::Array(v) => {
@@ -81,7 +82,7 @@ impl Display for JSExpr {
             },
             JSExpr::Lambda { args, body } => {
                 write!(f, "((")?;
-                for (i, (name, _ty)) in args.iter().enumerate() {
+                for (i, name) in args.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
@@ -98,6 +99,23 @@ impl Display for JSExpr {
                     write!(f, "}})")
                 }
             },
+            JSExpr::Defines(vs) => {
+                write!(f, "let [")?;
+                for (i, (name, _)) in vs.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", name)?;
+                }
+                write!(f, "] = [")?;
+                for (i, (_, expr)) in vs.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", expr)?;
+                }
+                write!(f, "]")
+            }
             JSExpr::Return(e) => write!(f, "return {}", e),
         }
     }
@@ -107,20 +125,10 @@ impl Display for JSStmt {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match self {
             JSStmt::Expr(e) => write!(f, "{}", e),
-            JSStmt::Let(vars) => {
-                write!(f, "let ")?;
-                for (i, (name, _ty, e)) in vars.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "{} = {}", name, e)?;
-                }
-                write!(f, ";")
-            },
             JSStmt::Func { name, args, ret: _, body } => {
                 // const name = (args) => body;
                 write!(f, "const {} = (", name)?;
-                for (i, (name, _ty)) in args.iter().enumerate() {
+                for (i, name) in args.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }

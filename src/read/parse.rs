@@ -295,10 +295,16 @@ pub fn expr_parser() -> impl P<Spanned<PExpr>> {
         .then(expr.clone())
         .map(|(vars, body)| PExpr::Let {
             vars,
-            body: Box::new(body),
+            body: Some(Box::new(body)),
         })
         .boxed()
-        .labelled("let..in");
+        .labelled("let with expression");
+
+        let let_def = just(Token::Let)
+        .ignore_then(let_binds)
+        .map(|vars| PExpr::Let { vars, body: None })
+        .boxed()
+        .labelled("let definition");
 
         let block = nested_parser(
             expr.clone()
@@ -322,6 +328,7 @@ pub fn expr_parser() -> impl P<Spanned<PExpr>> {
         .or(paren_expr)
         .or(lam)
         .or(let_in)
+        .or(let_def)
         .or(block)
         .or(ret)
         .map_with_span(|e, s| (e, s))

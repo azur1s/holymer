@@ -1,9 +1,7 @@
-func add (x: num) num = (\a: num -> a + 1)(x);
+let x: num = 34,
+    y: num = 35
+in
+    println(x + y);
 
-println(
-    {
-        println("Hello");
-        return let x: num = 17 * 2 in
-            add(x);
-    } + 34
-);
+let foo: num = 69;
+println(foo);

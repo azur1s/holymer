@@ -16,7 +16,7 @@ pub enum BinaryOp {
 
 #[derive(Clone, Debug)]
 pub enum Literal {
-    Num(i64), Str(String), Bool(bool),
+    Num(i64), Str(String), Bool(bool), Unit,
 }
 
 /// Enum to represent internal expression
@@ -31,19 +31,19 @@ pub enum Expr {
 
     Call(Box<Self>, Vec<Self>),
     Lambda {
-        args: Vec<(String, Type)>,
+        args: Vec<String>,
         body: Vec<Self>,
     },
+    Defines(Vec<(String, Self)>),
     Return(Box<Self>),
 }
 
 #[derive(Clone, Debug)]
 pub enum Stmt {
     Expr(Expr),
-    Let(Vec<(String, Type, Expr)>),
     Func {
         name: String,
-        args: Vec<(String, Type)>,
+        args: Vec<String>,
         ret: Type,
         body: Expr,
     },
@@ -56,6 +56,7 @@ impl Display for Expr {
                 Literal::Num(n)  => write!(f, "{}", n),
                 Literal::Str(s)  => write!(f, "\"{}\"", s),
                 Literal::Bool(b) => write!(f, "{}", b),
+                Literal::Unit    => write!(f, "()"),
             },
             Expr::Sym(s) => write!(f, "{}", s),
             Expr::Vec(v) => {
@@ -79,8 +80,8 @@ impl Display for Expr {
             },
             Expr::Lambda { args, body } => {
                 write!(f, "(lambda ")?;
-                for (name, ty) in args {
-                    write!(f, "[{} {}]", name, ty)?;
+                for arg in args {
+                    write!(f, " {}", arg)?;
                 }
                 if body.len() == 1 {
                     write!(f, " {})", body[0])
@@ -92,6 +93,13 @@ impl Display for Expr {
                     write!(f, "))")
                 }
             },
+            Expr::Defines(defs) => {
+                write!(f, "(defs ")?;
+                for (name, expr) in defs {
+                    write!(f, "({} {})", name, expr)?;
+                }
+                write!(f, ")")
+            },
             Expr::Return(e) => write!(f, "(return {})", e),
         }
     }
@@ -101,17 +109,10 @@ impl Display for Stmt {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match self {
             Stmt::Expr(e) => write!(f, "{}", e),
-            Stmt::Let(vars) => {
-                write!(f, "(let")?;
-                for (name, ty, e) in vars {
-                    write!(f, " [{} {} {}]", name, ty, e)?;
-                }
-                write!(f, ")")
-            },
             Stmt::Func { name, args, ret, body } => {
                 write!(f, "(defn {} [", name)?;
-                for (name, ty) in args {
-                    write!(f, "[{} {}]", name, ty)?;
+                for name in args {
+                    write!(f, " {}", name)?;
                 }
                 write!(f, "] {} {})", ret, body)
             },
