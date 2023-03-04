@@ -445,13 +445,14 @@ pub fn exprs_parser() -> impl P<Vec<Spanned<PExpr>>> {
 pub fn stmt_parser() -> impl P<Spanned<PStmt>> {
     let func = just(Token::Func)
         .ignore_then(symbol_parser())
+        .then_ignore(just(Token::Open(Delim::Paren)))
         .then(
             symbol_parser()
             .then_ignore(just(Token::Colon))
             .then(type_parser())
             .separated_by(just(Token::Comma))
         )
-        .then_ignore(just(Token::Arrow))
+        .then_ignore(just(Token::Close(Delim::Paren)))
         .then(type_parser())
         .then_ignore(just(Token::Assign))
         .then(expr_parser().map(Box::new))

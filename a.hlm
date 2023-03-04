@@ -1,4 +1,4 @@
-func add x: num -> num = x + 1;
+func add (x: num) num = x + 1;
 
 println(
     {
