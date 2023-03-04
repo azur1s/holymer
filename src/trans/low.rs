@@ -7,7 +7,6 @@ use crate::asts::{
 pub fn translate_stmt(stmt: PStmt) -> Stmt {
     match stmt {
         PStmt::Expr(e) => Stmt::Expr(translate_expr(e.0)),
-        PStmt::Let(vars) => todo!(),
         PStmt::Func { name, args, ret, body } => Stmt::Func {
             name,
             args: args.into_iter().map(|(name, _ty)| name).collect(),
@@ -20,7 +19,7 @@ pub fn translate_stmt(stmt: PStmt) -> Stmt {
 pub fn exprs_to_lam(es: Vec<PExpr>) -> Expr {
     let lam = Expr::Lambda {
         args: vec![],
-        body: es.into_iter().map(|e| translate_expr(e)).collect(),
+        body: es.into_iter().map(translate_expr).collect(),
     };
     Expr::Call(Box::new(lam), vec![])
 }

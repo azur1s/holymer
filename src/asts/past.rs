@@ -45,7 +45,6 @@ pub enum PExpr {
 #[derive(Clone, Debug)]
 pub enum PStmt {
     Expr(Spanned<PExpr>),
-    Let(Vec<(String, Type, Spanned<PExpr>)>),
     Func {
         name: String,
         args: Vec<(String, Type)>,
