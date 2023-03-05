@@ -34,6 +34,11 @@ pub enum Expr {
         args: Vec<String>,
         body: Vec<Self>,
     },
+    If {
+        cond: Box<Self>,
+        t: Box<Self>,
+        f: Box<Self>,
+    },
     Defines(Vec<(String, Self)>),
     Return(Box<Self>),
 }
@@ -92,6 +97,9 @@ impl Display for Expr {
                     }
                     write!(f, "))")
                 }
+            },
+            Expr::If { cond, t, f: fe } => {
+                write!(f, "(if {} {} {})", cond, t, fe)
             },
             Expr::Defines(defs) => {
                 write!(f, "(defs ")?;

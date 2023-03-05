@@ -38,6 +38,11 @@ pub enum PExpr {
         vars: Vec<(String, Type, Spanned<Self>)>,
         body: Option<Box<Spanned<Self>>>,
     },
+    If {
+        cond: Box<Spanned<Self>>,
+        t: Box<Spanned<Self>>,
+        f: Box<Spanned<Self>>,
+    },
     Block(Vec<Spanned<Self>>),
     Return(Box<Spanned<Self>>),
 }

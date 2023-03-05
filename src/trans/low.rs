@@ -93,6 +93,11 @@ pub fn translate_expr(expr: PExpr) -> Expr {
                 }).collect())
             }
         },
+        PExpr::If { cond, t, f } => Expr::If {
+            cond: Box::new(translate_expr((*cond).0)),
+            t: Box::new(translate_expr((*t).0)),
+            f: Box::new(translate_expr((*f).0)),
+        },
         PExpr::Block(es) => {
             exprs_to_lam(es.into_iter().map(|e| e.0).collect())
         },
@@ -171,6 +176,11 @@ pub fn translate_js_expr(expr: Expr) -> JSExpr {
         Expr::Lambda { args, body } => JSExpr::Lambda {
             args,
             body: body.into_iter().map(translate_js_expr).collect(),
+        },
+        Expr::If { cond, t, f } => JSExpr::If {
+            cond: Box::new(translate_js_expr(*cond)),
+            t: Box::new(translate_js_expr(*t)),
+            f: Box::new(translate_js_expr(*f)),
         },
         Expr::Defines(defs) => JSExpr::Defines(defs.into_iter().map(|(name, val)| {
             (name, translate_js_expr(val))

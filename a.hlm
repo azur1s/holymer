@@ -1,7 +1,4 @@
-let x: num = 34,
-    y: num = 35
+let x: num = 1,
+    y: num = 2,
 in
-    println(x + y);
-
-let foo: num = 69;
-println(foo);
+    println(if x + y == 3 then 69 else 0);

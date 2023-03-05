@@ -19,6 +19,11 @@ pub enum JSExpr {
         args: Vec<String>,
         body: Vec<Self>,
     },
+    If {
+        cond: Box<Self>,
+        t: Box<Self>,
+        f: Box<Self>,
+    },
     Defines(Vec<(String, Self)>),
     Return(Box<Self>),
 }
@@ -98,6 +103,9 @@ impl Display for JSExpr {
                     }
                     write!(f, "}})")
                 }
+            },
+            JSExpr::If { cond, t, f: fe } => {
+                write!(f, "({} ? {} : {})", cond, t, fe)
             },
             JSExpr::Defines(vs) => {
                 write!(f, "let [")?;

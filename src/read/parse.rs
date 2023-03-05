@@ -20,7 +20,7 @@ pub enum Token {
     Open(Delim), Close(Delim),
     Lambda, Arrow,
 
-    Let, In, Func, Return,
+    Let, In, Func, Return, If, Then, Else,
 }
 
 impl Display for Token {
@@ -67,6 +67,9 @@ impl Display for Token {
             Token::In     => write!(f, "in"),
             Token::Func   => write!(f, "func"),
             Token::Return => write!(f, "return"),
+            Token::If     => write!(f, "if"),
+            Token::Then   => write!(f, "then"),
+            Token::Else   => write!(f, "else"),
         }
     }
 }
@@ -126,6 +129,9 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
             "in"     => Token::In,
             "func"   => Token::Func,
             "return" => Token::Return,
+            "if"     => Token::If,
+            "then"   => Token::Then,
+            "else"   => Token::Else,
             _        => Token::Sym(s),
         });
 
@@ -285,6 +291,8 @@ pub fn expr_parser() -> impl P<Spanned<PExpr>> {
         .then_ignore(just(Token::Assign))
         .then(expr.clone())
         .map(|((sym, ty), body)| (sym, ty, body))
+        .boxed()
+        .labelled("let binding")
         .separated_by(just(Token::Comma))
         .allow_trailing()
         .labelled("let bindings");
@@ -322,6 +330,20 @@ pub fn expr_parser() -> impl P<Spanned<PExpr>> {
         .map(PExpr::Return)
         .labelled("return");
 
+        let ifelse = just(Token::If)
+        .ignore_then(expr.clone())
+        .then_ignore(just(Token::Then))
+        .then(expr.clone())
+        .then_ignore(just(Token::Else))
+        .then(expr.clone())
+        .map(|((cond, then), f)| PExpr::If {
+            cond: Box::new(cond),
+            t: Box::new(then),
+            f: Box::new(f),
+        })
+        .boxed()
+        .labelled("if else");
+
         let atom = lit
         .or(sym)
         .or(vec)
@@ -331,6 +353,7 @@ pub fn expr_parser() -> impl P<Spanned<PExpr>> {
         .or(let_def)
         .or(block)
         .or(ret)
+        .or(ifelse)
         .map_with_span(|e, s| (e, s))
         .boxed()
         .labelled("atom");
