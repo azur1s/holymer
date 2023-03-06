@@ -1,8 +1,12 @@
 [package]
-name = "renxi"
+name = "holymer"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 chumsky = "0.9.0"
 structopt = "0.3.26"
+
+[[bin]]
+name = "hlmc"
+path = "src/main.rs"
