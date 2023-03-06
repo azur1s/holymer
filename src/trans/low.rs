@@ -154,24 +154,15 @@ pub fn translate_js_expr(expr: Expr) -> JSExpr {
             match *f {
                 Expr::Sym(ref s) => {
                     match s.as_str() {
-                        "println" => {
-                            JSExpr::Method(
-                                Box::new(JSExpr::Sym("console".to_string())),
-                                "log".to_string(),
-                                Some(args.into_iter().map(translate_js_expr).collect()),
-                            )
-                        },
-                        "print" => {
-                            JSExpr::Method(
+                        "print" => JSExpr::Call(
                                 Box::new(JSExpr::Method(
-                                    Box::new(JSExpr::Sym("process".to_string())),
-                                    "stdout".to_string(),
-                                    None,
+                                    Box::new(JSExpr::Method(
+                                        Box::new(JSExpr::Sym("process".to_string())),
+                                        "stdout".to_string(),
+                                    )),
+                                    "write".to_string(),
                                 )),
-                                "write".to_string(),
-                                Some(args.into_iter().map(translate_js_expr).collect()),
-                            )
-                        }
+                                args.into_iter().map(translate_js_expr).collect()),
                         _ => JSExpr::Call(
                             Box::new(translate_js_expr(*f)),
                             args.into_iter().map(translate_js_expr).collect(),

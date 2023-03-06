@@ -14,7 +14,7 @@ pub enum JSExpr {
     Op(&'static str, Box<Self>, Option<Box<Self>>),
 
     Call(Box<Self>, Vec<Self>),
-    Method(Box<Self>, String, Option<Vec<Self>>),
+    Method(Box<Self>, String),
     Lambda {
         args: Vec<String>,
         body: Vec<Self>,
@@ -75,20 +75,7 @@ impl Display for JSExpr {
                 }
                 write!(f, ")")
             },
-            JSExpr::Method(c, m, args) => {
-                write!(f, "{}.{}", c, m)?;
-                if let Some(args) = args {
-                    write!(f, "(")?;
-                    for (i, arg) in args.iter().enumerate() {
-                        if i > 0 {
-                            write!(f, ", ")?;
-                        }
-                        write!(f, "{}", arg)?;
-                    }
-                    write!(f, ")")?;
-                }
-                Ok(())
-            },
+            JSExpr::Method(c, m) => write!(f, "{}.{}", c, m),
             JSExpr::Lambda { args, body } => {
                 write!(f, "((")?;
                 for (i, name) in args.iter().enumerate() {
