@@ -154,6 +154,12 @@ pub fn translate_js_expr(expr: Expr) -> JSExpr {
             match *f {
                 Expr::Sym(ref s) => {
                     match s.as_str() {
+                        "println" => JSExpr::Call(
+                                Box::new(JSExpr::Method(
+                                    Box::new(JSExpr::Sym("console".to_string())),
+                                    "log".to_string(),
+                                )),
+                                args.into_iter().map(translate_js_expr).collect()),
                         "print" => JSExpr::Call(
                                 Box::new(JSExpr::Method(
                                     Box::new(JSExpr::Method(
