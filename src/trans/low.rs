@@ -88,9 +88,9 @@ pub fn translate_expr(expr: PExpr) -> Expr {
                 }
                 expr
             } else {
-                Expr::Defines(vars.into_iter().map(|(name, _ty, val)| {
+                Expr::Defines(vars.into_iter().map(|(name, _ty, val)|
                     (name, translate_expr(val.0))
-                }).collect())
+                ).collect())
             }
         },
         PExpr::If { cond, t, f } => Expr::If {
@@ -190,9 +190,9 @@ pub fn translate_js_expr(expr: Expr) -> JSExpr {
             t: Box::new(translate_js_expr(*t)),
             f: Box::new(translate_js_expr(*f)),
         },
-        Expr::Defines(defs) => JSExpr::Defines(defs.into_iter().map(|(name, val)| {
+        Expr::Defines(defs) => JSExpr::Defines(defs.into_iter().map(|(name, val)|
             (name, translate_js_expr(val))
-        }).collect()),
+        ).collect()),
         Expr::Return(e) => JSExpr::Return(Box::new(translate_js_expr(*e))),
     }
 }

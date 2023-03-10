@@ -23,7 +23,7 @@ fn main() {
             let ast = past.into_iter().map(|(e, _)| translate_stmt(e)).collect::<Vec<_>>();
             let js = ast.into_iter().map(translate_js_stmt).collect::<Vec<_>>();
 
-            let mut file = std::fs::File::create(opt.output.unwrap_or("out.js".into()))
+            let mut file = std::fs::File::create(opt.output.unwrap_or_else(|| "out.js".to_owned()))
                 .expect("Failed to create file");
             let s = js
                 .into_iter()

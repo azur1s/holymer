@@ -515,7 +515,7 @@ pub fn parse(
 ) -> (Option<Vec<Spanned<PStmt>>>, Vec<Simple<Token>>) {
     let (ast, parse_error) = stmts_parser()
     .then_ignore(end())
-    .parse_recovery(Stream::from_iter(len..len + 1, tokens.into_iter()));
+    .parse_recovery(Stream::from_iter(len..=len, tokens.into_iter()));
 
     (ast, parse_error)
 }
