@@ -124,7 +124,7 @@ impl Display for JSStmt {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match self {
             JSStmt::Expr(e) => write!(f, "{}", e),
-            JSStmt::Func { name, args, ret: _, body } => {
+            JSStmt::Func { name, args, body, .. } => {
                 // const name = (args) => body;
                 write!(f, "const {} = (", name)?;
                 for (i, name) in args.iter().enumerate() {
