@@ -1,0 +1,8 @@
+[package]
+name = "holymer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ariadne = "0.2.0"
+chumsky = "1.0.0-alpha.3"

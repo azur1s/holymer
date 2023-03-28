@@ -1,0 +1,19 @@
+let something: bool = true;
+
+let a: num = 4 in
+    println(a);
+
+fun foo(x: bool): num = {
+    fun id(a: T): T = id;
+
+    if !id(x) then
+        return 1;
+
+    42
+};
+
+fun main(): () = {
+    let r: num = foo(something);
+
+    println(r);
+};
