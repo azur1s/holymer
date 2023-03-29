@@ -101,7 +101,7 @@ fn type_expr<'src>(
 
         Expr::Ident(name) => {
             let ty = env.lookup(name)
-                .ok_or(TypeError::new(format!("unknown identifier `{}`", name), expr.1))?;
+                .ok_or(TypeError::new(format!("Unknown identifier `{}`", name), expr.1))?;
             oks!(TExpr::Ident(name, ty))
         }
 
@@ -111,6 +111,12 @@ fn type_expr<'src>(
                 UnaryOp::Neg => Type::Num,
                 UnaryOp::Not => Type::Bool,
             };
+
+            if te.0.ty() != &ret_ty {
+                return Err(TypeError::new(format!("Expected `{}` but found `{}`", ret_ty, te.0.ty()), te.1)
+                    .with_note(format!("This have type `{}`", te.0.ty()))
+                    .with_hint(format!("This operator requires a `{}`", ret_ty), (te.1.start-1..te.1.start).into()));
+            }
 
             oks!(TExpr::Unary {
                 op,
@@ -122,21 +128,45 @@ fn type_expr<'src>(
         Expr::Binary(op, lhs, rhs) => {
             let tlhs = type_expr(env, unbox!(lhs))?;
             let trhs = type_expr(env, unbox!(rhs))?;
-            let ret_ty = match op {
+            let op_ty = match op {
                 BinaryOp::Add
                 | BinaryOp::Sub
                 | BinaryOp::Mul
                 | BinaryOp::Div
-                | BinaryOp::Rem => Type::Num,
+                | BinaryOp::Rem => Some(Type::Num),
                 BinaryOp::And
-                | BinaryOp::Or => Type::Bool,
+                | BinaryOp::Or => Some(Type::Bool),
                 BinaryOp::Eq
                 | BinaryOp::Ne
                 | BinaryOp::Lt
                 | BinaryOp::Le
                 | BinaryOp::Gt
-                | BinaryOp::Ge => Type::Bool,
+                | BinaryOp::Ge => None,
             };
+
+            let ret_ty;
+            if let Some(op_ty) = op_ty {
+                if tlhs.0.ty() != &op_ty {
+                    return Err(TypeError::new(format!("Expected `{}` but found `{}`", op_ty, tlhs.0.ty()), tlhs.1)
+                        .with_note(format!("This have type `{}`", tlhs.0.ty()))
+                        .with_hint(format!("This operator requires a `{}`", op_ty), (tlhs.1.start-1..tlhs.1.start).into()));
+                }
+                if trhs.0.ty() != &op_ty {
+                    return Err(TypeError::new(format!("Expected `{}` but found `{}`", op_ty, trhs.0.ty()), trhs.1)
+                        .with_note(format!("This have type `{}`", trhs.0.ty()))
+                        .with_hint(format!("This operator requires a `{}`", op_ty), (trhs.1.start-1..trhs.1.start).into()));
+                }
+                ret_ty = op_ty;
+            } else {
+                if tlhs.0.ty() != trhs.0.ty() {
+                    return Err(TypeError::new(format!("Expected `{}` but found `{}`", tlhs.0.ty(), trhs.0.ty()), trhs.1)
+                        .with_hint(
+                            format!("Both have to be the same type. Got `{}` and `{}`", tlhs.0.ty(), trhs.0.ty()),
+                            (tlhs.1.start..trhs.1.end).into(),
+                        ));
+                }
+                ret_ty = Type::Bool;
+            }
 
             oks!(TExpr::Binary {
                 op,
@@ -199,17 +229,17 @@ fn type_expr<'src>(
                 if param_tys.len() != targs.len() {
                     return Err(TypeError::new(
                         format!(
-                            "expected {} arguments, got {}",
+                            "Expected {} arguments, got {}",
                             param_tys.len(),
                             targs.len(),
                         ),
                         args_span.into(),
                     ).with_note(format!(
-                        "expected {} arguments",
+                        "Expected {} arguments",
                         param_tys.len(),
                     )).with_hint(
                         format!(
-                            "this expect arguments of type `{}`",
+                            "This expect arguments of type `{}`",
                             param_tys.iter().map(|ty| ty.to_string()).collect::<Vec<_>>().join(", ")
                         ),
                         func.1,
@@ -221,13 +251,13 @@ fn type_expr<'src>(
                     if arg.0.ty() != param {
                         return Err(TypeError::new(
                             format!(
-                                "expected argument of type `{}`, got `{}`",
+                                "Expected argument of type `{}`, got `{}`",
                                 param,
                                 arg.0.ty(),
                             ),
                             arg.1,
                         ).with_note(format!(
-                            "expected argument of type `{}`",
+                            "Expected argument of type `{}`",
                             param,
                         )));
                     }
@@ -241,7 +271,7 @@ fn type_expr<'src>(
                 })
             } else {
                 Err(TypeError::new(
-                    format!("expected function, got `{}`", tfunc.0.ty()),
+                    format!("Expected function, got `{}`", tfunc.0.ty()),
                     tfunc.1,
                 ))
             }
@@ -255,7 +285,7 @@ fn type_expr<'src>(
             // Check if the condition is of type `bool`.
             if tcond.0.ty() != &Type::Bool {
                 return Err(TypeError::new(
-                    format!("expected condition of type `bool`, got `{}`", tcond.0.ty()),
+                    format!("Expected condition of type `bool`, got `{}`", tcond.0.ty()),
                     tcond.1,
                 ));
             }
@@ -264,13 +294,13 @@ fn type_expr<'src>(
             if tt.0.ty() != tf.0.ty() {
                 return Err(TypeError::new(
                     format!(
-                        "expected the branches to have the same type, got `{}` and `{}`",
+                        "Expected the branches to have the same type, got `{}` and `{}`",
                         tt.0.ty(),
                         tf.0.ty(),
                     ),
                     tf.1,
                 ).with_note(format!(
-                    "expected this branch to be type of `{}`",
+                    "Expected this branch to be type of `{}`",
                     tt.0.ty(),
                 )));
             }
@@ -300,13 +330,13 @@ fn type_expr<'src>(
                 if texpr.0.ty() != &ty {
                     return Err(TypeError::new(
                         format!(
-                            "expected the binding to be of type `{}`, got `{}`",
+                            "Expected the value to be of type `{}`, got `{}`",
                             ty,
                             texpr.0.ty(),
                         ),
                         texpr.1,
                     ).with_note(format!(
-                        "expected this binding to be of type `{}`",
+                        "Expected this value to be of type `{}`",
                         ty,
                     )));
                 }
@@ -339,13 +369,13 @@ fn type_expr<'src>(
                 if texpr.0.ty() != &ty {
                     return Err(TypeError::new(
                         format!(
-                            "expected the binding to be of type `{}`, got `{}`",
+                            "Expected the binding to be of type `{}`, got `{}`",
                             ty,
                             texpr.0.ty(),
                         ),
                         texpr.1,
                     ).with_note(format!(
-                        "expected this binding to be of type `{}`",
+                        "Expected this binding to be of type `{}`",
                         ty,
                     )));
                 }

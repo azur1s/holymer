@@ -356,7 +356,78 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
                 None => (f.0, f.1),
             });
 
-        call
+        let op = choice((
+            just(Token::Sub).to(UnaryOp::Neg),
+            just(Token::Not).to(UnaryOp::Not),
+        ));
+        let unary = op
+            .map_with_span(|op, s| (op, s))
+            .repeated()
+            .foldr(
+                call,
+                |op, expr| {
+                let span = op.1.start..expr.1.end;
+                (Expr::Unary(op.0, boxspan(expr)), span.into())
+            });
+
+        let op = choice((
+            just(Token::Mul).to(BinaryOp::Mul),
+            just(Token::Div).to(BinaryOp::Div),
+        ));
+        let product = unary.clone()
+            .foldl(
+                op.then(unary).repeated(),
+                |a, (op, b)| {
+                    let span = a.1.start..b.1.end;
+                    (Expr::Binary(op, boxspan(a), boxspan(b)), span.into())
+                }
+            );
+
+        let op = choice((
+            just(Token::Add).to(BinaryOp::Add),
+            just(Token::Sub).to(BinaryOp::Sub),
+        ));
+        let sum = product.clone()
+            .foldl(
+                op.then(product).repeated(),
+                |a, (op, b)| {
+                    let span = a.1.start..b.1.end;
+                    (Expr::Binary(op, boxspan(a), boxspan(b)), span.into())
+                }
+            );
+
+        let op = choice((
+            just(Token::Eq).to(BinaryOp::Eq),
+            just(Token::Ne).to(BinaryOp::Ne),
+            just(Token::Lt).to(BinaryOp::Lt),
+            just(Token::Le).to(BinaryOp::Le),
+            just(Token::Gt).to(BinaryOp::Gt),
+            just(Token::Ge).to(BinaryOp::Ge),
+        ));
+        let comparison = sum.clone()
+            .foldl(
+                op.then(sum).repeated(),
+                |a, (op, b)| {
+                    let span = a.1.start..b.1.end;
+                    (Expr::Binary(op, boxspan(a), boxspan(b)), span.into())
+                }
+            );
+
+        let op = choice((
+            just(Token::And).to(BinaryOp::And),
+            just(Token::Or).to(BinaryOp::Or),
+        ));
+        let logical = comparison.clone()
+            .foldl(
+                op.then(comparison).repeated(),
+                |a, (op, b)| {
+                    let span = a.1.start..b.1.end;
+                    (Expr::Binary(op, boxspan(a), boxspan(b)), span.into())
+                }
+            );
+
+        #[allow(clippy::let_and_return)]
+        logical
     })
 }
 

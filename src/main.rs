@@ -8,9 +8,12 @@ pub mod typing;
 fn main() {
     let src = "
             {
-                let x: num = 1;
-                let y: num = 2;
-                x
+                let foo : num =
+                    let a : num = true,
+                        b : num = 3
+                    in
+                        a + b;
+                foo * 2
             }
         ".to_string();
     let filename = "?".to_string();
@@ -32,7 +35,7 @@ fn main() {
                         .with_label(Label::new((filename.clone(), ty_err.loc.into_range()))
                         .with_message(match ty_err.note {
                             Some(note) => note,
-                            None => "while type checking this expression".to_string(),
+                            None => "While type checking this expression".to_string(),
                         })
                         .with_color(Color::Red)
                     );
