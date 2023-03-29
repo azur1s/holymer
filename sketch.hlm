@@ -1,0 +1,25 @@
+mut ret_ty: Option<Ty>
+
+if type_check(expr) = Return {
+    if ret_ty.is_some() && ret_ty != this_ty {
+        error
+    } else {
+        ret_ty = this_ty
+    }
+}
+
+=====
+
+{
+    if true {
+        return 1;
+    }
+
+    if false {
+        return "Hello";
+    }
+
+    do_something();
+
+    return 4;
+}

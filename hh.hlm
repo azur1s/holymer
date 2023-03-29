@@ -1,7 +1,0 @@
-\x -> x      // => x : t0
-\x -> x + 1  // => x : Int
-(\x -> x)(1) // => x : Int
-
-let a : num = 1,
-    b : num = a + 1,
-    c : num = b + 1;

@@ -49,7 +49,8 @@ pub enum TExpr<'src> {
     },
     Assign(Vec<TypedBinding<'src>>),
     Block {
-        exprs: Vec<Self>,
+        exprs: Vec<Spanned<Self>>,
+        void: bool,
         ret_ty: Type,
     },
 }

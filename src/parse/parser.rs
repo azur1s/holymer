@@ -206,6 +206,7 @@ pub enum Expr<'src> {
     Assign(Vec<Binding<'src>>),
     Block {
         exprs: Vec<Spanned<Box<Self>>>,
+        void: bool, // True if last expression is discarded (ends with semicolon).
     },
 }
 
@@ -307,14 +308,26 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
 
         let block = expr.clone()
             .map(boxspan)
-            .separated_by(just(Token::Semicolon))
-            .allow_trailing()
+            .then_ignore(just(Token::Semicolon))
+            .repeated()
             .collect::<Vec<_>>()
+            .then(expr.clone()
+                .map(boxspan)
+                .or_not())
             .delimited_by(
                 just(Token::Open(Delim::Brace)),
                 just(Token::Close(Delim::Brace)),
             )
-            .map(|exprs| Expr::Block { exprs });
+            .map(|(mut exprs, end)| {
+                let void = end.is_none();
+                if let Some(end) = end {
+                    exprs.push(end);
+                }
+                Expr::Block {
+                    exprs,
+                    void,
+                }
+            });
 
         let atom = lit
             .or(ident)

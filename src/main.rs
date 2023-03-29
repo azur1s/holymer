@@ -7,7 +7,11 @@ pub mod typing;
 
 fn main() {
     let src = "
-            (\\x : num, y : num, z : num -> x)()
+            {
+                let x: num = 1;
+                let y: num = 2;
+                x
+            }
         ".to_string();
     let filename = "?".to_string();
 

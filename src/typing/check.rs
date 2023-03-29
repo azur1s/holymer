@@ -292,7 +292,7 @@ fn type_expr<'src>(
             for (name, maybe_ty, expr) in bindings {
                 let ty = match maybe_ty {
                     Some(ty) => ty,
-                    None => todo!(), // TODO: infer.
+                    None => todo!("Type inferrence"), // TODO: infer.
                 };
                 let texpr = type_expr(&mut new_env, unbox!(expr))?;
 
@@ -326,17 +326,14 @@ fn type_expr<'src>(
         }
 
         Expr::Assign(bindings) => {
-            // Create a new type environment.
-            let mut new_env = env.clone();
-
             // Type check the bindings.
             let mut tbindings = Vec::new();
             for (name, maybe_ty, expr) in bindings {
                 let ty = match maybe_ty {
                     Some(ty) => ty,
-                    None => todo!(), // TODO: infer.
+                    None => todo!("Type inferrence"), // TODO: infer.
                 };
-                let texpr = type_expr(&mut new_env, unbox!(expr))?;
+                let texpr = type_expr(env, unbox!(expr))?;
 
                 // Check if the type of the binding matches the type of the expression.
                 if texpr.0.ty() != &ty {
@@ -354,13 +351,35 @@ fn type_expr<'src>(
                 }
 
                 tbindings.push((name, ty.clone(), sbox!(texpr)));
-                new_env.bind(name, ty);
+                env.bind(name, ty);
             }
 
             // Return the typed assign expression.
             oks!(TExpr::Assign(tbindings))
         }
 
+        Expr::Block { exprs, void } => {
+            let texprs = exprs
+                .into_iter()
+                .map(|e| type_expr(env, unbox!(e)))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            let ret_ty = if void {
+                Type::Unit
+            } else if let Some(texpr) = texprs.last() {
+                texpr.0.ty().clone()
+            } else {
+                Type::Unit
+            };
+
+            oks!(TExpr::Block {
+                exprs: texprs,
+                void,
+                ret_ty,
+            })
+        }
+
+        #[allow(unreachable_patterns)]
         _ => todo!(),
     }
 }
