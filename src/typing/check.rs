@@ -5,12 +5,12 @@ use crate::parse::parser::{
 use super::{ty::Type, typed::TExpr};
 
 #[derive(Clone, Debug)]
-struct TypeEnv<'src> {
+struct TypeContext<'src> {
     bindings: Vec<(&'src str, Type)>,
     funcs: Vec<(&'src str, Vec<Type>, Type)>,
 }
 
-impl<'src> TypeEnv<'src> {
+impl<'src> TypeContext<'src> {
     fn new() -> Self {
         Self {
             bindings: Vec::new(),
@@ -73,7 +73,7 @@ impl TypeError {
 }
 
 fn type_expr<'src>(
-    env: &mut TypeEnv<'src>, expr: Spanned<Expr<'src>>
+    env: &mut TypeContext<'src>, expr: Spanned<Expr<'src>>
 ) -> Result<Spanned<TExpr<'src>>, TypeError> {
     macro_rules! oks { // Spanned Ok macro.
         ($e:expr $(,)?) => {
@@ -415,7 +415,7 @@ fn type_expr<'src>(
 }
 
 pub fn check(es: Vec<Spanned<Expr<'_>>>) -> Result<Vec<Spanned<TExpr<'_>>>, TypeError> {
-    let mut env = TypeEnv::new();
+    let mut env = TypeContext::new();
     let mut tes = Vec::new();
     for e in es {
         let te = type_expr(&mut env, e)?;
