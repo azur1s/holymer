@@ -1,6 +1,6 @@
 use ariadne::{sources, Color, Label, Report, ReportKind};
 use chumsky::{Parser, prelude::Input};
-use self::{parse::parser::{lexer, exprs_parser}, typing::check::check};
+use self::{parse::parser::{lexer, exprs_parser}};
 
 pub mod parse;
 pub mod typing;
@@ -8,11 +8,10 @@ pub mod typing;
 fn main() {
     let src = "
             {
-                let foo : num =
-                    let a : num = true,
-                        b : num = 3
-                    in
-                        a + b;
+                let foo =
+                    let a = true in
+                        let b = false in
+                            a + b;
                 foo * 2
             }
         ".to_string();
@@ -27,34 +26,7 @@ fn main() {
             .into_output_errors();
 
         if let Some(ast) = ast.filter(|_| errs.len() + parse_errs.len() == 0) {
-            match check(ast.0) {
-                Ok(tast) => println!("{:?}", tast),
-                Err(ty_err) => {
-                    let mut r = Report::build(ReportKind::Error, filename.clone(), ty_err.loc.start)
-                        .with_message(ty_err.msg)
-                        .with_label(Label::new((filename.clone(), ty_err.loc.into_range()))
-                        .with_message(match ty_err.note {
-                            Some(note) => note,
-                            None => "While type checking this expression".to_string(),
-                        })
-                        .with_color(Color::Red)
-                    );
-
-                    if let Some((hint, loc)) = ty_err.hint {
-                        r = r.with_label(Label::new((filename.clone(), loc.into_range()))
-                            .with_message(hint)
-                            .with_color(Color::Yellow),
-                        );
-                    }
-
-                    r.finish()
-                        .print(sources([(
-                            filename.clone(),
-                            src.clone(),
-                        )]))
-                        .unwrap();
-                }
-            }
+            println!("{:?}", ast);
         }
 
         parse_errs

@@ -178,8 +178,6 @@ pub enum BinaryOp {
 }
 
 pub type Spanned<T> = (T, Span);
-type Binding<'src> =
-    (&'src str, Option<Type>, Spanned<Box<Expr<'src>>>);
 
 // Clone is needed for type checking since the type checking
 // algorithm is recursive and sometimes consume the AST.
@@ -200,10 +198,16 @@ pub enum Expr<'src> {
         f: Spanned<Box<Self>>,
     },
     Let {
-        bindings: Vec<Binding<'src>>,
+        name: &'src str,
+        ty: Option<Type>,
+        value: Spanned<Box<Self>>,
         body: Spanned<Box<Self>>,
     },
-    Assign(Vec<Binding<'src>>),
+    Define {
+        name: &'src str,
+        ty: Option<Type>,
+        value: Spanned<Box<Self>>,
+    },
     Block {
         exprs: Vec<Spanned<Box<Self>>>,
         void: bool, // True if last expression is discarded (ends with semicolon).
@@ -268,8 +272,8 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
             .then(expr.clone())
             .map(|(args, body)| Expr::Lambda(args, boxspan(body)));
 
-        // (ident (: type)?)*
-        let binds = symbol
+        // ident (: type)?
+        let bind = symbol
             .then(
                 just(Token::Colon)
                     .ignore_then(type_parser())
@@ -277,21 +281,18 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
             )
             .then_ignore(just(Token::Assign))
             .then(expr.clone())
-            .map(|((name, ty), expr)| (name, ty, boxspan(expr)))
-            .separated_by(just(Token::Comma))
-            .allow_trailing()
-            .collect::<Vec<_>>();
+            .map(|((name, ty), expr)| (name, ty, boxspan(expr)));
 
-        let let_or_assign = just(Token::Let)
-            .ignore_then(binds)
+        let let_or_define = just(Token::Let)
+            .ignore_then(bind)
             .then(
                 just(Token::In)
                     .ignore_then(expr.clone())
                     .or_not()
             )
-            .map(|(bindings, body)| match body {
-                Some(body) => Expr::Let { bindings, body: boxspan(body) },
-                None => Expr::Assign(bindings),
+            .map(|((name, ty, expr), body)| match body {
+                Some(body) => Expr::Let { name, ty, value: expr, body: boxspan(body) },
+                None => Expr::Define { name, ty, value: expr },
             });
 
         let if_ = just(Token::If)
@@ -333,7 +334,7 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
             .or(ident)
             .or(paren_expr)
             .or(lambda)
-            .or(let_or_assign)
+            .or(let_or_define)
             .or(if_)
             .or(block)
             .map_with_span(|e, s| (e, s))
