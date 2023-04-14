@@ -89,11 +89,40 @@ pub enum Lit<'src> {
 #[derive(Clone, Debug)]
 pub enum UnaryOp { Neg, Not }
 
+impl Display for UnaryOp {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            UnaryOp::Neg => write!(f, "-"),
+            UnaryOp::Not => write!(f, "!"),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum BinaryOp {
     Add, Sub, Mul, Div, Rem,
     And, Or,
     Eq, Ne, Lt, Le, Gt, Ge,
+}
+
+impl Display for BinaryOp {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            BinaryOp::Add => write!(f, "+"),
+            BinaryOp::Sub => write!(f, "-"),
+            BinaryOp::Mul => write!(f, "*"),
+            BinaryOp::Div => write!(f, "/"),
+            BinaryOp::Rem => write!(f, "%"),
+            BinaryOp::And => write!(f, "&&"),
+            BinaryOp::Or  => write!(f, "||"),
+            BinaryOp::Eq  => write!(f, "=="),
+            BinaryOp::Ne  => write!(f, "!="),
+            BinaryOp::Lt  => write!(f, "<"),
+            BinaryOp::Le  => write!(f, "<="),
+            BinaryOp::Gt  => write!(f, ">"),
+            BinaryOp::Ge  => write!(f, ">="),
+        }
+    }
 }
 
 pub type Spanned<T> = (T, Span);

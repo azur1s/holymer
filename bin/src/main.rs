@@ -5,13 +5,22 @@ use typing::infer::infer_exprs;
 
 fn main() {
     let src = "
-            {
-                let foo =
-                    let a = true in
-                        let b = false in
-                            a + b;
-                foo * 2
-            }
+            let r = {
+                let x =
+                    if 0 == 1
+                    then {
+                        let x = true;
+                        if x then 1 else 2
+                    }
+                    else 34 + {
+                        let foo = 30 in
+                            foo + 5
+                    };
+                let y = { 1 } * 2;
+                if 1 + 1 == 2
+                then x
+                else y
+            };
         ".to_string();
     let filename = "?".to_string();
 
