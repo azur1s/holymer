@@ -1,9 +1,11 @@
-use super::ty::Type;
-use crate::parse::parser::{
-    BinaryOp,
-    UnaryOp,
-    Lit,
-    Spanned,
+use syntax::{
+    expr::{
+        BinaryOp,
+        UnaryOp,
+        Lit,
+        Spanned,
+    },
+    ty::Type,
 };
 
 // Typed version of the expression.

@@ -1,0 +1,10 @@
+[package]
+name = "bin"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ariadne = "0.2.0"
+chumsky = "1.0.0-alpha.3"
+syntax = { path = "../syntax" }
+typing = { path = "../typing" }

@@ -1,9 +1,7 @@
 use ariadne::{sources, Color, Label, Report, ReportKind};
 use chumsky::{Parser, prelude::Input};
-use self::{parse::parser::{lexer, exprs_parser}};
-
-pub mod parse;
-pub mod typing;
+use syntax::parser::{lexer, exprs_parser};
+use typing::infer::infer_exprs;
 
 fn main() {
     let src = "
@@ -26,7 +24,13 @@ fn main() {
             .into_output_errors();
 
         if let Some(ast) = ast.filter(|_| errs.len() + parse_errs.len() == 0) {
-            println!("{:?}", ast);
+            let (ast, e) = infer_exprs(ast.0);
+            if !e.is_empty() {
+                println!("{:?}", e);
+            }
+            if !ast.is_empty() {
+                println!("{:?}", ast);
+            }
         }
 
         parse_errs

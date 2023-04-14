@@ -24,6 +24,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bin"
+version = "0.1.0"
+dependencies = [
+ "ariadne",
+ "chumsky",
+ "syntax",
+ "typing",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -52,14 +62,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
  "ahash",
-]
-
-[[package]]
-name = "holymer"
-version = "0.1.0"
-dependencies = [
- "ariadne",
- "chumsky",
 ]
 
 [[package]]
@@ -94,6 +96,21 @@ dependencies = [
  "libc",
  "psm",
  "winapi",
+]
+
+[[package]]
+name = "syntax"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
+]
+
+[[package]]
+name = "typing"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
+ "syntax",
 ]
 
 [[package]]

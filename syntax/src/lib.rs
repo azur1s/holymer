@@ -1,9 +1,11 @@
+pub mod expr;
 pub mod parser;
+pub mod ty;
 
 #[cfg(test)]
 mod tests {
     use chumsky::prelude::*;
-    use super::parser::*;
+    use super::{ expr::*, parser::* };
 
     #[test]
     fn simple() {
