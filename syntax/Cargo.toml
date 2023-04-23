@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-chumsky = "1.0.0-alpha.3"
+chumsky = { version = "1.0.0-alpha.3", features = ["label"] }

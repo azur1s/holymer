@@ -1,4 +1,3 @@
-use chumsky::span::SimpleSpan;
 use syntax::{
     expr::{
         BinaryOp,

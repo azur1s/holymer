@@ -3,48 +3,37 @@ use chumsky::{Parser, prelude::Input};
 use syntax::parser::{lexer, exprs_parser};
 use typing::infer::infer_exprs;
 
+pub mod args;
+
 fn main() {
-    let src = "
-            let r = {
-                let x =
-                    if 0 == 1
-                    then {
-                        let x = true;
-                        if x then 1 else 2
-                    }
-                    else 34 + {
-                        let foo = 30 in
-                            foo + 5
-                    };
-                let y = { 1 } * 2;
-                if 1 + 1 == 2
-                then x
-                else y
-            };
-        ".to_string();
-    let filename = "?".to_string();
+    let args = args::get_args();
+    let filename = args.file.clone();
+    let src = std::fs::read_to_string(&args.file).expect("file not found");
 
     let (ts, errs) = lexer().parse(&src).into_output_errors();
 
-    let parse_errs = if let Some(tokens) = &ts {
+    let (ast, parse_errs) = if let Some(tokens) = &ts {
         let (ast, parse_errs) = exprs_parser()
             .map_with_span(|ast, span| (ast, span))
             .parse(tokens.as_slice().spanned((src.len()..src.len()).into()))
             .into_output_errors();
 
-        if let Some(ast) = ast.filter(|_| errs.len() + parse_errs.len() == 0) {
-            let (ast, e) = infer_exprs(ast.0);
-            if !e.is_empty() {
-                println!("{:?}", e);
-            }
-            if !ast.is_empty() {
-                println!("{:?}", ast);
-            }
-        }
-
-        parse_errs
+        (ast, parse_errs)
     } else {
-        Vec::new()
+        (None, vec![])
+    };
+
+    let (_typed_ast, _type_errs) = if let Some(ast) = ast.filter(|_| errs.len() + parse_errs.len() == 0) {
+        let (ast, e) = infer_exprs(ast.0);
+        if !e.is_empty() {
+            e.iter().for_each(|e| println!("{e:?}"));
+        }
+        if !ast.is_empty() {
+            ast.iter().for_each(|(e, _)| println!("{e:?}"));
+        }
+        (Some(ast), e)
+    } else {
+        (None, vec![])
     };
 
     errs.into_iter()

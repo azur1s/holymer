@@ -10,10 +10,25 @@ use syntax::{
 
 use super::typed::TExpr;
 
+macro_rules! ok {
+    ($e:expr) => {
+        ($e, vec![])
+    };
+}
+
 macro_rules! unbox {
     ($e:expr) => {
         (*$e.0, $e.1)
     };
+}
+
+#[derive(Clone, Debug)]
+pub enum InferError<'src> {
+    UnboundVariable(&'src str, SimpleSpan),
+    UnboundFunction(&'src str, SimpleSpan),
+    InfiniteType(Type, Type),
+    LengthMismatch(Type, Type),
+    TypeMismatch(Type, Type),
 }
 
 #[derive(Clone, Debug)]
@@ -71,7 +86,7 @@ impl<'src> Infer<'src> {
     }
 
     /// Unify two types
-    fn unify(&mut self, t1: Type, t2: Type) -> Result<(), String> {
+    fn unify(&mut self, t1: Type, t2: Type) -> Result<(), InferError<'src>> {
         use Type::*;
         match (t1, t2) {
             // Literal types
@@ -92,7 +107,7 @@ impl<'src> Infer<'src> {
                 }
                 // If the variable occurs in t2
                 if self.occurs(i, t2.clone()) {
-                    return Err(format!("Infinite type: '{} = {}", itoa(i), t2));
+                    return Err(InferError::InfiniteType(Var(i), t2));
                 }
                 // Set the substitution
                 self.subst[i] = t2;
@@ -105,7 +120,7 @@ impl<'src> Infer<'src> {
                     }
                 }
                 if self.occurs(i, t1.clone()) {
-                    return Err(format!("Infinite type: '{} = {}", itoa(i), t1));
+                    return Err(InferError::InfiniteType(Var(i), t1));
                 }
                 self.subst[i] = t1;
                 Ok(())
@@ -115,7 +130,7 @@ impl<'src> Infer<'src> {
             (Func(a1, r1), Func(a2, r2)) => {
                 // Check the number of arguments
                 if a1.len() != a2.len() {
-                    return Err(format!("Function argument mismatch: {} != {}", a1.len(), a2.len()));
+                    return Err(InferError::LengthMismatch(Func(a1, r1), Func(a2, r2)));
                 }
                 // Unify the arguments
                 for (a1, a2) in a1.into_iter().zip(a2.into_iter()) {
@@ -129,7 +144,7 @@ impl<'src> Infer<'src> {
             (Tuple(t1), Tuple(t2)) => {
                 // Check the number of elements
                 if t1.len() != t2.len() {
-                    return Err(format!("Tuple element mismatch: {} != {}", t1.len(), t2.len()));
+                    return Err(InferError::LengthMismatch(Tuple(t1), Tuple(t2)));
                 }
                 // Unify the elements
                 for (t1, t2) in t1.into_iter().zip(t2.into_iter()) {
@@ -142,12 +157,12 @@ impl<'src> Infer<'src> {
             (Array(t1), Array(t2)) => self.unify(*t1, *t2),
 
             // The rest will be type mismatch
-            (t1, t2) => Err(format!("Type mismatch: {} != {}", t1, t2)),
+            (t1, t2) => Err(InferError::TypeMismatch(t1, t2)),
         }
     }
 
     /// Solve the constraints by unifying them
-    fn solve(&mut self) -> Result<(), String> {
+    fn solve(&mut self) -> Result<(), InferError<'src>> {
         for (t1, t2, _span) in self.constraints.clone().into_iter() {
             self.unify(t1, t2)?;
         }
@@ -266,30 +281,45 @@ impl<'src> Infer<'src> {
     }
 
     /// Infer the type of an expression
-    fn infer(&mut self, e: (Expr<'src>, SimpleSpan), expected: Type) -> Result<TExpr<'src>, String> {
-        let (e, span) = e;
-        match e {
+    fn infer(
+        &mut self, e: (Expr<'src>, SimpleSpan), expected: Type
+    ) -> (TExpr<'src>, Vec<InferError<'src>>) {
+        let span = e.1;
+        match e.0 {
             // Literal values
             // Push the constraint (expected type to be the literal type) and
             // return the typed expression
-            Expr::Lit(l) => {
-                let t = match l {
-                    Lit::Unit => Type::Unit,
-                    Lit::Bool(_) => Type::Bool,
-                    Lit::Num(_) => Type::Num,
-                    Lit::Str(_) => Type::Str,
-                };
-                self.add_constraint(expected, t, span);
-                Ok(TExpr::Lit(l))
-            },
+            Expr::Lit(l) => match l {
+                Lit::Unit => {
+                    self.add_constraint(expected, Type::Unit, span);
+                    ok!(TExpr::Lit(Lit::Unit))
+                }
+                Lit::Bool(b) => {
+                    self.add_constraint(expected, Type::Bool, span);
+                    ok!(TExpr::Lit(Lit::Bool(b)))
+                }
+                Lit::Num(i) => {
+                    self.add_constraint(expected, Type::Num, span);
+                    ok!(TExpr::Lit(Lit::Num(i)))
+                }
+                Lit::Str(s) => {
+                    self.add_constraint(expected, Type::Str, span);
+                    ok!(TExpr::Lit(Lit::Str(s)))
+                }
+            }
 
             // Identifiers
             // The same as literals but the type is looked up in the environment
             Expr::Ident(ref x) => {
-                let t = self.env.get(x)
-                    .ok_or(format!("Unbound variable: {}", x))?;
-                self.add_constraint(expected, t.clone(), span);
-                Ok(TExpr::Ident(x.clone()))
+                if let Some(t) = self.env.get(x) {
+                    self.add_constraint(expected, t.clone(), span);
+                    ok!(TExpr::Ident(x))
+                } else {
+                    (TExpr::Ident(x), vec![match expected {
+                        Type::Func(_, _) => InferError::UnboundFunction(x, span),
+                        _ => InferError::UnboundVariable(x, span),
+                    }])
+                }
             }
 
             // Unary & binary operators
@@ -298,23 +328,23 @@ impl<'src> Infer<'src> {
             Expr::Unary(op, e) => match op {
                 // Numeric operators (Num -> Num)
                 UnaryOp::Neg => {
-                    let et = self.infer(unbox!(e), Type::Num)?;
+                    let (te, err) = self.infer(unbox!(e), Type::Num);
                     self.add_constraint(expected, Type::Num, span);
-                    Ok(TExpr::Unary {
+                    (TExpr::Unary {
                         op,
-                        expr: (Box::new(et), e.1),
+                        expr: (Box::new(te), span),
                         ret_ty: Type::Num,
-                    })
+                    }, err)
                 },
                 // Boolean operators (Bool -> Bool)
                 UnaryOp::Not => {
-                    let et = self.infer(unbox!(e), Type::Bool)?;
+                    let (te, err) = self.infer(unbox!(e), Type::Bool);
                     self.add_constraint(expected, Type::Bool, span);
-                    Ok(TExpr::Unary {
+                    (TExpr::Unary {
                         op,
-                        expr: (Box::new(et), e.1),
+                        expr: (Box::new(te), span),
                         ret_ty: Type::Bool,
-                    })
+                    }, err)
                 },
             }
             Expr::Binary(op, lhs, rhs) => match op {
@@ -325,29 +355,31 @@ impl<'src> Infer<'src> {
                 | BinaryOp::Div
                 | BinaryOp::Rem
                 => {
-                    let lt = self.infer(unbox!(lhs), Type::Num)?;
-                    let rt = self.infer(unbox!(rhs), Type::Num)?;
+                    let (lt, mut errs0) = self.infer(unbox!(lhs), Type::Num);
+                    let (rt, errs1) = self.infer(unbox!(rhs), Type::Num);
+                    errs0.extend(errs1);
                     self.add_constraint(expected, Type::Num, span);
-                    Ok(TExpr::Binary {
+                    (TExpr::Binary {
                         op,
                         lhs: (Box::new(lt), lhs.1),
                         rhs: (Box::new(rt), rhs.1),
                         ret_ty: Type::Num,
-                    })
+                    }, errs0)
                 },
                 // Boolean operators (Bool -> Bool -> Bool)
                 BinaryOp::And
                 | BinaryOp::Or
                 => {
-                    let lt = self.infer(unbox!(lhs), Type::Bool)?;
-                    let rt = self.infer(unbox!(rhs), Type::Bool)?;
+                    let (lt, mut errs0) = self.infer(unbox!(lhs), Type::Bool);
+                    let (rt, errs1) = self.infer(unbox!(rhs), Type::Bool);
+                    errs0.extend(errs1);
                     self.add_constraint(expected, Type::Bool, span);
-                    Ok(TExpr::Binary {
+                    (TExpr::Binary {
                         op,
                         lhs: (Box::new(lt), lhs.1),
                         rhs: (Box::new(rt), rhs.1),
                         ret_ty: Type::Bool,
-                    })
+                    }, errs0)
                 },
                 // Comparison operators ('a -> 'a -> Bool)
                 BinaryOp::Eq
@@ -361,15 +393,16 @@ impl<'src> Infer<'src> {
                     // expected type for both the left and right hand side
                     // so the type on both side have to be the same
                     let t = self.fresh();
-                    let lt = self.infer(unbox!(lhs), t.clone())?;
-                    let rt = self.infer(unbox!(rhs), t)?;
+                    let (lt, mut errs0) = self.infer(unbox!(lhs), t.clone());
+                    let (rt, errs1) = self.infer(unbox!(rhs), t);
+                    errs0.extend(errs1);
                     self.add_constraint(expected, Type::Bool, span);
-                    Ok(TExpr::Binary {
+                    (TExpr::Binary {
                         op,
                         lhs: (Box::new(lt), lhs.1),
                         rhs: (Box::new(rt), rhs.1),
                         ret_ty: Type::Bool,
-                    })
+                    }, errs0)
                 },
             }
 
@@ -388,7 +421,7 @@ impl<'src> Infer<'src> {
                 xs.clone().into_iter().for_each(|(x, t)| { env.insert(x, t); });
                 let mut inf = self.clone();
                 inf.env = env;
-                let bt = inf.infer(unbox!(b), rt.clone())?;
+                let (bt, errs) = inf.infer(unbox!(b), rt.clone());
 
                 // Add the substitutions & constraints from the body
                 // if it doesn't already exist
@@ -411,11 +444,11 @@ impl<'src> Infer<'src> {
                     Box::new(rt.clone()),
                 ), span);
 
-                Ok(TExpr::Lambda {
+                (TExpr::Lambda {
                     params: xs,
                     body: (Box::new(bt), b.1),
                     ret_ty: rt,
-                })
+                }, errs)
             },
 
             // Call
@@ -430,41 +463,53 @@ impl<'src> Infer<'src> {
                     Box::new(expected),
                 );
                 // Expect the function to have the function type
-                let ft = self.infer(unbox!(f), fsig)?;
+                let (ft, mut errs) = self.infer(unbox!(f), fsig);
                 // Infer the arguments
-                let xs = args.into_iter()
+                let (xs, xerrs) = args.into_iter()
                     .zip(freshes.into_iter())
-                    .map(|(x, t)| Ok((self.infer(x, t)?, span)))
-                    .collect::<Result<Vec<_>, String>>()?;
+                    .map(|(x, t)| {
+                        let span = x.1;
+                        let (xt, err) = self.infer(x, t);
+                        ((xt, span), err)
+                    })
+                    // Flatten errors
+                    .fold((vec![], vec![]), |(mut xs, mut errs), ((x, span), err)| {
+                        xs.push((x, span));
+                        errs.extend(err);
+                        (xs, errs)
+                    });
+                errs.extend(xerrs);
 
-                Ok(TExpr::Call {
+                (TExpr::Call {
                     func: (Box::new(ft), f.1),
                     args: xs,
-                })
+                }, errs)
             },
 
             // If
             Expr::If { cond, t, f } => {
                 // Condition has to be a boolean
-                let ct = self.infer(unbox!(cond), Type::Bool)?;
+                let (ct, mut errs) = self.infer(unbox!(cond), Type::Bool);
                 // The type of the if expression is the same as the
                 // expected type
-                let tt = self.infer(unbox!(t), expected.clone())?;
-                let et = self.infer(unbox!(f), expected.clone())?;
+                let (tt, terrs) = self.infer(unbox!(t), expected.clone());
+                let (ft, ferrs) = self.infer(unbox!(f), expected.clone());
+                errs.extend(terrs);
+                errs.extend(ferrs);
 
-                Ok(TExpr::If {
+                (TExpr::If {
                     cond: (Box::new(ct), cond.1),
                     t: (Box::new(tt), t.1),
-                    f: (Box::new(et), f.1),
+                    f: (Box::new(ft), f.1),
                     br_ty: expected,
-                })
+                }, errs)
             },
 
             // Let & define
             Expr::Let { name, ty, value, body } => {
                 // Infer the type of the value
                 let ty = ty.unwrap_or(self.fresh());
-                let vt = self.infer(unbox!(value), ty.clone())?;
+                let (vt, mut errs) = self.infer(unbox!(value), ty.clone());
 
                 // Create a new environment and add the binding to it
                 // and then use the new environment to infer the body
@@ -472,23 +517,27 @@ impl<'src> Infer<'src> {
                 env.insert(name.clone(), ty.clone());
                 let mut inf = Infer::new();
                 inf.env = env;
-                let bt = inf.infer(unbox!(body), expected.clone())?;
+                let (bt, berrs) = inf.infer(unbox!(body), expected.clone());
+                errs.extend(berrs);
 
-                Ok(TExpr::Let {
+                (TExpr::Let {
                     name, ty,
                     value: (Box::new(vt), value.1),
                     body: (Box::new(bt), body.1),
-                })
+                }, errs)
             },
             Expr::Define { name, ty, value } => {
                 let ty = ty.unwrap_or(self.fresh());
-                let vt = self.infer(unbox!(value), ty.clone())?;
+                let (val_ty, errs) = self.infer(unbox!(value), ty.clone());
                 self.env.insert(name.clone(), ty.clone());
 
-                Ok(TExpr::Define {
-                    name, ty,
-                    value: (Box::new(vt), value.1),
-                })
+                self.constraints.push((expected, Type::Unit, e.1));
+
+                (TExpr::Define {
+                    name,
+                    ty,
+                    value: (Box::new(val_ty), value.1),
+                }, errs)
             },
 
             // Block
@@ -496,18 +545,23 @@ impl<'src> Infer<'src> {
                 // Infer the type of each expression
                 let mut last = None;
                 let len = exprs.len();
-                let xs = exprs.into_iter()
+                let (texprs, errs) = exprs.into_iter()
                     .enumerate()
                     .map(|(i, x)| {
+                        let span = x.1;
                         let t = self.fresh();
-                        let xt = self.infer(unbox!(x), t.clone())?;
+                        let (xt, err) = self.infer(unbox!(x), t.clone());
                         // Save the type of the last expression
                         if i == len - 1 {
                             last = Some(t);
                         }
-                        Ok((xt, x.1))
+                        ((xt, span), err)
                     })
-                    .collect::<Result<Vec<_>, String>>()?;
+                    .fold((vec![], vec![]), |(mut xs, mut errs), ((x, span), err)| {
+                        xs.push((x, span));
+                        errs.extend(err);
+                        (xs, errs)
+                    });
 
                 let rt = if void || last.is_none() {
                     // If the block is void or there is no expression,
@@ -520,70 +574,42 @@ impl<'src> Infer<'src> {
                     expected
                 };
 
-                Ok(TExpr::Block {
-                    exprs: xs,
+                (TExpr::Block {
+                    exprs: texprs,
                     void,
                     ret_ty: rt,
-                })
+                }, errs)
             },
         }
     }
 }
 
 /// Infer a list of expressions
-pub fn infer_exprs(es: Vec<(Expr, SimpleSpan)>) -> (Vec<(TExpr, SimpleSpan)>, String) {
+pub fn infer_exprs(es: Vec<(Expr, SimpleSpan)>) -> (Vec<(TExpr, SimpleSpan)>, Vec<InferError>) {
     let mut inf = Infer::new();
-    // Typed expressions
-    let mut tes = vec![];
-    // Typed expressions without substitutions
-    let mut tes_nosub = vec![];
-    // Errors
-    let mut errs = vec![];
+    let mut typed_exprs = vec![];
+    let mut errors = vec![];
 
-    for (e, s) in es {
-        let f = inf.fresh();
-        let t = inf.infer((e, s), f).unwrap();
-        tes.push(Some((t.clone(), s)));
-        tes_nosub.push((t, s));
-
-        match inf.solve() {
-            Ok(_) => {
-                // Substitute the type variables for the solved expressions
-                tes = tes.into_iter()
-                    .map(|te| match te {
-                        Some((t, s)) => {
-                            Some((inf.substitute_texp(t), s))
-                        },
-                        None => None,
-                    })
-                    .collect();
-            },
-            Err(e) => {
-                errs.push(e);
-                // Replace the expression with None
-                tes.pop();
-                tes.push(None);
-            },
+    for e in es {
+        let span = e.1;
+        let fresh = inf.fresh();
+        let (te, err) = inf.infer(e, fresh);
+        typed_exprs.push((te, span));
+        if !err.is_empty() {
+            errors.extend(err);
         }
     }
 
-    // Union typed expressions, replacing None with the typed expression without substitutions
-    // None means that the expression has an error
-    let mut tes_union = vec![];
-    for (te, te_nosub) in tes.into_iter().zip(tes_nosub.into_iter()) {
-        match te {
-            Some(t) => {
-                tes_union.push(t);
-            },
-            None => {
-                tes_union.push(te_nosub);
-            },
+    match inf.solve() {
+        Ok(_) => {
+            typed_exprs = typed_exprs.into_iter()
+                .map(|(x, s)| (inf.substitute_texp(x), s))
+                .collect();
+        }
+        Err(e) => {
+            errors.push(e);
         }
     }
 
-    (
-        // Renamer::new().process(tes_union),
-        tes_union,
-        errs.join("\n")
-    )
+    (typed_exprs, errors)
 }

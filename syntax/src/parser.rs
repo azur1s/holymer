@@ -15,10 +15,20 @@ pub fn lexer<'src>() -> impl Parser<'src, &'src str, Vec<(Token<'src>, Span)>, e
         .then_ignore(just('"'))
         .map_slice(Token::Str);
 
-    let word = text::ident().map(|s: &str| match s {
+    fn id_filter<C>(c: &C) -> bool where C: text::Char {
+        c.to_char().is_ascii_alphabetic()
+        || "_'".contains(c.to_char())
+    }
+    let id = any()
+        .filter(id_filter)
+        .then(any()
+            .filter(id_filter)
+            .repeated())
+        .slice();
+
+    let word = id.map(|s: &str| match s {
         "true"   => Token::Bool(true),
         "false"  => Token::Bool(false),
-        "unit"   => Token::Unit,
         "let"    => Token::Let,
         "in"     => Token::In,
         "func"   => Token::Func,
@@ -30,6 +40,7 @@ pub fn lexer<'src>() -> impl Parser<'src, &'src str, Vec<(Token<'src>, Span)>, e
     });
 
     let sym = choice((
+        just("()").to(Token::Unit),
         just("\\").to(Token::Lambda),
         just("->").to(Token::Arrow),
 
@@ -72,7 +83,7 @@ pub fn lexer<'src>() -> impl Parser<'src, &'src str, Vec<(Token<'src>, Span)>, e
         ));
 
     token
-        .map_with_span(|tok, span| (tok, span))
+        .map_with_span(move |tok, span| (tok, span))
         .padded()
         // If we get an error, skip to the next character and try again.
         .recover_with(skip_then_retry_until(any().ignored(), end()))
@@ -297,8 +308,8 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
                 }
             );
 
-        #[allow(clippy::let_and_return)]
         logical
+            .labelled("expression")
     })
 }
 
@@ -310,11 +321,20 @@ pub fn type_parser<'tokens, 'src: 'tokens>() -> impl Parser<
 > + Clone {
     recursive(|ty| {
         let lit_ty = select! {
-            Token::Ident("bool") => Type::Bool,
-            Token::Ident("num")  => Type::Num,
-            Token::Ident("str")  => Type::Str,
+            Token::Ident("Bool") => Type::Bool,
+            Token::Ident("Num")  => Type::Num,
+            Token::Ident("Str")  => Type::Str,
+            // TODO: Support type variables in both the parser and the type checker.
+            Token::Ident(_)      => Type::Var(69),
             Token::Unit          => Type::Unit,
-        };
+        }.validate(|tys, span, emitter| {
+            if let Type::Var(_) = tys {
+                emitter.emit(Rich::custom(span,
+                    "Type variables are not yet supported.".to_string()
+                ));
+            }
+            tys
+        });
 
         let tys_paren = ty.clone()
             .separated_by(just(Token::Comma))
@@ -351,6 +371,8 @@ pub fn type_parser<'tokens, 'src: 'tokens>() -> impl Parser<
             .or(array)
             .or(func)
             .or(tuple)
+            .boxed()
+            .labelled("type")
     })
 }
 
