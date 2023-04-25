@@ -1,1 +1,11 @@
-let f = \f, g, h, a, b, c, d = ;
+let addi = fn x y = x + y;
+
+let factorial = fn x =
+    if x == 1
+        then x
+        else x * factorial(x - 1);
+
+let result = factorial(addi(2, 3));
+
+let println = fn x = ();
+println(result);

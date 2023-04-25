@@ -9,3 +9,7 @@ chumsky = "1.0.0-alpha.3"
 clap = { version = "4.2.4", features = ["derive"] }
 syntax = { path = "../syntax" }
 typing = { path = "../typing" }
+
+[[bin]]
+name = "hc"
+path = "src/main.rs"

@@ -68,7 +68,7 @@ impl<'src> Infer<'src> {
     fn occurs(&self, i: usize, t: Type) -> bool {
         use Type::*;
         match t {
-            Unit | Bool | Num | Str => false,
+            Unit | Bool | Int | Str => false,
             Var(j) => {
                 if let Some(t) = self.subst(j) {
                     if t != Var(j) {
@@ -92,7 +92,7 @@ impl<'src> Infer<'src> {
             // Literal types
             (Unit, Unit)
             | (Bool, Bool)
-            | (Num, Num)
+            | (Int, Int)
             | (Str, Str) => Ok(()),
 
             // Variable
@@ -298,9 +298,9 @@ impl<'src> Infer<'src> {
                     self.add_constraint(expected, Type::Bool, span);
                     ok!(TExpr::Lit(Lit::Bool(b)))
                 }
-                Lit::Num(i) => {
-                    self.add_constraint(expected, Type::Num, span);
-                    ok!(TExpr::Lit(Lit::Num(i)))
+                Lit::Int(i) => {
+                    self.add_constraint(expected, Type::Int, span);
+                    ok!(TExpr::Lit(Lit::Int(i)))
                 }
                 Lit::Str(s) => {
                     self.add_constraint(expected, Type::Str, span);
@@ -326,14 +326,14 @@ impl<'src> Infer<'src> {
             // The type of the left and right hand side are inferred and
             // the expected type is determined by the operator
             Expr::Unary(op, e) => match op {
-                // Numeric operators (Num -> Num)
+                // Numeric operators (Int -> Int)
                 UnaryOp::Neg => {
-                    let (te, err) = self.infer(unbox!(e), Type::Num);
-                    self.add_constraint(expected, Type::Num, span);
+                    let (te, err) = self.infer(unbox!(e), Type::Int);
+                    self.add_constraint(expected, Type::Int, span);
                     (TExpr::Unary {
                         op,
                         expr: (Box::new(te), span),
-                        ret_ty: Type::Num,
+                        ret_ty: Type::Int,
                     }, err)
                 },
                 // Boolean operators (Bool -> Bool)
@@ -348,22 +348,22 @@ impl<'src> Infer<'src> {
                 },
             }
             Expr::Binary(op, lhs, rhs) => match op {
-                // Numeric operators (Num -> Num -> Num)
+                // Numeric operators (Int -> Int -> Int)
                 BinaryOp::Add
                 | BinaryOp::Sub
                 | BinaryOp::Mul
                 | BinaryOp::Div
                 | BinaryOp::Rem
                 => {
-                    let (lt, mut errs0) = self.infer(unbox!(lhs), Type::Num);
-                    let (rt, errs1) = self.infer(unbox!(rhs), Type::Num);
+                    let (lt, mut errs0) = self.infer(unbox!(lhs), Type::Int);
+                    let (rt, errs1) = self.infer(unbox!(rhs), Type::Int);
                     errs0.extend(errs1);
-                    self.add_constraint(expected, Type::Num, span);
+                    self.add_constraint(expected, Type::Int, span);
                     (TExpr::Binary {
                         op,
                         lhs: (Box::new(lt), lhs.1),
                         rhs: (Box::new(rt), rhs.1),
-                        ret_ty: Type::Num,
+                        ret_ty: Type::Int,
                     }, errs0)
                 },
                 // Boolean operators (Bool -> Bool -> Bool)
@@ -528,8 +528,8 @@ impl<'src> Infer<'src> {
             },
             Expr::Define { name, ty, value } => {
                 let ty = ty.unwrap_or(self.fresh());
-                let (val_ty, errs) = self.infer(unbox!(value), ty.clone());
                 self.env.insert(name.clone(), ty.clone());
+                let (val_ty, errs) = self.infer(unbox!(value), ty.clone());
 
                 self.constraints.push((expected, Type::Unit, e.1));
 

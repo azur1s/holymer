@@ -3,7 +3,7 @@ use std::fmt::{self, Display, Formatter};
 // TODO: Introduce lifetime here to reduce cloning.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Type {
-    Unit, Bool, Num, Str,
+    Unit, Bool, Int, Str,
     Var(usize), // This type is only used during type inference.
     Func(Vec<Type>, Box<Type>),
     Tuple(Vec<Type>),
@@ -15,7 +15,7 @@ impl Display for Type {
         match *self {
             Type::Unit => write!(f, "Unit"),
             Type::Bool => write!(f, "Bool"),
-            Type::Num  => write!(f, "Num"),
+            Type::Int  => write!(f, "Int"),
             Type::Str  => write!(f, "Str"),
             Type::Var(id) => write!(f, "{}", itoa(id)),
             Type::Func(ref args, ref ret) => {

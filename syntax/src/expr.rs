@@ -10,7 +10,7 @@ pub enum Delim { Paren, Brack, Brace }
 // 'src is the lifetime of the source code string.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token<'src> {
-    Unit, Bool(bool), Num(f64), Str(&'src str),
+    Unit, Bool(bool), Int(i64), Str(&'src str),
     Ident(&'src str),
 
     Add, Sub, Mul, Div, Rem,
@@ -29,7 +29,7 @@ impl<'src> Display for Token<'src> {
         match self {
             Token::Unit    => write!(f, "()"),
             Token::Bool(b) => write!(f, "{}", b),
-            Token::Num(n)  => write!(f, "{}", n),
+            Token::Int(n)  => write!(f, "{}", n),
             Token::Str(s)  => write!(f, "\"{}\"", s),
             Token::Ident(s)  => write!(f, "{}", s),
 
@@ -82,7 +82,7 @@ pub type Span = SimpleSpan<usize>;
 pub enum Lit<'src> {
     Unit,
     Bool(bool),
-    Num(f64),
+    Int(i64),
     Str(&'src str),
 }
 

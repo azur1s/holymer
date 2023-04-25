@@ -1,0 +1,18 @@
+my_add x y:
+    0:
+        v0 = iadd x y
+        ret v0
+
+factorial x:
+    0:
+        v0 = eq x 1
+        jf v0 1
+        ret x
+    1:
+        v0 = isub x 1
+        v1 = call factorial v0
+        v2 = imul x v1
+        ret v2
+
+v0 = call my_add 2 3
+v1 = call factorial v0

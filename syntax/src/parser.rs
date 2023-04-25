@@ -3,12 +3,17 @@ use chumsky::prelude::*;
 use super::{ expr::*, ty::Type };
 
 pub fn lexer<'src>() -> impl Parser<'src, &'src str, Vec<(Token<'src>, Span)>, extra::Err<Rich<'src, char, Span>>> {
-    let num = text::int(10)
-        .then(just('.').then(text::digits(10)).or_not())
+    // let num = text::int(10)
+    //     .then(just('.').then(text::digits(10)).or_not())
+    //     .slice()
+    //     .from_str()
+    //     .unwrapped()
+    //     .map(Token::Int);
+    let int = text::int(10)
         .slice()
         .from_str()
         .unwrapped()
-        .map(Token::Num);
+        .map(Token::Int);
 
     let strn = just('"')
         .ignore_then(none_of('"').repeated())
@@ -31,7 +36,7 @@ pub fn lexer<'src>() -> impl Parser<'src, &'src str, Vec<(Token<'src>, Span)>, e
         "false"  => Token::Bool(false),
         "let"    => Token::Let,
         "in"     => Token::In,
-        "func"   => Token::Func,
+        "fn"     => Token::Func,
         "return" => Token::Return,
         "if"     => Token::If,
         "then"   => Token::Then,
@@ -75,15 +80,20 @@ pub fn lexer<'src>() -> impl Parser<'src, &'src str, Vec<(Token<'src>, Span)>, e
     ));
 
     let token = choice((
-            num,
+            int,
             strn,
             word,
             sym,
             delim,
         ));
 
+    let comment = just("//")
+        .then(any().and_is(just('\n').not()).repeated())
+        .padded();
+
     token
         .map_with_span(move |tok, span| (tok, span))
+        .padded_by(comment.repeated())
         .padded()
         // If we get an error, skip to the next character and try again.
         .recover_with(skip_then_retry_until(any().ignored(), end()))
@@ -114,7 +124,7 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
         let lit = select! {
             Token::Unit    => Expr::Lit(Lit::Unit),
             Token::Bool(b) => Expr::Lit(Lit::Bool(b)),
-            Token::Num(n)  => Expr::Lit(Lit::Num(n)),
+            Token::Int(n)  => Expr::Lit(Lit::Int(n)),
             Token::Str(s)  => Expr::Lit(Lit::Str(s)),
         };
 
@@ -132,20 +142,25 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
             )
             .map(|e: Spanned<Expr>| e.0);
 
-        // \x : t, y : t -> rt = e
-        let lambda = just(Token::Lambda)
+        // func (x t, y t) : rt = e
+        // func x, y = e
+        let lambda = just(Token::Func)
             .ignore_then(
-                (
-                    symbol.then(
-                        just(Token::Colon)
-                            .ignore_then(type_parser())
-                            .or_not())
-                ).separated_by(just(Token::Comma))
-                    .allow_trailing()
+                symbol
+                    .map(|s| (s, None))
+                    .or(symbol
+                        .then(type_parser())
+                        .delimited_by(
+                            just(Token::Open(Delim::Paren)),
+                            just(Token::Close(Delim::Paren)),
+                        )
+                        .map(|(s, t)| (s, Some(t)))
+                    )
+                    .repeated()
                     .collect::<Vec<_>>()
             )
             .then(
-                just(Token::Arrow)
+                just(Token::Colon)
                     .ignore_then(type_parser())
                     .or_not()
             )
@@ -219,7 +234,8 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
             .or(if_)
             .or(block)
             .map_with_span(|e, s| (e, s))
-            .boxed();
+            .boxed()
+            .labelled("(atomic) expression");
 
         let call = atom
             .then(
@@ -322,7 +338,7 @@ pub fn type_parser<'tokens, 'src: 'tokens>() -> impl Parser<
     recursive(|ty| {
         let lit_ty = select! {
             Token::Ident("Bool") => Type::Bool,
-            Token::Ident("Num")  => Type::Num,
+            Token::Ident("Int")  => Type::Int,
             Token::Ident("Str")  => Type::Str,
             // TODO: Support type variables in both the parser and the type checker.
             Token::Ident(_)      => Type::Var(69),
@@ -362,9 +378,11 @@ pub fn type_parser<'tokens, 'src: 'tokens>() -> impl Parser<
             })
             .map(Type::Tuple);
 
-        let array = just(Token::Open(Delim::Brack))
-            .ignore_then(ty.clone())
-            .then_ignore(just(Token::Close(Delim::Brack)))
+        let array = ty.clone()
+            .delimited_by(
+                just(Token::Open(Delim::Brack)),
+                just(Token::Close(Delim::Brack)),
+            )
             .map(|t| Type::Array(Box::new(t)));
 
         lit_ty
