@@ -1,7 +1,7 @@
 use ariadne::{sources, Color, Label, Report, ReportKind};
 use chumsky::{Parser, prelude::Input};
 use syntax::parser::{lexer, exprs_parser};
-use typing::infer::infer_exprs;
+use typing::infer::{infer_exprs, InferErrorKind};
 
 pub mod args;
 
@@ -10,6 +10,7 @@ fn main() {
     let filename = args.file.clone();
     let src = std::fs::read_to_string(&args.file).expect("file not found");
 
+    // Lexing & parsing
     let (ts, errs) = lexer().parse(&src).into_output_errors();
 
     let (ast, parse_errs) = if let Some(tokens) = &ts {
@@ -23,19 +24,37 @@ fn main() {
         (None, vec![])
     };
 
-    let (_typed_ast, _type_errs) = if let Some(ast) = ast.filter(|_| errs.len() + parse_errs.len() == 0) {
+    // Typecheck if there are no lexing or parsing errors
+    if let Some(ast) = ast.filter(|_| errs.len() + parse_errs.len() == 0) {
         let (ast, e) = infer_exprs(ast.0);
         if !e.is_empty() {
-            e.iter().for_each(|e| println!("{e:?}"));
+            e.into_iter()
+                .for_each(|e| {
+                    let mut r = Report::build(ReportKind::Error, filename.clone(), e.span.start)
+                        .with_message(e.title.to_string());
+
+                    for (msg, kind, span) in e.labels {
+                        r = r.with_label(
+                            Label::new((filename.clone(), span.into_range()))
+                                .with_message(msg.to_string())
+                                .with_color(match kind {
+                                    InferErrorKind::Error => Color::Red,
+                                    InferErrorKind::Hint => Color::Blue,
+                                }),
+                        );
+                    }
+
+                    r
+                        .finish()
+                        .print(sources([(filename.clone(), src.clone())]))
+                        .unwrap()
+                });
+        } else {
+            ast.iter().for_each(|node| println!("{:?}", node.0));
         }
-        if !ast.is_empty() {
-            ast.iter().for_each(|(e, _)| println!("{e:?}"));
-        }
-        (Some(ast), e)
-    } else {
-        (None, vec![])
     };
 
+    // Report lex & parse errors
     errs.into_iter()
         .map(|e| e.map_token(|c| c.to_string()))
         .chain(
@@ -51,11 +70,6 @@ fn main() {
                         .with_message(e.reason().to_string())
                         .with_color(Color::Red),
                 )
-                // .with_labels(e.contexts().map(|(label, span)| {
-                //     Label::new((filename.clone(), span.into_range()))
-                //         .with_message(format!("while parsing this {}", label))
-                //         .with_color(Color::Yellow)
-                // }))
                 .finish()
                 .print(sources([(filename.clone(), src.clone())]))
                 .unwrap()

@@ -43,9 +43,9 @@ pub fn itoa(i: usize) -> String {
     let mut i = i;
 
     while i >= 26 {
-        s.push((b'a' + (i % 26) as u8) as char);
+        s.push((b'A' + (i % 26) as u8) as char);
         i /= 26;
     }
-    s.push((b'a' + i as u8) as char);
+    s.push((b'A' + i as u8) as char);
     s
 }

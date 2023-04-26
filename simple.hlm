@@ -1,0 +1,3 @@
+let mk = fn n = fn x = x + n;
+let f = mk(35);
+let res = f(34);

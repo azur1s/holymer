@@ -8,6 +8,8 @@ use syntax::{
     ty::*,
 };
 
+use crate::rename::{rename_exprs, rename_type};
+
 use super::typed::TExpr;
 
 macro_rules! ok {
@@ -23,12 +25,36 @@ macro_rules! unbox {
 }
 
 #[derive(Clone, Debug)]
-pub enum InferError<'src> {
-    UnboundVariable(&'src str, SimpleSpan),
-    UnboundFunction(&'src str, SimpleSpan),
-    InfiniteType(Type, Type),
-    LengthMismatch(Type, Type),
-    TypeMismatch(Type, Type),
+pub enum InferErrorKind {
+    Error,
+    Hint,
+}
+
+#[derive(Clone, Debug)]
+pub struct InferError {
+    pub title: String,
+    pub labels: Vec<(String, InferErrorKind, SimpleSpan)>,
+    pub span: SimpleSpan,
+}
+
+impl InferError {
+    pub fn new<S: Into<String>>(title: S, span: SimpleSpan) -> Self {
+        Self {
+            title: title.into(),
+            labels: Vec::new(),
+            span,
+        }
+    }
+
+    pub fn add_error<S: Into<String>>(mut self, reason: S, span: SimpleSpan) -> Self {
+        self.labels.push((reason.into(), InferErrorKind::Error, span));
+        self
+    }
+
+    pub fn add_hint<S: Into<String>>(mut self, reason: S, span: SimpleSpan) -> Self {
+        self.labels.push((reason.into(), InferErrorKind::Hint, span));
+        self
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -86,7 +112,7 @@ impl<'src> Infer<'src> {
     }
 
     /// Unify two types
-    fn unify(&mut self, t1: Type, t2: Type) -> Result<(), InferError<'src>> {
+    fn unify(&mut self, t1: Type, t2: Type, s: SimpleSpan) -> Result<(), InferError> {
         use Type::*;
         match (t1, t2) {
             // Literal types
@@ -102,12 +128,15 @@ impl<'src> Infer<'src> {
                 // unify the substitution with t2
                 if let Some(t) = self.subst(i) {
                     if t != Var(i) {
-                        return self.unify(t, t2);
+                        return self.unify(t, t2, s);
                     }
                 }
                 // If the variable occurs in t2
                 if self.occurs(i, t2.clone()) {
-                    return Err(InferError::InfiniteType(Var(i), t2));
+                    return Err(InferError::new("Infinite type", s)
+                        .add_error(format!(
+                            "This type contains itself: {}", rename_type(Var(i))
+                        ), s));
                 }
                 // Set the substitution
                 self.subst[i] = t2;
@@ -116,11 +145,15 @@ impl<'src> Infer<'src> {
             (t1, Var(i)) => {
                 if let Some(t) = self.subst(i) {
                     if t != Var(i) {
-                        return self.unify(t1, t);
+                        return self.unify(t1, t, s);
                     }
                 }
                 if self.occurs(i, t1.clone()) {
-                    return Err(InferError::InfiniteType(Var(i), t1));
+                    return Err(InferError::new("Infinite type", s)
+                        .add_error(format!(
+                            "This type contains itself: {}",
+                            rename_type(Var(i))
+                        ), s));
                 }
                 self.subst[i] = t1;
                 Ok(())
@@ -130,41 +163,53 @@ impl<'src> Infer<'src> {
             (Func(a1, r1), Func(a2, r2)) => {
                 // Check the number of arguments
                 if a1.len() != a2.len() {
-                    return Err(InferError::LengthMismatch(Func(a1, r1), Func(a2, r2)));
+                    return Err(InferError::new("Argument length mismatch", s)
+                        .add_error(format!(
+                            "Expected {} arguments, found {}",
+                            a1.len(), a2.len()
+                        ), s));
                 }
                 // Unify the arguments
                 for (a1, a2) in a1.into_iter().zip(a2.into_iter()) {
-                    self.unify(a1, a2)?;
+                    self.unify(a1, a2, s)?;
                 }
                 // Unify the return types
-                self.unify(*r1, *r2)
+                self.unify(*r1, *r2, s)
             },
 
             // Tuple
             (Tuple(t1), Tuple(t2)) => {
                 // Check the number of elements
                 if t1.len() != t2.len() {
-                    return Err(InferError::LengthMismatch(Tuple(t1), Tuple(t2)));
+                    return Err(InferError::new("Tuple length mismatch", s)
+                        .add_error(format!(
+                            "Expected {} elements, found {}",
+                            t1.len(), t2.len()
+                        ), s));
                 }
                 // Unify the elements
                 for (t1, t2) in t1.into_iter().zip(t2.into_iter()) {
-                    self.unify(t1, t2)?;
+                    self.unify(t1, t2, s)?;
                 }
                 Ok(())
             },
 
             // Array
-            (Array(t1), Array(t2)) => self.unify(*t1, *t2),
+            (Array(t1), Array(t2)) => self.unify(*t1, *t2, s),
 
             // The rest will be type mismatch
-            (t1, t2) => Err(InferError::TypeMismatch(t1, t2)),
+            (t1, t2) => Err(InferError::new("Type mismatch", s)
+                .add_error(format!(
+                    "Expected {}, found {}",
+                    rename_type(t1), rename_type(t2)
+                ), s)),
         }
     }
 
     /// Solve the constraints by unifying them
-    fn solve(&mut self) -> Result<(), InferError<'src>> {
-        for (t1, t2, _span) in self.constraints.clone().into_iter() {
-            self.unify(t1, t2)?;
+    fn solve(&mut self) -> Result<(), InferError> {
+        for (t1, t2, span) in self.constraints.clone().into_iter() {
+            self.unify(t1, t2, span)?;
         }
         Ok(())
     }
@@ -283,7 +328,7 @@ impl<'src> Infer<'src> {
     /// Infer the type of an expression
     fn infer(
         &mut self, e: (Expr<'src>, SimpleSpan), expected: Type
-    ) -> (TExpr<'src>, Vec<InferError<'src>>) {
+    ) -> (TExpr<'src>, Vec<InferError>) {
         let span = e.1;
         match e.0 {
             // Literal values
@@ -315,10 +360,14 @@ impl<'src> Infer<'src> {
                     self.add_constraint(expected, t.clone(), span);
                     ok!(TExpr::Ident(x))
                 } else {
-                    (TExpr::Ident(x), vec![match expected {
-                        Type::Func(_, _) => InferError::UnboundFunction(x, span),
-                        _ => InferError::UnboundVariable(x, span),
-                    }])
+                    let kind = match &expected {
+                        Type::Func(_, _) => "function",
+                        _ => "value",
+                    };
+                    (
+                        TExpr::Ident(x),
+                        vec![InferError::new(format!("Undefined {}", kind), span)]
+                    )
                 }
             }
 
@@ -611,5 +660,5 @@ pub fn infer_exprs(es: Vec<(Expr, SimpleSpan)>) -> (Vec<(TExpr, SimpleSpan)>, Ve
         }
     }
 
-    (typed_exprs, errors)
+    (rename_exprs(typed_exprs), errors)
 }
