@@ -4,5 +4,4 @@ members = [
     "bin",
     "syntax",
     "typing",
-    "ir",
 ]

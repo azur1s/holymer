@@ -57,11 +57,29 @@ impl InferError {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct Constraint {
+    t1: Type,
+    t2: Type,
+    // Where the constraint was generated, for error reporting
+    span: SimpleSpan,
+}
+
+impl Constraint {
+    fn new(t1: Type, t2: Type, span: SimpleSpan) -> Self {
+        Self {
+            t1,
+            t2,
+            span,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 struct Infer<'src> {
     env: HashMap<&'src str, Type>,
     subst: Vec<Type>,
-    constraints: Vec<(Type, Type, SimpleSpan)>,
+    constraints: Vec<Constraint>,
 }
 
 impl<'src> Infer<'src> {
@@ -86,8 +104,8 @@ impl<'src> Infer<'src> {
     }
 
     /// Add new constraint
-    fn add_constraint(&mut self, t1: Type, t2: Type, span: SimpleSpan) {
-        self.constraints.push((t1, t2, span));
+    fn add_constraint(&mut self, c: Constraint) {
+        self.constraints.push(c);
     }
 
     /// Check if a type variable occurs in a type
@@ -112,9 +130,15 @@ impl<'src> Infer<'src> {
     }
 
     /// Unify two types
-    fn unify(&mut self, t1: Type, t2: Type, s: SimpleSpan) -> Result<(), InferError> {
+    fn unify(&mut self, c: Constraint) -> Result<(), InferError> {
+        macro_rules! constraint {
+            ($t1:expr, $t2:expr) => {
+                Constraint::new($t1, $t2, c.span)
+            };
+        }
+
         use Type::*;
-        match (t1, t2) {
+        match (c.t1.clone(), c.t2.clone()) {
             // Literal types
             (Unit, Unit)
             | (Bool, Bool)
@@ -128,15 +152,15 @@ impl<'src> Infer<'src> {
                 // unify the substitution with t2
                 if let Some(t) = self.subst(i) {
                     if t != Var(i) {
-                        return self.unify(t, t2, s);
+                        return self.unify(constraint!(t, t2));
                     }
                 }
                 // If the variable occurs in t2
                 if self.occurs(i, t2.clone()) {
-                    return Err(InferError::new("Infinite type", s)
+                    return Err(InferError::new("Infinite type", c.span)
                         .add_error(format!(
                             "This type contains itself: {}", rename_type(Var(i))
-                        ), s));
+                        ), c.span));
                 }
                 // Set the substitution
                 self.subst[i] = t2;
@@ -145,15 +169,15 @@ impl<'src> Infer<'src> {
             (t1, Var(i)) => {
                 if let Some(t) = self.subst(i) {
                     if t != Var(i) {
-                        return self.unify(t1, t, s);
+                        return self.unify(constraint!(t1, t));
                     }
                 }
                 if self.occurs(i, t1.clone()) {
-                    return Err(InferError::new("Infinite type", s)
+                    return Err(InferError::new("Infinite type", c.span)
                         .add_error(format!(
                             "This type contains itself: {}",
                             rename_type(Var(i))
-                        ), s));
+                        ), c.span));
                 }
                 self.subst[i] = t1;
                 Ok(())
@@ -163,53 +187,53 @@ impl<'src> Infer<'src> {
             (Func(a1, r1), Func(a2, r2)) => {
                 // Check the number of arguments
                 if a1.len() != a2.len() {
-                    return Err(InferError::new("Argument length mismatch", s)
+                    return Err(InferError::new("Argument length mismatch", c.span)
                         .add_error(format!(
-                            "Expected {} arguments, found {}",
+                            "This function should take {} arguments, found {}",
                             a1.len(), a2.len()
-                        ), s));
+                        ), c.span));
                 }
                 // Unify the arguments
                 for (a1, a2) in a1.into_iter().zip(a2.into_iter()) {
-                    self.unify(a1, a2, s)?;
+                    self.unify(constraint!(a1, a2))?;
                 }
                 // Unify the return types
-                self.unify(*r1, *r2, s)
+                self.unify(constraint!(*r1, *r2))
             },
 
             // Tuple
             (Tuple(t1), Tuple(t2)) => {
                 // Check the number of elements
                 if t1.len() != t2.len() {
-                    return Err(InferError::new("Tuple length mismatch", s)
+                    return Err(InferError::new("Tuple length mismatch", c.span)
                         .add_error(format!(
                             "Expected {} elements, found {}",
                             t1.len(), t2.len()
-                        ), s));
+                        ), c.span));
                 }
                 // Unify the elements
                 for (t1, t2) in t1.into_iter().zip(t2.into_iter()) {
-                    self.unify(t1, t2, s)?;
+                    self.unify(constraint!(t1, t2))?;
                 }
                 Ok(())
             },
 
             // Array
-            (Array(t1), Array(t2)) => self.unify(*t1, *t2, s),
+            (Array(t1), Array(t2)) => self.unify(constraint!(*t1, *t2)),
 
             // The rest will be type mismatch
-            (t1, t2) => Err(InferError::new("Type mismatch", s)
+            (t1, t2) => Err(InferError::new("Type mismatch", c.span)
                 .add_error(format!(
                     "Expected {}, found {}",
                     rename_type(t1), rename_type(t2)
-                ), s)),
+                ), c.span)),
         }
     }
 
     /// Solve the constraints by unifying them
     fn solve(&mut self) -> Result<(), InferError> {
-        for (t1, t2, span) in self.constraints.clone().into_iter() {
-            self.unify(t1, t2, span)?;
+        for c in self.constraints.clone().into_iter() {
+            self.unify(c)?;
         }
         Ok(())
     }
@@ -330,25 +354,31 @@ impl<'src> Infer<'src> {
         &mut self, e: (Expr<'src>, SimpleSpan), expected: Type
     ) -> (TExpr<'src>, Vec<InferError>) {
         let span = e.1;
+        macro_rules! constraint {
+            ($ty:expr) => {
+                self.add_constraint(Constraint::new(expected, $ty, span))
+            };
+        }
+
         match e.0 {
             // Literal values
             // Push the constraint (expected type to be the literal type) and
             // return the typed expression
             Expr::Lit(l) => match l {
                 Lit::Unit => {
-                    self.add_constraint(expected, Type::Unit, span);
+                    constraint!(Type::Unit);
                     ok!(TExpr::Lit(Lit::Unit))
                 }
                 Lit::Bool(b) => {
-                    self.add_constraint(expected, Type::Bool, span);
+                    constraint!(Type::Bool);
                     ok!(TExpr::Lit(Lit::Bool(b)))
                 }
                 Lit::Int(i) => {
-                    self.add_constraint(expected, Type::Int, span);
+                    constraint!(Type::Int);
                     ok!(TExpr::Lit(Lit::Int(i)))
                 }
                 Lit::Str(s) => {
-                    self.add_constraint(expected, Type::Str, span);
+                    constraint!(Type::Str);
                     ok!(TExpr::Lit(Lit::Str(s)))
                 }
             }
@@ -357,7 +387,7 @@ impl<'src> Infer<'src> {
             // The same as literals but the type is looked up in the environment
             Expr::Ident(ref x) => {
                 if let Some(t) = self.env.get(x) {
-                    self.add_constraint(expected, t.clone(), span);
+                    constraint!(t.clone());
                     ok!(TExpr::Ident(x))
                 } else {
                     let kind = match &expected {
@@ -378,7 +408,7 @@ impl<'src> Infer<'src> {
                 // Numeric operators (Int -> Int)
                 UnaryOp::Neg => {
                     let (te, err) = self.infer(unbox!(e), Type::Int);
-                    self.add_constraint(expected, Type::Int, span);
+                    constraint!(Type::Int);
                     (TExpr::Unary {
                         op,
                         expr: (Box::new(te), span),
@@ -388,7 +418,7 @@ impl<'src> Infer<'src> {
                 // Boolean operators (Bool -> Bool)
                 UnaryOp::Not => {
                     let (te, err) = self.infer(unbox!(e), Type::Bool);
-                    self.add_constraint(expected, Type::Bool, span);
+                    constraint!(Type::Bool);
                     (TExpr::Unary {
                         op,
                         expr: (Box::new(te), span),
@@ -407,7 +437,7 @@ impl<'src> Infer<'src> {
                     let (lt, mut errs0) = self.infer(unbox!(lhs), Type::Int);
                     let (rt, errs1) = self.infer(unbox!(rhs), Type::Int);
                     errs0.extend(errs1);
-                    self.add_constraint(expected, Type::Int, span);
+                    constraint!(Type::Int);
                     (TExpr::Binary {
                         op,
                         lhs: (Box::new(lt), lhs.1),
@@ -422,7 +452,7 @@ impl<'src> Infer<'src> {
                     let (lt, mut errs0) = self.infer(unbox!(lhs), Type::Bool);
                     let (rt, errs1) = self.infer(unbox!(rhs), Type::Bool);
                     errs0.extend(errs1);
-                    self.add_constraint(expected, Type::Bool, span);
+                    constraint!(Type::Bool);
                     (TExpr::Binary {
                         op,
                         lhs: (Box::new(lt), lhs.1),
@@ -445,12 +475,33 @@ impl<'src> Infer<'src> {
                     let (lt, mut errs0) = self.infer(unbox!(lhs), t.clone());
                     let (rt, errs1) = self.infer(unbox!(rhs), t);
                     errs0.extend(errs1);
-                    self.add_constraint(expected, Type::Bool, span);
+                    constraint!(Type::Bool);
                     (TExpr::Binary {
                         op,
                         lhs: (Box::new(lt), lhs.1),
                         rhs: (Box::new(rt), rhs.1),
                         ret_ty: Type::Bool,
+                    }, errs0)
+                },
+
+                BinaryOp::Pipe => {
+                    // Since this is parsed with a fold left, the right hand
+                    // side should always be a function
+                    let t = self.fresh();
+                    let (lt, mut errs0) = self.infer(unbox!(lhs), t.clone());
+                    // The right hand side should be a function that takes
+                    // 1 argument with the type of t
+                    let (rt, errs1) = self.infer(
+                        unbox!(rhs),
+                        Type::Func(vec![t.clone()], Box::new(t.clone())),
+                    );
+                    errs0.extend(errs1);
+                    constraint!(t.clone());
+                    (TExpr::Binary {
+                        op,
+                        lhs: (Box::new(lt), lhs.1),
+                        rhs: (Box::new(rt), rhs.1),
+                        ret_ty: t,
                     }, errs0)
                 },
             }
@@ -486,12 +537,12 @@ impl<'src> Infer<'src> {
                 }
 
                 // Push the constraints
-                self.add_constraint(expected, Type::Func(
+                constraint!(Type::Func(
                     xs.clone().into_iter()
                         .map(|x| x.1)
                         .collect(),
                     Box::new(rt.clone()),
-                ), span);
+                ));
 
                 (TExpr::Lambda {
                     params: xs,
@@ -580,7 +631,7 @@ impl<'src> Infer<'src> {
                 self.env.insert(name.clone(), ty.clone());
                 let (val_ty, errs) = self.infer(unbox!(value), ty.clone());
 
-                self.constraints.push((expected, Type::Unit, e.1));
+                constraint!(Type::Unit);
 
                 (TExpr::Define {
                     name,
@@ -615,11 +666,12 @@ impl<'src> Infer<'src> {
                 let rt = if void || last.is_none() {
                     // If the block is void or there is no expression,
                     // the return type is unit
-                    self.add_constraint(expected, Type::Unit, span);
+                    constraint!(Type::Unit);
                     Type::Unit
                 } else {
                     // Otherwise, the return type is the same as the expected type
-                    self.add_constraint(expected.clone(), last.unwrap(), span);
+                    // constraint!(last.unwrap());
+                    self.add_constraint(Constraint::new(expected.clone(), last.unwrap(), span));
                     expected
                 };
 

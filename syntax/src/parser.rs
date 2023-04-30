@@ -48,6 +48,7 @@ pub fn lexer<'src>() -> impl Parser<'src, &'src str, Vec<(Token<'src>, Span)>, e
         just("()").to(Token::Unit),
         just("\\").to(Token::Lambda),
         just("->").to(Token::Arrow),
+        just("|>").to(Token::Pipe),
 
         just('+').to(Token::Add),
         just('-').to(Token::Sub),
@@ -324,7 +325,17 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
                 }
             );
 
-        logical
+        let pipe = logical.clone()
+            .foldl(
+                just(Token::Pipe).to(BinaryOp::Pipe)
+                .then(logical).repeated(),
+                |a, (op, b)| {
+                    let span = a.1.start..b.1.end;
+                    (Expr::Binary(op, boxspan(a), boxspan(b)), span.into())
+                }
+            );
+
+        pipe
             .labelled("expression")
     })
 }

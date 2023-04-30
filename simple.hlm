@@ -1,3 +1,4 @@
-let mk = fn n = fn x = x + n;
-let f = mk(35);
-let res = f(34);
+let succ = fn x = x + 1;
+let add  = fn a b = a + b;
+
+let res = 10 |> succ |> fn a = add(a, 1) |> add;

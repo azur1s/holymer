@@ -16,6 +16,7 @@ pub enum Token<'src> {
     Add, Sub, Mul, Div, Rem,
     Eq, Ne, Lt, Gt, Le, Ge,
     And, Or, Not,
+    Pipe,
 
     Assign, Comma, Colon, Semicolon,
     Open(Delim), Close(Delim),
@@ -47,6 +48,7 @@ impl<'src> Display for Token<'src> {
             Token::And => write!(f, "&&"),
             Token::Or  => write!(f, "||"),
             Token::Not => write!(f, "!"),
+            Token::Pipe => write!(f, "|>"),
 
             Token::Assign    => write!(f, "="),
             Token::Comma     => write!(f, ","),
@@ -103,6 +105,7 @@ pub enum BinaryOp {
     Add, Sub, Mul, Div, Rem,
     And, Or,
     Eq, Ne, Lt, Le, Gt, Ge,
+    Pipe,
 }
 
 impl Display for BinaryOp {
@@ -121,6 +124,7 @@ impl Display for BinaryOp {
             BinaryOp::Le  => write!(f, "<="),
             BinaryOp::Gt  => write!(f, ">"),
             BinaryOp::Ge  => write!(f, ">="),
+            BinaryOp::Pipe => write!(f, "|>"),
         }
     }
 }
