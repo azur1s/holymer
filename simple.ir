@@ -1,0 +1,28 @@
+succ x:
+    var_load x
+    int_push 1
+    int_add
+    ret
+
+add a b:
+    var_load a
+    var_load b
+    int_add
+    ret
+
+dedu x:
+    var_load x
+    int_push 1
+    int_sub
+    ret
+
+_lambda_0 a:
+    var_load a
+    int_push 1
+    call add
+    ret
+
+int_push 10
+call succ
+call _lambda_0
+call dedu

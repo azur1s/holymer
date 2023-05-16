@@ -36,7 +36,7 @@ pub fn lexer<'src>() -> impl Parser<'src, &'src str, Vec<(Token<'src>, Span)>, e
         "false"  => Token::Bool(false),
         "let"    => Token::Let,
         "in"     => Token::In,
-        "fn"     => Token::Func,
+        "fun"    => Token::Func,
         "return" => Token::Return,
         "if"     => Token::If,
         "then"   => Token::Then,
@@ -143,29 +143,19 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
             )
             .map(|e: Spanned<Expr>| e.0);
 
-        // func (x t, y t) : rt = e
-        // func x, y = e
         let lambda = just(Token::Func)
             .ignore_then(
                 symbol
-                    .map(|s| (s, None))
-                    .or(symbol
-                        .then(type_parser())
-                        .delimited_by(
-                            just(Token::Open(Delim::Paren)),
-                            just(Token::Close(Delim::Paren)),
-                        )
-                        .map(|(s, t)| (s, Some(t)))
-                    )
-                    .repeated()
+                    .then(type_parser().or_not())
+                    .separated_by(just(Token::Comma))
                     .collect::<Vec<_>>()
+                    .delimited_by(
+                        just(Token::Open(Delim::Paren)),
+                        just(Token::Close(Delim::Paren)),
+                    )
             )
-            .then(
-                just(Token::Colon)
-                    .ignore_then(type_parser())
-                    .or_not()
-            )
-            .then_ignore(just(Token::Assign))
+            .then(type_parser().or_not())
+            .then_ignore(just(Token::Arrow))
             .then(expr.clone())
             .map(|((args, ret), body)| Expr::Lambda(args, ret, boxspan(body)));
 

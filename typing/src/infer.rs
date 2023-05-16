@@ -187,11 +187,23 @@ impl<'src> Infer<'src> {
             (Func(a1, r1), Func(a2, r2)) => {
                 // Check the number of arguments
                 if a1.len() != a2.len() {
-                    return Err(InferError::new("Argument length mismatch", c.span)
+                    let mut e = InferError::new("Argument length mismatch", c.span)
                         .add_error(format!(
-                            "This function should take {} arguments, found {}",
-                            a1.len(), a2.len()
-                        ), c.span));
+                            "This function is expected to take {} arguments, found {}",
+                            a2.len(), a1.len()
+                        ), c.span);
+                    if a2.len() > a1.len() {
+                        // Get the types of the needed arguments
+                        let mut args = Vec::new();
+                        for i in a1.len()..a2.len() {
+                            args.push(self.substitute(a2[i].clone()).to_string());
+                        }
+                        e = e.add_hint(format!(
+                            "Need arguments of type `{}` to call this function",
+                            args.join(", ")
+                        ), c.span);
+                    }
+                    return Err(e);
                 }
                 // Unify the arguments
                 for (a1, a2) in a1.into_iter().zip(a2.into_iter()) {
@@ -231,11 +243,15 @@ impl<'src> Infer<'src> {
     }
 
     /// Solve the constraints by unifying them
-    fn solve(&mut self) -> Result<(), InferError> {
+
+    fn solve(&mut self) -> Vec<InferError> {
+        let mut errors = Vec::new();
         for c in self.constraints.clone().into_iter() {
-            self.unify(c)?;
+            if let Err(e) = self.unify(c) {
+                errors.push(e);
+            }
         }
-        Ok(())
+        errors
     }
 
     /// Substitute the type variables with the substitutions
@@ -394,10 +410,10 @@ impl<'src> Infer<'src> {
                         Type::Func(_, _) => "function",
                         _ => "value",
                     };
-                    (
-                        TExpr::Ident(x),
-                        vec![InferError::new(format!("Undefined {}", kind), span)]
-                    )
+                    (TExpr::Ident(x), vec![
+                        InferError::new(format!("Undefined {}", kind), span)
+                            .add_error(format!("`{}` is not defined", x), span)
+                    ])
                 }
             }
 
@@ -620,6 +636,17 @@ impl<'src> Infer<'src> {
                 let (bt, berrs) = inf.infer(unbox!(body), expected.clone());
                 errs.extend(berrs);
 
+                for s in inf.subst {
+                    if !self.subst.contains(&s) {
+                        self.subst.push(s);
+                    }
+                }
+                for c in inf.constraints {
+                    if !self.constraints.contains(&c) {
+                        self.constraints.push(c);
+                    }
+                }
+
                 (TExpr::Let {
                     name, ty,
                     value: (Box::new(vt), value.1),
@@ -688,29 +715,30 @@ impl<'src> Infer<'src> {
 /// Infer a list of expressions
 pub fn infer_exprs(es: Vec<(Expr, SimpleSpan)>) -> (Vec<(TExpr, SimpleSpan)>, Vec<InferError>) {
     let mut inf = Infer::new();
-    let mut typed_exprs = vec![];
+    // Type expressions
+    let mut tes = vec![];
+    // Unsubstituted typed expressions
     let mut errors = vec![];
 
     for e in es {
         let span = e.1;
         let fresh = inf.fresh();
+        // Infer the types
         let (te, err) = inf.infer(e, fresh);
-        typed_exprs.push((te, span));
+
+        // Push the expression to the list
+        tes.push((te.clone(), span));
+
         if !err.is_empty() {
             errors.extend(err);
         }
     }
 
-    match inf.solve() {
-        Ok(_) => {
-            typed_exprs = typed_exprs.into_iter()
-                .map(|(x, s)| (inf.substitute_texp(x), s))
-                .collect();
-        }
-        Err(e) => {
-            errors.push(e);
-        }
+    let solve_errors = inf.solve();
+    if !solve_errors.is_empty() {
+        errors.extend(solve_errors);
     }
 
-    (rename_exprs(typed_exprs), errors)
+
+    (rename_exprs(tes), errors)
 }

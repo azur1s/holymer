@@ -1,4 +1,5 @@
-let succ = fn x = x + 1;
-let add  = fn a b = a + b;
+let a = fun (x Int, y) Int -> x + y;
+let b = fun (x, y) -> x + y;
+a(34, 35);
 
-let res = 10 |> succ |> fn a = add(a, 1) |> add;
+fun (x Int, y) Int -> x + y;

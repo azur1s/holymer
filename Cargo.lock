@@ -79,6 +79,7 @@ dependencies = [
  "ariadne",
  "chumsky",
  "clap",
+ "ir",
  "syntax",
  "typing",
 ]
@@ -210,6 +211,15 @@ dependencies = [
  "hermit-abi",
  "libc",
  "windows-sys",
+]
+
+[[package]]
+name = "ir"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
+ "syntax",
+ "typing",
 ]
 
 [[package]]

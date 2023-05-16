@@ -1,0 +1,2 @@
+let f = fn x y z = x + y + z in f(1);
+let g = fn x = x + 1; g(1, 2);

@@ -100,7 +100,7 @@ impl Display for UnaryOp {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BinaryOp {
     Add, Sub, Mul, Div, Rem,
     And, Or,

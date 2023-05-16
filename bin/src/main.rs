@@ -1,7 +1,9 @@
 use ariadne::{sources, Color, Label, Report, ReportKind};
 use chumsky::{Parser, prelude::Input};
+
 use syntax::parser::{lexer, exprs_parser};
 use typing::infer::{infer_exprs, InferErrorKind};
+use ir::Lowerer;
 
 pub mod args;
 
@@ -27,6 +29,7 @@ fn main() {
     // Typecheck if there are no lexing or parsing errors
     if let Some(ast) = ast.filter(|_| errs.len() + parse_errs.len() == 0) {
         let (ast, e) = infer_exprs(ast.0);
+        // If there is an error, print it
         if !e.is_empty() {
             e.into_iter()
                 .for_each(|e| {
@@ -49,8 +52,12 @@ fn main() {
                         .print(sources([(filename.clone(), src.clone())]))
                         .unwrap()
                 });
+        // Else go to the next stage
         } else {
-            ast.iter().for_each(|node| println!("{:?}", node.0));
+            // ast.iter().for_each(|node| println!("{:?}", node.0));
+            let mut l = Lowerer::new();
+            let irs = l.lower_texprs(ast);
+            irs.iter().for_each(|ir| println!("{:?}", ir));
         }
     };
 
