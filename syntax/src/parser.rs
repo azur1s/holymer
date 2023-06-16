@@ -145,14 +145,15 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
 
         let lambda = just(Token::Func)
             .ignore_then(
-                symbol
+                (symbol
                     .then(type_parser().or_not())
                     .separated_by(just(Token::Comma))
                     .collect::<Vec<_>>()
                     .delimited_by(
                         just(Token::Open(Delim::Paren)),
                         just(Token::Close(Delim::Paren)),
-                    )
+                    ))
+                    .or(just(Token::Unit).to(Vec::new()))
             )
             .then(type_parser().or_not())
             .then_ignore(just(Token::Arrow))
@@ -262,6 +263,7 @@ pub fn expr_parser<'tokens, 'src: 'tokens>() -> impl Parser<
         let op = choice((
             just(Token::Mul).to(BinaryOp::Mul),
             just(Token::Div).to(BinaryOp::Div),
+            just(Token::Rem).to(BinaryOp::Rem),
         ));
         let product = unary.clone()
             .foldl(

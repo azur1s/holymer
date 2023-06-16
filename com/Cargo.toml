@@ -1,0 +1,13 @@
+[package]
+name = "com"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chumsky = "1.0.0-alpha.3"
+cranelift = "0.96.3"
+cranelift-jit = "0.96.3"
+cranelift-module = "0.96.3"
+cranelift-native = "0.96.3"
+syntax = { path = "../syntax" }
+typing = { path = "../typing" }

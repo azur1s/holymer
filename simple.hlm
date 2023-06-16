@@ -1,5 +1,2 @@
-let a = fun (x Int, y) Int -> x + y;
-let b = fun (x, y) -> x + y;
-a(34, 35);
-
-fun (x Int, y) Int -> x + y;
+let f = fun (x Int, y) Int -> x + y;
+f(34, 35);

@@ -54,6 +54,10 @@ fn main() {
                 });
         // Else go to the next stage
         } else {
+            if args.typecheck {
+                ast.iter().for_each(|node| println!("{:?}", node.0));
+                return;
+            }
             // ast.iter().for_each(|node| println!("{:?}", node.0));
             let mut l = Lowerer::new();
             let irs = l.lower_texprs(ast);

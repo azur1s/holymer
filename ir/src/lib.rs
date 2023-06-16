@@ -4,9 +4,14 @@ use typing::typed::TExpr;
 
 #[derive(Clone, Debug)]
 pub enum IExpr<'src> {
+    BoolAnd,
     IntPush(i64),
     IntAdd,
     IntSub,
+    IntRem,
+    IntEq,
+    StrPush(&'src str),
+    Branch(Vec<Self>, Vec<Self>),
     VarLoad(&'src str),
     VarStore(&'src str),
     FnPush(Vec<Self>),
@@ -27,10 +32,10 @@ impl Lowerer {
         use IExpr::*;
         match e {
             TExpr::Lit(l) => match l {
-                Lit::Unit    => todo!(),
+                Lit::Unit    => vec![],
                 Lit::Bool(_) => todo!(),
                 Lit::Int(n)  => vec![IntPush(n)],
-                Lit::Str(_)  => todo!(),
+                Lit::Str(s)  => vec![StrPush(s)],
             }
             TExpr::Ident(s) => vec![VarLoad(s)],
             TExpr::Unary { op, expr, .. } => {
@@ -55,14 +60,14 @@ impl Lowerer {
                     BinaryOp::Sub => IExpr::IntSub,
                     BinaryOp::Mul => todo!(),
                     BinaryOp::Div => todo!(),
-                    BinaryOp::Rem => todo!(),
-                    BinaryOp::Eq  => todo!(),
+                    BinaryOp::Rem => IExpr::IntRem,
+                    BinaryOp::Eq  => IExpr::IntEq,
                     BinaryOp::Ne  => todo!(),
                     BinaryOp::Lt  => todo!(),
                     BinaryOp::Gt  => todo!(),
                     BinaryOp::Le  => todo!(),
                     BinaryOp::Ge  => todo!(),
-                    BinaryOp::And => todo!(),
+                    BinaryOp::And => IExpr::BoolAnd,
                     BinaryOp::Or  => todo!(),
                     BinaryOp::Pipe => unreachable!(),
                 });
@@ -82,11 +87,21 @@ impl Lowerer {
                 es.push(IExpr::Call);
                 es
             },
+
+            TExpr::If { cond, t, f, .. } => {
+                let mut es = self.lower_texpr(*cond.0);
+                es.push(IExpr::Branch(
+                    self.lower_texpr(*t.0),
+                    self.lower_texpr(*f.0),
+                ));
+                es
+            },
             TExpr::Define { name, value, .. } => {
                 let mut es = self.lower_texpr(*value.0);
                 es.push(IExpr::VarStore(name));
                 es
             },
+
 
             e => unimplemented!("{:?}", e)
         }

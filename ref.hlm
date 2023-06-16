@@ -1,2 +1,2 @@
-let by_ref = fn (&x: int) = *x + 1;
-let by_value = fn (x: int) = x + 1;
+let by_ref = fun (&x int) ->  *x + 1;
+let by_value = fun (x: int) -> x + 1;

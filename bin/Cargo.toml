@@ -10,6 +10,7 @@ clap = { version = "4.2.4", features = ["derive"] }
 syntax = { path = "../syntax" }
 typing = { path = "../typing" }
 ir = { path = "../ir" }
+com = { path = "../com" }
 
 [[bin]]
 name = "hc"
