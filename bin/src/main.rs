@@ -1,9 +1,9 @@
 use ariadne::{sources, Color, Label, Report, ReportKind};
 use chumsky::{Parser, prelude::Input};
 
+use ir::lower_expr;
 use syntax::parser::{lexer, exprs_parser};
 use typing::infer::{infer_exprs, InferErrorKind};
-use ir::Lowerer;
 
 pub mod args;
 
@@ -59,9 +59,8 @@ fn main() {
                 return;
             }
             // ast.iter().for_each(|node| println!("{:?}", node.0));
-            let mut l = Lowerer::new();
-            let irs = l.lower_texprs(ast);
-            irs.iter().for_each(|ir| println!("{:?}", ir));
+            let irs = ast.into_iter().map(|node| lower_expr(node.0)).collect::<Vec<_>>();
+            irs.iter().for_each(|ir| println!("{}", ir));
         }
     };
 

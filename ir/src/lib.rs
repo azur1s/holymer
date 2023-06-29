@@ -1,115 +1,149 @@
-use chumsky::span::SimpleSpan;
-use syntax::expr::{Lit, UnaryOp, BinaryOp};
 use typing::typed::TExpr;
+use syntax::expr::{Lit as ExprLit, UnaryOp, BinaryOp};
+
+use std::fmt::{self, Display, Formatter, Result as FmtResult};
 
 #[derive(Clone, Debug)]
-pub enum IExpr<'src> {
-    BoolAnd,
-    IntPush(i64),
-    IntAdd,
-    IntSub,
-    IntRem,
-    IntEq,
-    StrPush(&'src str),
-    Branch(Vec<Self>, Vec<Self>),
-    VarLoad(&'src str),
-    VarStore(&'src str),
-    FnPush(Vec<Self>),
-    Call,
-    Ret,
+pub enum Lit<'src> {
+    Unit,
+    Bool(bool),
+    Int(i64),
+    Str(&'src str),
 }
 
-#[derive(Clone, Debug)]
-pub struct Lowerer {
-}
-
-impl Lowerer {
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    fn lower_texpr<'a>(self: &mut Self, e: TExpr<'a>) -> Vec<IExpr<'a>> {
-        use IExpr::*;
-        match e {
-            TExpr::Lit(l) => match l {
-                Lit::Unit    => vec![],
-                Lit::Bool(_) => todo!(),
-                Lit::Int(n)  => vec![IntPush(n)],
-                Lit::Str(s)  => vec![StrPush(s)],
-            }
-            TExpr::Ident(s) => vec![VarLoad(s)],
-            TExpr::Unary { op, expr, .. } => {
-                let mut expr = self.lower_texpr(*expr.0);
-                expr.push(match op {
-                    UnaryOp::Neg => IntSub,
-                    UnaryOp::Not => todo!(),
-                });
-                expr
-            }
-            TExpr::Binary { op, lhs, rhs, .. } if op == BinaryOp::Pipe => {
-                println!("{lhs:?}");
-                println!("{rhs:?}");
-                todo!()
-            }
-            TExpr::Binary { op, lhs, rhs, .. } => {
-                let mut lhs = self.lower_texpr(*lhs.0);
-                let mut rhs = self.lower_texpr(*rhs.0);
-                lhs.append(&mut rhs);
-                lhs.push(match op {
-                    BinaryOp::Add => IExpr::IntAdd,
-                    BinaryOp::Sub => IExpr::IntSub,
-                    BinaryOp::Mul => todo!(),
-                    BinaryOp::Div => todo!(),
-                    BinaryOp::Rem => IExpr::IntRem,
-                    BinaryOp::Eq  => IExpr::IntEq,
-                    BinaryOp::Ne  => todo!(),
-                    BinaryOp::Lt  => todo!(),
-                    BinaryOp::Gt  => todo!(),
-                    BinaryOp::Le  => todo!(),
-                    BinaryOp::Ge  => todo!(),
-                    BinaryOp::And => IExpr::BoolAnd,
-                    BinaryOp::Or  => todo!(),
-                    BinaryOp::Pipe => unreachable!(),
-                });
-                lhs
-            }
-
-            TExpr::Lambda { body, .. } => {
-                let mut es = self.lower_texpr(*body.0);
-                es.push(IExpr::Ret);
-                vec![IExpr::FnPush(es)]
-            },
-            TExpr::Call { func, args } => {
-                let mut es: Vec<IExpr> = args.into_iter()
-                    .flat_map(|(e, _)| self.lower_texpr(e))
-                    .collect();
-                es.append(&mut self.lower_texpr(*func.0));
-                es.push(IExpr::Call);
-                es
-            },
-
-            TExpr::If { cond, t, f, .. } => {
-                let mut es = self.lower_texpr(*cond.0);
-                es.push(IExpr::Branch(
-                    self.lower_texpr(*t.0),
-                    self.lower_texpr(*f.0),
-                ));
-                es
-            },
-            TExpr::Define { name, value, .. } => {
-                let mut es = self.lower_texpr(*value.0);
-                es.push(IExpr::VarStore(name));
-                es
-            },
-
-
-            e => unimplemented!("{:?}", e)
+impl Display for Lit<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Lit::Unit    => write!(f, "()"),
+            Lit::Bool(b) => write!(f, "{}", b),
+            Lit::Int(i)  => write!(f, "{}", i),
+            Lit::Str(s)  => write!(f, "\"{}\"", s),
         }
     }
+}
 
-    pub fn lower_texprs<'a>(self: &mut Self, e: Vec<(TExpr<'a>, SimpleSpan)>) -> Vec<IExpr<'a>> {
-        e.into_iter()
-            .flat_map(|(e, _)| self.lower_texpr(e))
-            .collect()
+#[derive(Clone, Debug)]
+pub enum Expr<'src> {
+    Lit(Lit<'src>),
+    // v0
+    Var(&'src str),
+    // f(v0, v1, ...)
+    Call(Vec<Self>),
+}
+
+impl Display for Expr<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Expr::Lit(l) => write!(f, "{}", l),
+            Expr::Var(s) => write!(f, "{}", s),
+            Expr::Call(v) => {
+                write!(f, "(")?;
+                for (i, e) in v.iter().enumerate() {
+                    if i != 0 {
+                        write!(f, " ")?;
+                    }
+                    write!(f, "{}", e)?;
+                }
+                write!(f, ")")
+            }
+        }
+    }
+}
+
+macro_rules! unbox {
+    ($e:expr) => {
+        *(($e).0)
+    };
+}
+
+macro_rules! str {
+    ($e:expr) => {
+        Expr::Lit(Lit::Str($e))
+    };
+}
+
+macro_rules! var {
+    ($e:expr) => {
+        Expr::Var($e)
+    };
+}
+
+macro_rules! call {
+    ($e:expr) => {
+        Expr::Call($e)
+    };
+}
+
+pub fn lower_lit(lit: ExprLit) -> Lit {
+    match lit {
+        ExprLit::Unit    => Lit::Unit,
+        ExprLit::Bool(b) => Lit::Bool(b),
+        ExprLit::Int(i)  => Lit::Int(i),
+        ExprLit::Str(s)  => Lit::Str(s),
+    }
+}
+
+pub fn lower_expr(e: TExpr) -> Expr {
+    match e {
+        TExpr::Lit(l)   => Expr::Lit(lower_lit(l)),
+        TExpr::Ident(s) => var!(s),
+        TExpr::Unary { op, expr, .. } => {
+            let expr = lower_expr(unbox!(expr));
+            match op {
+                UnaryOp::Neg => call!(vec![var!("neg"), expr]),
+                UnaryOp::Not => call!(vec![var!("not"), expr]),
+            }
+        }
+        TExpr::Binary { op: BinaryOp::Pipe, lhs, rhs, .. } => {
+            let lhs = lower_expr(unbox!(lhs)); // arguments
+            let rhs = lower_expr(unbox!(rhs)); // function
+            call!(vec![rhs, lhs])
+        }
+        TExpr::Binary { op, lhs, rhs, .. } => {
+            let lhs = lower_expr(unbox!(lhs));
+            let rhs = lower_expr(unbox!(rhs));
+            match op {
+                BinaryOp::Add => call!(vec![var!("+"), lhs, rhs]),
+                BinaryOp::Sub => call!(vec![var!("-"), lhs, rhs]),
+                BinaryOp::Mul => call!(vec![var!("*"), lhs, rhs]),
+                BinaryOp::Div => call!(vec![var!("/"), lhs, rhs]),
+                BinaryOp::Rem => call!(vec![var!("%"), lhs, rhs]),
+                BinaryOp::Eq  => call!(vec![var!("=="), lhs, rhs]),
+                BinaryOp::Ne  => call!(vec![var!("!="), lhs, rhs]),
+                BinaryOp::Lt  => call!(vec![var!("<"), lhs, rhs]),
+                BinaryOp::Le  => call!(vec![var!("<="), lhs, rhs]),
+                BinaryOp::Gt  => call!(vec![var!(">"), lhs, rhs]),
+                BinaryOp::Ge  => call!(vec![var!(">="), lhs, rhs]),
+                BinaryOp::And => call!(vec![var!("&&"), lhs, rhs]),
+                BinaryOp::Or  => call!(vec![var!("||"), lhs, rhs]),
+                BinaryOp::Pipe => unreachable!("pipe operator is handled separately"),
+            }
+        }
+        TExpr::Lambda { params, body, .. } => {
+            let body = lower_expr(unbox!(body));
+            call!(vec![
+                var!("lambda"),
+                call!(params.into_iter().map(|(p, _)| var!(p)).collect()),
+                body,
+            ])
+        }
+        TExpr::Call { func, args } => {
+            let func = lower_expr(unbox!(func));
+            let args = args.into_iter()
+                .map(|(a, _)| lower_expr(a))
+                .collect::<Vec<_>>();
+            call!(vec![func].into_iter().chain(args).collect())
+        }
+        TExpr::If { cond, t, f, br_ty } => todo!(),
+        TExpr::Let { name, value, body, .. } => {
+            let value = lower_expr(unbox!(value));
+            let body = lower_expr(unbox!(body));
+            call!(vec![var!("let"), str!(name), value, body])
+        }
+        TExpr::Define { name, value, .. } => {
+            let value = lower_expr(unbox!(value));
+            call!(vec![var!("define"), str!(name), value])
+        }
+        TExpr::Block { exprs, void, ret_ty } => todo!(),
     }
 }
