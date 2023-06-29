@@ -134,7 +134,12 @@ pub fn lower_expr(e: TExpr) -> Expr {
                 .collect::<Vec<_>>();
             call!(vec![func].into_iter().chain(args).collect())
         }
-        TExpr::If { cond, t, f, br_ty } => todo!(),
+        TExpr::If { cond, t, f, .. } => {
+            let cond = lower_expr(unbox!(cond));
+            let t = lower_expr(unbox!(t));
+            let f = lower_expr(unbox!(f));
+            call!(vec![var!("if"), cond, t, f])
+        }
         TExpr::Let { name, value, body, .. } => {
             let value = lower_expr(unbox!(value));
             let body = lower_expr(unbox!(body));
@@ -142,8 +147,17 @@ pub fn lower_expr(e: TExpr) -> Expr {
         }
         TExpr::Define { name, value, .. } => {
             let value = lower_expr(unbox!(value));
-            call!(vec![var!("define"), str!(name), value])
+            call!(vec![var!("define"), var!(name), value])
         }
-        TExpr::Block { exprs, void, ret_ty } => todo!(),
+        TExpr::Block { exprs, void, .. } => {
+            let exprs = exprs.into_iter()
+                .map(|(e, _)| lower_expr(e))
+                .collect::<Vec<_>>();
+            if void {
+                call!(vec![var!("block"), call!(exprs)])
+            } else {
+                call!(vec![var!("block"), call!(exprs), var!("()")])
+            }
+        }
     }
 }
