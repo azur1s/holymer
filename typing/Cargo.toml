@@ -1,0 +1,8 @@
+[package]
+name = "typing"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chumsky = "1.0.0-alpha.3"
+syntax = { path = "../syntax" }
