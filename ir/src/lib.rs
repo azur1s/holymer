@@ -1,7 +1,7 @@
 use typing::typed::TExpr;
 use syntax::expr::{Lit as ExprLit, UnaryOp, BinaryOp};
 
-use std::fmt::{self, Display, Formatter, Result as FmtResult};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Clone, Debug)]
 pub enum Lit<'src> {

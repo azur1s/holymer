@@ -187,22 +187,11 @@ impl<'src> Infer<'src> {
             (Func(a1, r1), Func(a2, r2)) => {
                 // Check the number of arguments
                 if a1.len() != a2.len() {
-                    let mut e = InferError::new("Argument length mismatch", c.span)
+                    let e = InferError::new("Argument length mismatch", c.span)
                         .add_error(format!(
                             "This function is expected to take {} arguments, found {}",
                             a2.len(), a1.len()
                         ), c.span);
-                    if a2.len() > a1.len() {
-                        // Get the types of the needed arguments
-                        let mut args = Vec::new();
-                        for i in a1.len()..a2.len() {
-                            args.push(self.substitute(a2[i].clone()).to_string());
-                        }
-                        e = e.add_hint(format!(
-                            "Need arguments of type `{}` to call this function",
-                            args.join(", ")
-                        ), c.span);
-                    }
                     return Err(e);
                 }
                 // Unify the arguments
@@ -243,7 +232,6 @@ impl<'src> Infer<'src> {
     }
 
     /// Solve the constraints by unifying them
-
     fn solve(&mut self) -> Vec<InferError> {
         let mut errors = Vec::new();
         for c in self.constraints.clone().into_iter() {
@@ -737,8 +725,12 @@ pub fn infer_exprs(es: Vec<(Expr, SimpleSpan)>) -> (Vec<(TExpr, SimpleSpan)>, Ve
     let solve_errors = inf.solve();
     if !solve_errors.is_empty() {
         errors.extend(solve_errors);
+    } else {
+        // Substitute the types
+        tes = tes.into_iter()
+            .map(|(te, s)| (inf.substitute_texp(te), s))
+            .collect();
     }
-
 
     (rename_exprs(tes), errors)
 }

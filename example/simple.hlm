@@ -1,7 +1,7 @@
-let add = fun (x Int, y Int) Int -> x + y;
+let add  = fun (x Int, y Int) Int -> x + y;
 let succ = fun (x) -> x + 1;
-let mul = fun (x, y) -> x * y;
+let mul  = fun (x, y) -> x * y;
 
-add(33, 34)
-|> fun (x) -> succ(x)
-|> fun (x) -> mul(x, 10)
+add(33, 35)
+    |> fun (x) -> succ(x)
+    |> fun (x) -> mul(x, 10)

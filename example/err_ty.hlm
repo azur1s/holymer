@@ -1,0 +1,10 @@
+let f = fun (a (Int)      -> Int, y Int) -> a(y);
+let g = fun (a (Int, Int) -> Int, y Int) -> a(y, 1);
+
+let a = fun (x Int) -> x + 1;
+let b = fun (x Int, y Int) -> x + y;
+
+f(a, 1);
+g(a, 1);
+f(b, 1);
+g(b, 1);
