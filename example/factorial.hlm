@@ -1,0 +1,7 @@
+let factorial = fun (n Int) Int ->
+    if n > 1
+        then n * factorial(n - 1)
+        else 1
+;
+
+factorial(5);
