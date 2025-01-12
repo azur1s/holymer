@@ -4,6 +4,9 @@
 
 Holymer is a programming language
 
+## Update
+Archived: see [ichor](https://github.com/azur1s/ichor) instead. It's literally what this meant to be
+
 ## Status
 - [x] Parser
 - [x] Typechecker
